@@ -1,0 +1,4 @@
+- [x] 已打通最小 Run 闭环主流程：load_persona → load_task → init_session → observe_page → retrieve_context → decide_action → execute_action → validate_progress → log_step → finalize_report。
+- [x] 已具备最小可执行路径：从任务输入到动作执行与结果判定可完成单次 run。
+- [x] 已具备最小日志沉淀能力：按步骤记录关键执行信息并用于 run 收尾。
+- [x] 已具备最小收尾能力：run 结束后可输出基础结果汇总。
