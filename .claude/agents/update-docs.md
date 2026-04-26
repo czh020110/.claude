@@ -1,5 +1,5 @@
 ---
-name: update-docs-agent
+name: update-docs
 description: 专门更新项目文档、TODO/DONE、修改记录，并在用户要求时创建 git commit。根据当前 git 变更生成文档更新结果，限制只修改 introduction/ 下文档与必要的修改记录文件。
 tools: Bash, Read, Edit, Write, Glob, Grep
 model: sonnet

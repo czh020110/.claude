@@ -8,7 +8,7 @@ The main model is responsible for user-facing configuration guidance.
 
 ## When the main model should use this guide
 
-Only use this guide when `query-project-agent` or `query_introduction_rag.py` returns:
+Only use this guide when `query-project` or `query_introduction_rag.py` returns:
 
 - `CONFIG_ERROR[embedding]`
 - `CONFIG_ERROR[rerank]`
@@ -23,7 +23,7 @@ When receiving `CONFIG_ERROR[...]`, the main model should:
 1. Explain that the failure is caused by missing or invalid RAG configuration.
 2. Use Claude Code options to ask the user how to proceed.
 3. If the user wants help, guide them to provide the required values.
-4. After configuration is fixed, re-run `query-project-agent`.
+4. After configuration is fixed, re-run `query-project`.
 
 ## Claude Code option flow
 

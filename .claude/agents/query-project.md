@@ -1,5 +1,5 @@
 ---
-name: query-project-agent
+name: query-project
 description: 专门执行 query-project RAG 检索。接收一个或多个项目文档问题，调用 .claude/skills/query-project/scripts/query_introduction_rag.py，提炼与问题直接相关的文档块内容并返回主模型。
 tools: Bash, Read, Glob, Grep
 model: haiku

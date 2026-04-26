@@ -1,5 +1,5 @@
 ---
-name: docs-research-agent
+name: docs-research
 description: 专门查询最新技术文档、官方用法、教程、迁移说明、issue 与 release note。接收主模型提交的问题，优先使用 context7，必要时再用 serper，并把整理后的结果返回主模型。
 tools: mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__serper-search__google_search, mcp__serper-search__scrape
 model: haiku
@@ -87,5 +87,5 @@ Need:
 - 每个问题都要形成闭环：`结论 / 依据 / 建议用法 / 风险与不确定项`。
 - `依据` 只能来自本次实际调用的 `context7` 或 `serper` 工具结果；未调用工具时不能写“官方文档确认”。
 - 如果无法确认“最新”或版本范围，明确写出未确认点，不要猜测。
-- 项目内部背景、目标、模块规划、环境、数据流、TODO/DONE、修改记录等问题，不属于本 agent 范围，应由主模型改用 `query-project`。
+- 项目内部背景、目标、模块规划、环境、数据流、TODO/DONE、修改记录等问题，不属于本 agent 范围，应由主模型改用 `query-project` agent。
 - 结果里不要混入与问题无关的实现建议或代码修改。
