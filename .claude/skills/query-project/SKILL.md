@@ -1,19 +1,19 @@
 ---
 name: query-project
-description: 当用户要求查询项目背景、目标边界、项目目标、环境、数据流、TODO/DONE、修改记录，或模型需要按问题从 introduction/ 项目事实文档中检索上下文时使用；主模型应委托 `query-project` agent 执行 RAG 检索并返回相关文档块摘要 (rag已配置)
+description: 当用户要求查询项目背景、目标边界、项目目标、环境、数据流、TODO/DONE、修改记录，或你需要按问题从 introduction/ 项目事实文档中检索上下文时使用；委托 `query-project` agent 执行 RAG 检索并返回相关文档块摘要 (rag已配置)
 ---
 
 基于 `introduction/` 下的项目事实文档做只读 RAG 检索。
 
-## 主模型职责
+## 你的职责
 
 - 不直接执行 RAG 脚本；优先调用 `query-project` agent。
-- 只能使用自定义 subagent `query-project` agent，不要改用 `general-purpose` 或其他通用 agent。
+- 只能使用自定义 subagent `query-project`，不要改用 `general-purpose` 或其他通用 agent。
 - 可以一次提交一个或多个问题给 `query-project` agent，让 subagent 批量检索、去重、提炼结果。
 - 只要求 subagent 返回与问题相关的文档块内容、路径、行号和必要分数。
-- 收到 subagent 结果后，主模型再结合当前任务做最终回答或实施决策。
-- 如果 subagent 返回 `CONFIG_ERROR[...]`，主模型读取 `references/api-config-guide.md` 并继续用户配置引导。
-- 如果 subagent 返回 `GITIGNORE_ERROR`，主模型先补齐根目录 `.gitignore` 缺失条目，再重新委托。
+- 收到 subagent 结果后，你再结合当前任务做最终回答或实施决策。
+- 如果 subagent 返回 `CONFIG_ERROR[...]`，读取 `references/api-config-guide.md` 并继续用户配置引导。
+- 如果 subagent 返回 `GITIGNORE_ERROR`，先补齐根目录 `.gitignore` 缺失条目，再重新委托。
 
 ## 调用方式
 
@@ -40,17 +40,11 @@ Need:
 - 每个问题都要给出结论 / 依据 / 后续，形成闭环。
 ```
 
-## 什么时候调用
+## 后续动作
 
-- 用户要求查询项目背景、目标边界、项目目标、环境、数据流、TODO/DONE、修改记录。
-- 模型执行任务时需要确认项目细节，例如模块边界、数据流入口、已完成事项、当前目标或环境命令。
-- 更新文档前后需要确认 `introduction/` 中真实项目事实。
-
-## 主模型后续动作
-
-- 如果 subagent 返回检索结果，主模型基于这些结果回答用户或继续执行当前任务。
-- 如果 subagent 返回 `CONFIG_ERROR[...]`，由主模型负责继续配置引导，不要把这部分交给 subagent。
-- 如果主模型修复了配置，先运行 `--sync-config-status`；若状态为 `(rag已配置)`，再按需运行 `--refresh-index`。
+- 如果 subagent 返回检索结果，你基于这些结果回答用户或继续执行当前任务。
+- 如果 subagent 返回 `CONFIG_ERROR[...]`，由你负责继续配置引导，不要把这部分交给 subagent。
+- 如果你修复了配置，先运行 `--sync-config-status`；若状态为 `(rag已配置)`，再按需运行 `--refresh-index`。
 
 ## 结果使用规则
 
@@ -61,4 +55,4 @@ Need:
 
 ## 引导边界
 
-- `references/api-config-guide.md` 只在 subagent 返回 `CONFIG_ERROR[...]` 后由主模型读取，用于继续配置引导。
+- `references/api-config-guide.md` 只在 subagent 返回 `CONFIG_ERROR[...]` 后由你读取，用于继续配置引导。

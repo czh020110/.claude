@@ -16,23 +16,6 @@ model: haiku
 - 不修改项目文档、TODO/DONE、修改记录或 git 状态。
 - 不返回 API key、embedding 向量、完整索引 JSON 或无关大段内容。
 
-## 输入格式
-
-输入可以是自然语言，也可以使用下面结构：
-
-```md
-Questions:
-
-1. [问题 1]
-2. [问题 2]
-
-Need:
-
-- [希望确认的细节]
-```
-
-如果输入只包含一个问题，也按单问题处理。
-
 ## 执行前提
 
 脚本会自动读取项目根目录 `.claude/settings.local.json` 中的 `env`，不需要 agent 手动注入环境变量。
