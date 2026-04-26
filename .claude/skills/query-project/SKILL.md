@@ -1,6 +1,6 @@
 ---
 name: query-project
-description: 当用户要求查询项目背景、目标、模块规划、环境、数据流、TODO/DONE、修改记录，或模型需要按问题从 introduction/ 项目事实文档中检索上下文时使用；主模型应委托 `query-project` agent 执行 RAG 检索并返回相关文档块摘要 (rag已配置)
+description: 当用户要求查询项目背景、目标边界、项目目标、环境、数据流、TODO/DONE、修改记录，或模型需要按问题从 introduction/ 项目事实文档中检索上下文时使用；主模型应委托 `query-project` agent 执行 RAG 检索并返回相关文档块摘要 (rag已配置)
 ---
 
 基于 `introduction/` 下的项目事实文档做只读 RAG 检索。
@@ -42,7 +42,7 @@ Need:
 
 ## 什么时候调用
 
-- 用户要求查询项目背景、目标、模块规划、环境、数据流、TODO/DONE、修改记录。
+- 用户要求查询项目背景、目标边界、项目目标、环境、数据流、TODO/DONE、修改记录。
 - 模型执行任务时需要确认项目细节，例如模块边界、数据流入口、已完成事项、当前目标或环境命令。
 - 更新文档前后需要确认 `introduction/` 中真实项目事实。
 

@@ -1,8 +1,8 @@
 # [项目名称]
 
-项目概览：@introduction/项目具体说明/
-项目目标：@introduction/项目实现目标/目标边界.md
-模块规划：@introduction/项目实现目标/模块规划.md
+项目文档：`introduction/项目文档/`
+目标边界：@introduction/项目实现目标/目标边界.md
+项目目标：@introduction/项目实现目标/项目目标.md
 本地环境：@introduction/环境说明/本地开发环境.md
 常用命令：@introduction/环境说明/常用命令.md
 长期计划：@introduction/TODO/STEP.md
@@ -24,8 +24,8 @@
 
 - 需要理解调用链、状态流转、模块协作时，读取 `introduction/数据流/`。
 - 需要更新项目文档、TODO/DONE、修改记录或提交 git commit 时，使用 `update-docs` skill。
-- 需要补充项目背景、业务边界或用户长期要求时，写入 `introduction/项目具体说明/`。
-- 需要补充阶段目标、模块规划或验收标准时，写入 `introduction/项目实现目标/`。
+- `introduction/项目文档/` 是用户维护的长期项目文档，默认只读；除非用户明确要求，不要主动写入。
+- `introduction/项目实现目标/` 需要由你维护；实现过程中发现目标边界、流程目标、功能范围或验收标准需要更新时，按真实项目事实同步。
 
 ## 进度维护
 
@@ -44,5 +44,5 @@
 ## 文档组织
 
 - 项目说明必须按 `introduction/` 下的主题文件夹维护。
-- 不要把项目具体说明、环境说明、数据流、目标、TODO、DONE、修改记录混在一个文件里。
+- 不要把项目文档、环境说明、数据流、目标、TODO、DONE、修改记录混在一个文件里。
 - 单个主题文档过长时，在同一文件夹下新增分块文件。
