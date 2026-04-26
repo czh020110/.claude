@@ -12,8 +12,8 @@ description: 当用户要求查询项目背景、目标、模块规划、环境�
 - 可以一次提交一个或多个问题给 `query-project-agent`，让 subagent 批量检索、去重、提炼结果。
 - 只要求 subagent 返回与问题相关的文档块内容、路径、行号和必要分数。
 - 收到 subagent 结果后，主模型再结合当前任务做最终回答或实施决策。
-- 如果 subagent 返回 `CONFIG_ERROR[...]`，由主模型负责继续引导用户配置。
-- 如果 subagent 返回 `GITIGNORE_ERROR`，先把缺少条目添加到根目录 `.gitignore`，再重新委托。
+- 如果 subagent 返回 `CONFIG_ERROR[...]`，主模型读取 `references/api-config-guide.md` 并继续用户配置引导。
+- 如果 subagent 返回 `GITIGNORE_ERROR`，主模型先补齐根目录 `.gitignore` 缺失条目，再重新委托。
 
 ## 调用方式
 
@@ -44,6 +44,12 @@ Need:
 - 模型执行任务时需要确认项目细节，例如模块边界、数据流入口、已完成事项、当前目标或环境命令。
 - 更新文档前后需要确认 `introduction/` 中真实项目事实。
 
+## 主模型后续动作
+
+- 如果 subagent 返回检索结果，主模型基于这些结果回答用户或继续执行当前任务。
+- 如果 subagent 返回 `CONFIG_ERROR[...]`，由主模型负责继续配置引导，不要把这部分交给 subagent。
+- 如果主模型修复了配置，先运行 `--sync-config-status`；若状态为 `(rag已配置)`，再按需运行 `--refresh-index`。
+
 ## 结果使用规则
 
 1. 优先使用 subagent 返回的最高相关文档块。
@@ -53,5 +59,6 @@ Need:
 
 ## 维护说明
 
-- 查询脚本的执行细节、配置要求、gitignore 检查、Windows 编码排障和缓存命名规则都已迁移进 `.claude/agents/query-project-agent.md`。
+- query-project 的执行细节已经完全收敛到 `.claude/agents/query-project-agent.md`。
+- `references/api-config-guide.md` 只服务于主模型的用户配置引导，不是 subagent 执行 reference。
 - 本 skill 的主用途是提示主模型直接委托自定义 subagent `query-project-agent`，避免用通用 agent 额外读取 agent 文件、增加 token 消耗，且不把脚本操作细节加载进主模型上下文。

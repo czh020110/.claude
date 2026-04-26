@@ -1,17 +1,37 @@
-# RAG setup guide
+# Main-model-only RAG config guide
 
-Use this guide only when `query_introduction_rag.py` returns `CONFIG_ERROR[...]`.
+This document is for the main model only.
 
-## When to enter this guide
+Do not treat this file as a subagent execution reference.
+Subagents should only return `CONFIG_ERROR[...]` summaries and stop.
+The main model is responsible for user-facing configuration guidance.
 
-Only enter this guide when the script reports one of these configuration problems:
+## When the main model should use this guide
 
-- Missing configuration
-- Invalid configuration
-- Permission/authentication failure
-- Service endpoint unreachable
+Only use this guide when `query-project-agent` or `query_introduction_rag.py` returns:
 
-- If the script returns `GITIGNORE_ERROR`, add the missing entries to the project root `.gitignore` before rerunning the command. Required entries: `.claude/settings.local.json` and `.claude/.cache/`.
+- `CONFIG_ERROR[embedding]`
+- `CONFIG_ERROR[rerank]`
+
+Do not use this guide for normal retrieval flow.
+Do not use this guide for `GITIGNORE_ERROR`.
+
+## Main model responsibilities
+
+When receiving `CONFIG_ERROR[...]`, the main model should:
+
+1. Explain that the failure is caused by missing or invalid RAG configuration.
+2. Use Claude Code options to ask the user how to proceed.
+3. If the user wants help, guide them to provide the required values.
+4. After configuration is fixed, re-run `query-project-agent`.
+
+## Claude Code option flow
+
+Offer exactly these options:
+
+1. `I will configure environment variables myself`
+2. `Please configure environment variables for me`
+3. `Do not use RAG retrieval`
 
 ## Required configuration items
 
@@ -31,49 +51,20 @@ Optional fallback variables:
 - `OPENAI_API_KEY`
 - `DASHSCOPE_API_KEY`
 
-## Claude Code option flow
-
-When the user needs help after a `CONFIG_ERROR[...]`, use Claude Code options and offer exactly these choices:
-
-1. `I will configure environment variables myself`
-2. `Please configure environment variables for me`
-3. `Do not use RAG retrieval`
-
-The user can switch options with the arrow keys.
-
-## What to do for each option
+## What the main model should do for each option
 
 ### 1. I will configure environment variables myself
 
-Give the user the variable names and the setup steps.
+Provide:
 
-You should provide:
-
-- all 6 variable names
+- the 6 variable names
 - what each variable means
 - a copy-paste example
-- how to rerun status sync after setup
-
-Example template:
-
-```md
-Please configure these environment variables:
-- RAG_EMBEDDING_BASE_URL
-- RAG_EMBEDDING_API_KEY
-- RAG_EMBEDDING_MODEL
-- RAG_RERANK_BASE_URL
-- RAG_RERANK_API_KEY
-- RAG_RERANK_MODEL
-
-After configuration, run:
-python .claude/skills/query-project/scripts/query_introduction_rag.py --sync-config-status
-```
+- how to re-run status sync after setup
 
 ### 2. Please configure environment variables for me
 
-Ask the user for the values needed to configure the environment.
-
-You should ask for:
+Ask the user for:
 
 - embedding base URL
 - embedding API key
@@ -82,19 +73,15 @@ You should ask for:
 - rerank API key
 - rerank model ID
 
-If embedding and rerank share the same provider or key, confirm whether the user wants to reuse the same value.
-
 ### 3. Do not use RAG retrieval
 
-Acknowledge that the project will not use RAG retrieval for now.
+Tell the user:
 
-You should:
+- `query-project` can remain in `(rag未配置)` state
+- `update-docs` should skip vector refresh while RAG is unconfigured
+- non-RAG workflows can continue
 
-- tell the user that `query-project` can remain in `(rag未配置)` state
-- tell the user that `update-docs` will skip vector refresh while the skill stays unconfigured
-- continue with non-RAG workflows
-
-## Example configurations
+## Example configuration
 
 ### DashScope example
 
@@ -107,56 +94,15 @@ export RAG_RERANK_API_KEY="your-rerank-key"
 export RAG_RERANK_MODEL="qwen3-rerank"
 ```
 
-### Generic OpenAI-compatible providers
+## After configuration is fixed
 
-```bash
-export RAG_EMBEDDING_BASE_URL="https://your-embedding-provider/v1"
-export RAG_EMBEDDING_API_KEY="your-embedding-key"
-export RAG_EMBEDDING_MODEL="your-embedding-model-id"
-export RAG_RERANK_BASE_URL="https://your-rerank-provider/v1"
-export RAG_RERANK_API_KEY="your-rerank-key"
-export RAG_RERANK_MODEL="your-rerank-model-id"
-```
-
-## Windows output encoding check
-
-If query output is garbled in a Windows terminal, write stdout bytes to a UTF-8 file and read the file instead of trusting terminal rendering.
-
-Name the cache file from the query text: `.claude/.cache/query-project/<query>.md`. Replace unsafe filename characters with `-`; stderr uses the same filename with `.err`.
-
-```bash
-python - <<'PY'
-import json, os, re, subprocess, sys
-from pathlib import Path
-query = '项目的 RAG 记忆与上下文系统是什么'
-settings = json.loads(Path('.claude/settings.local.json').read_text(encoding='utf-8'))
-env = os.environ.copy()
-env.update(settings.get('env', {}))
-env['PYTHONIOENCODING'] = 'utf-8'
-cmd = [sys.executable, '.claude/skills/query-project/scripts/query_introduction_rag.py', '--query', query, '--top-k', '3']
-proc = subprocess.run(cmd, env=env, capture_output=True)
-safe_name = re.sub(r'[\\/:*?"<>|\s]+', '-', query).strip('-') or 'query'
-out_path = Path('.claude/.cache/query-project') / f'{safe_name}.md'
-out_path.parent.mkdir(parents=True, exist_ok=True)
-out_path.write_bytes(proc.stdout)
-if proc.stderr:
-    out_path.with_suffix('.err').write_bytes(proc.stderr)
-print(out_path.as_posix())
-raise SystemExit(proc.returncode)
-PY
-```
-
-Then read the printed `.md` file. If the file shows normal Chinese, the RAG result is valid and only the terminal rendering is broken.
-
-## Final step after setup
-
-After the user finishes configuration, run:
+The main model should re-run:
 
 ```bash
 python .claude/skills/query-project/scripts/query_introduction_rag.py --sync-config-status
 ```
 
-If status becomes `(rag已配置)`, vector refresh can be triggered later with:
+If status becomes `(rag已配置)`, the main model may continue with:
 
 ```bash
 python .claude/skills/query-project/scripts/query_introduction_rag.py --refresh-index

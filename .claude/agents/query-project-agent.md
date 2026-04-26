@@ -48,29 +48,13 @@ Need:
 
 ## 配置错误处理
 
-如果脚本返回 `CONFIG_ERROR[...]`，不要继续检索，直接把配置问题摘要返回给主模型。
+如果脚本返回 `CONFIG_ERROR[...]`，不要继续检索，直接把配置错误类型和原始错误摘要返回给主模型。
 
-当主模型需要继续引导用户时，建议使用 Claude Code options，提供这 3 个选项：
+返回时至少包含：
 
-1. `I will configure environment variables myself`
-2. `Please configure environment variables for me`
-3. `Do not use RAG retrieval`
-
-当前完整配置项为：
-
-- `RAG_EMBEDDING_BASE_URL`
-- `RAG_EMBEDDING_API_KEY`
-- `RAG_EMBEDDING_MODEL`
-- `RAG_RERANK_BASE_URL`
-- `RAG_RERANK_API_KEY`
-- `RAG_RERANK_MODEL`
-
-DashScope 默认值：
-
-- Embedding URL: `https://dashscope.aliyuncs.com/compatible-mode/v1`
-- Embedding model: `text-embedding-v4`
-- Rerank URL: `https://dashscope.aliyuncs.com/compatible-api/v1`
-- Rerank model: `qwen3-rerank`
+- 错误类型：`CONFIG_ERROR[embedding]` 或 `CONFIG_ERROR[rerank]`
+- 原始错误摘要
+- 当前问题是否因此未完成
 
 ## 执行流程
 
