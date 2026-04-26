@@ -1,14 +1,14 @@
 # [项目名称]
 
-项目概览：@introduction/项目具体说明/01-项目概览.md
-项目目标：@introduction/项目实现目标/01-目标边界.md
-模块规划：@introduction/项目实现目标/02-模块规划.md
-本地环境：@introduction/环境说明/01-本地开发环境.md
-常用命令：@introduction/环境说明/02-常用命令.md
+项目概览：@introduction/项目具体说明/
+项目目标：@introduction/项目实现目标/目标边界.md
+模块规划：@introduction/项目实现目标/模块规划.md
+本地环境：@introduction/环境说明/本地开发环境.md
+常用命令：@introduction/环境说明/常用命令.md
 长期计划：@introduction/TODO/STEP.md
 本次待办：@introduction/TODO/TODO.md
 已完成项：@introduction/TODO/DONE.md
-项目数据流：@introduction/数据流/01-核心数据流.md
+项目数据流：@introduction/数据流/核心数据流.md
 
 ## 执行要求
 

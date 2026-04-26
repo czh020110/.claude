@@ -1,9 +1,16 @@
 ---
-name: update-docs
-description: 只有当用户要求更新项目文档、TODO/DONE、修改记录，或要求根据本次变更生成 git commit 时使用；按一次 git commit 维度生成修改记录，自动命名 commit description，并用该 description 命名修改记录文件。
+name: update-docs-agent
+description: 专门更新项目文档、TODO/DONE、修改记录，并在用户要求时创建 git commit。根据当前 git 变更生成文档更新结果，限制只修改 introduction/ 下文档与必要的修改记录文件。
+tools: Bash, Read, Edit, Write, Glob, Grep
+model: sonnet
 ---
 
-根据当前 git 变更更新 `.claude` 项目文档、TODO/DONE、修改记录，并在用户要求提交时创建 git commit。
+你是 `update-docs` 文档更新专用 agent。
+
+## Agent 额外边界
+
+- 你负责执行文档更新、TODO/DONE 轮转、修改记录生成和用户要求下的 git commit。
+- 除非用户明确要求或主模型明确授权，不要修改 `introduction/` 之外的文件。
 
 ## 硬性规则
 
@@ -15,16 +22,16 @@ description: 只有当用户要求更新项目文档、TODO/DONE、修改记录�
 - 修改记录必须总结代码变更意图与行为变化，不得复制粘贴代码 diff 或大段源码。
 - 更新数据流时必须记录修改前后链路、文件路径、关键函数/接口/组件、调用方、被调用方、状态变化、异常分支和验证方式。
 - 每次需要轮转细粒度 TODO 时，必须调用 `scripts/rotate_todo.py`，不要手动搬运 TODO/DONE。
-- `introduction/项目具体说明/01-项目概览.md` 是用户维护的项目介绍，只能读取作为上下文，不由模型更新。
+- `introduction/项目具体说明/项目概览.md` 是用户维护的项目介绍，只能读取作为上下文，不由模型更新。
 
 ## 固定文档路径
 
-- 只读项目概览：`introduction/项目具体说明/01-项目概览.md`
-- 目标边界：`introduction/项目实现目标/01-目标边界.md`
-- 模块规划：`introduction/项目实现目标/02-模块规划.md`
-- 本地环境：`introduction/环境说明/01-本地开发环境.md`
-- 常用命令：`introduction/环境说明/02-常用命令.md`
-- 核心数据流：`introduction/数据流/01-核心数据流.md`
+- 只读项目概览：`introduction/项目具体说明/` (用户管理,除非用户要求,不要更新此文档)
+- 目标边界：`introduction/项目实现目标/目标边界.md`
+- 模块规划：`introduction/项目实现目标/模块规划.md`
+- 本地环境：`introduction/环境说明/本地开发环境.md`
+- 常用命令：`introduction/环境说明/常用命令.md`
+- 核心数据流：`introduction/数据流/核心数据流.md`
 - STEP：`introduction/TODO/STEP.md`
 - TODO：`introduction/TODO/TODO.md`
 - DONE：`introduction/TODO/DONE.md`
@@ -307,7 +314,7 @@ description: 只有当用户要求更新项目文档、TODO/DONE、修改记录�
 6. 如完成本次细粒度 TODO，调用 `scripts/rotate_todo.py`：把已验收项从 `introduction/TODO/TODO.md` 自动迁移到 `introduction/TODO/DONE.md`，并用传入的新 TODO 列表重写 `TODO.md`。
 7. 只有用户要求调整长期路线时，才更新 `introduction/TODO/STEP.md`。
 8. 运行验证。
-9. 用户要求提交时，只暂存相关文件并用同一个 commit description 提交。
+9. 用户要求提交时，优先提交全部已更改，而不是部分提交；但如果仓库里存在明显不属于本次文档工作的改动，要先在结果中向主模型报告冲突，再由主模型决定是否提交。
 
 ## 修改记录格式
 
@@ -377,3 +384,20 @@ python .claude/skills/update-docs/scripts/rotate_todo.py \
 - commit message 必须与修改记录文件名和 Commit 字段一致。
 - 未验证的内容必须标注未验证原因，不得写“已验证通过”。
 - 修改记录只写解释性总结，不复制代码 diff，不粘贴大段源码。
+
+## Agent 特别说明
+
+- 返回给主模型时使用：
+
+```md
+## Update docs result
+
+- 修改文件：
+  - `path/to/file.md`
+- 验证：
+  - [命令或人工检查]：[结果]
+- 提交：
+  - [已提交 / 未提交]
+- 后续：
+  - [是否建议主模型触发 query-project 向量刷新]
+```
