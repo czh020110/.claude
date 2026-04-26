@@ -1,18 +1,19 @@
 ---
 name: update-obsidian
-description: 更新用户的obsidian笔记内容
+description: 根据用户指定的外部笔记位置，更新 Obsidian 或其他知识库中的项目相关笔记
 disable-model-invocation: true
 ---
 
-你需要根据用户要求更新现有的obsidian笔记内容, 需要更新的是: 笔记中没有记录到的内容
+当用户明确要求更新外部笔记时使用本流程。
 
-现支持修改的笔记文件路径:
-LangChain:`C:\Users\Chen\OneDrive\Apps\remotely-save\Obsidian\Study\AI\Agent\LangChain.md`
+## 使用前确认
 
-LangGraph:`C:\Users\Chen\OneDrive\Apps\remotely-save\Obsidian\Study\AI\Agent\LangGraph.md`
+- 用户指定了要更新的笔记路径或知识库位置。
+- 用户说明了要补充的内容范围。
 
-FastAPI:`C:\Users\Chen\OneDrive\Apps\remotely-save\Obsidian\Study\AI\Agent\FastAPI.md`
+## 执行规则
 
-Pydantic:`C:\Users\Chen\OneDrive\Apps\remotely-save\Obsidian\Study\AI\Agent\Pydantic.md`
-
-> 除非用户要求, 不要修改文件中与修改事项无关的内容
+1. 先读取目标笔记，避免重复记录。
+2. 只补充缺失内容，不重写无关部分。
+3. 不写入密钥、账号、token 或个人隐私信息。
+4. 如果笔记路径是用户本地私有路径，不要把该路径写入共享模板。

@@ -1,77 +1,48 @@
-项目:Synthetic User Lab
+# [项目名称]
 
-# 项目环境说明
+项目概览：@introduction/项目具体说明/01-项目概览.md
+项目目标：@introduction/项目实现目标/01-目标边界.md
+模块规划：@introduction/项目实现目标/02-模块规划.md
+本地环境：@introduction/环境说明/01-本地开发环境.md
+常用命令：@introduction/环境说明/02-常用命令.md
+长期计划：@introduction/TODO/STEP.md
+本次待办：@introduction/TODO/TODO.md
+已完成项：@introduction/TODO/DONE.md
+项目数据流：@introduction/数据流/01-核心数据流.md
 
-项目环境: @introduction/环境说明/关键的环境说明文档.md
+## 执行要求
 
-## 运行验证注意事项
+- 回答和执行前，先判断任务属于代码修改、文档更新、进度维护、修改记录、环境排查、接口查询还是架构推进。
+- 代码修改时直接改文件，不要只给代码片段；除非用户明确只要示例。
+- 开始开发新功能前，先对照 `当前待办` 和 `项目目标`，避免偏离当前阶段。
+- 修改已有功能前，先读取相关代码、数据流和 TODO，确认上下游影响。
+- 完成修改后必须说明修改了哪些文件；涉及代码时说明验证方式和结果。
+- 不要一次性实现全部长期目标；每次推进应形成一个可验证的阶段成果。
+- 不确定第三方库、SDK、CLI、云服务或框架接口时，先查文档再实现。
 
-- 默认使用 `synthetic-user-lab` Conda 环境，避免系统 Python 缺少 Playwright 等依赖。
-- FastAPI 本地验证优先使用端口 `8765`：`python -m uvicorn backend.main:app --host 127.0.0.1 --port 8765`。
-- Windows 下如需脚本输出中文 JSON，优先直接调用环境 Python：`D:/Env/Anaconda/Anaconda3-2024.06-1/envs/synthetic-user-lab/python.exe`，避免 `conda run` 的 GBK 转码问题。
-- 复杂异步或 HTTP 轮询验证不要塞进 `python -c` 单行命令，优先使用 heredoc、临时脚本或直接环境 Python 执行。
+## 按需读取
 
-# 项目实现目标说明
+- 需要理解调用链、状态流转、模块协作时，读取 `introduction/数据流/`。
+- 需要更新项目文档、TODO/DONE、修改记录或提交 git commit 时，使用 `update-docs` skill。
+- 需要补充项目背景、业务边界或用户长期要求时，写入 `introduction/项目具体说明/`。
+- 需要补充阶段目标、模块规划或验收标准时，写入 `introduction/项目实现目标/`。
 
-## 分块文档说明
+## 进度维护
 
-1. 项目定位、边界与设计原则
-   @introduction/项目实现目标-v1/01-项目定位边界与设计原则.md
-   - 用于理解项目为什么存在、解决什么问题、第一阶段边界与核心设计原则。
+- `introduction/TODO/STEP.md` 是项目长期方向和阶段步骤事实源，默认不随每次提交更新。
+- `introduction/TODO/TODO.md` 只记录下一次提交可完成并验收的细粒度小模块任务。
+- `introduction/TODO/DONE.md` 记录上一次 TODO.md 中已完成且已验证的事项。
+- 只有用户要求更新进度、完成阶段总结或整理文档时，才同步 STEP/TODO/DONE。
 
-2. 功能模块与 API 接口
-   @introduction/项目实现目标-v1/02-功能模块与API接口.md
-   - 用于实现 persona、task、observer、planner、validator、report 等功能模块和基础 API。
+## 修改记录
 
-3. RAG 记忆与上下文系统
-   @introduction/项目实现目标-v1/03-RAG记忆与上下文系统.md
-   - 用于实现产品知识库、UI 经验库、失败恢复库、评测规则库和检索策略。
+- 修改记录只在用户要求时更新。
+- 修改记录按一次 git commit 维度记录，不再按单个文件分别记录。
+- commit description 由模型根据本次变更自动命名，并作为修改记录文件名与提交信息。
+- 记录目标、修改前、修改后、修改文件、修改原因、验证结果和后续影响。
 
-4. 系统架构、技术栈与存储职责
-   @introduction/项目实现目标-v1/04-系统架构技术栈与存储职责.md
-   - 用于搭建项目目录、技术栈选型、服务分层以及 PostgreSQL / Redis 职责划分。
+## 文档组织
 
-5. LangGraph 执行流程与数据模型
-   @introduction/项目实现目标-v1/05-LangGraph流程与数据模型.md
-   - 用于实现 run 流程、异常恢复分支以及 Project / Persona / Task / Run / StepLog 等数据对象。
-
-6. 安全边界与 MVP 路线图
-   @introduction/项目实现目标-v1/06-安全边界与MVP路线图.md
-   - 用于判断 MVP 先做什么、哪些操作必须限制，以及后续阶段如何演进。
-
-# 项目代码数据流
-
-项目代码数据流说明: @introduction/数据流/代码数据流
-
-# 技术接口规范
-
-LangChain 与 LangGraph 接口规范: @introduction/LangChain与LangGraph接口规范.md
-
-# TODO
-
-项目整体计划步骤: @introduction/TODO/Steps.md
-
-当前项目已完成具体模块功能点: @introduction/TODO/DONE.md
-
-# 修复记录
-
-修复记录的代码修改目录:
-`.claude\introduction\修改记录\目录.md` (按需查看)
-
-## 已有代码修复记录的文档路径
-
-.claude/introduction/修改记录/graph_prompt.md
-
-.claude/introduction/修改记录/demo_runs.md
-
-.claude/introduction/修改记录/validator.md
-
-.claude/introduction/修改记录/config.md
-
-.claude/introduction/修改记录/demo_run_graph.md
-
-.claude/introduction/修改记录/in_memory_run_store.md
-
-.claude/introduction/修改记录/playwright_adapter.md
-
-.claude/introduction/修改记录/run_schemas.md
+- 项目说明必须按 `introduction/` 下的主题文件夹维护。
+- 不要把项目具体说明、环境说明、数据流、目标、TODO、DONE、修改记录混在一个文件里。
+- 单个主题文档过长时，在同一文件夹下新增分块文件。
