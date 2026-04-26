@@ -59,8 +59,6 @@ Need:
 3. 如果 subagent 表示检索不足，不要猜测；读取对应原文或询问用户。
 4. 不要把 API key、embedding 向量、完整索引内容写入回答。
 
-## 维护说明
+## 引导边界
 
-- query-project 的执行细节已经完全收敛到 `.claude/agents/query-project.md`。
-- `references/api-config-guide.md` 只服务于主模型的用户配置引导，不是 subagent 执行 reference。
-- 本 skill 的主用途是提示主模型直接委托自定义 subagent `query-project` agent，避免用通用 agent 额外读取 agent 文件、增加 token 消耗，且不把脚本操作细节加载进主模型上下文。
+- `references/api-config-guide.md` 只在 subagent 返回 `CONFIG_ERROR[...]` 后由主模型读取，用于继续配置引导。

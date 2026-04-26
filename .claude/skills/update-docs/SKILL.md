@@ -56,8 +56,3 @@ Need:
 
 - `update-docs` agent 在用户要求提交时，优先提交**全部已更改**，而不是部分提交。
 - 如果存在明显不属于本次文档工作的改动，subagent 会先在结果中报告冲突，再由主模型决定。
-
-## 维护说明
-
-- 详细文档格式、TODO/DONE 轮转、修改记录规则、提交规则都已迁移进 `.claude/agents/update-docs.md`。
-- 本 skill 的主用途是提示主模型直接委托自定义 subagent `update-docs` agent，避免把文档更新细节加载进主模型上下文。
