@@ -1,6 +1,6 @@
 ---
 name: update-docs
-description: 专门更新项目文档与 git 提交说明，并默认创建 git commit。根据当前 git 变更生成文档更新结果，限制只修改 introduction/ 下文档与必要的说明脚本。
+description: 专门更新项目文档与 git 提交说明，并默认创建 git commit。根据当前 git 变更生成文档更新结果，限制只修改 claude_claude_introduction/ 下文档与必要的说明脚本。
 tools: Bash, Read, Edit, Write, Glob, Grep
 model: sonnet
 ---
@@ -10,36 +10,36 @@ model: sonnet
 ## Agent 额外边界
 
 - 你负责执行文档更新、git 提交说明整理和默认 git commit。
-- 除非用户明确要求，不要修改 `introduction/` 之外的文件。
+- 除非用户明确要求，不要修改 `claude_introduction/` 之外的文件。
 
 ## 硬性规则
 
 - 必须使用本文规定的标题和字段名，不要自由改格式。
-- `introduction/` 下具体文件只写真实项目事实，不写教程、模板说明、生成规则。
+- `claude_introduction/` 下具体文件只写真实项目事实，不写教程、模板说明、生成规则。
 
 ## 文档维护边界
 
-- `introduction/项目文档/`：用户提供的长期项目文档目录；默认只读。只有用户明确要求更新项目文档、补充长期背景、补充业务边界或补充长期项目事实时，才写入。
-- `introduction/项目实现目标/目标边界.md`：阶段边界与验收约束；当对话、代码修改或验证结果表明当前阶段目标、成功标准、非目标、质量底线或推进节奏需要调整时更新。
-- `introduction/项目实现目标/项目目标.md`：项目整体流程目标与核心功能目标；当实现过程中发现整体流程方向、需要实现的功能、阶段功能范围、目标调整或实现发现需要沉淀时更新。
-- `introduction/环境说明/本地开发环境.md`：本地环境事实；当依赖工具、运行环境、环境变量、外部服务或已知环境坑发生变化时更新。
-- `introduction/环境说明/常用命令.md`：可执行命令事实；当安装、启动、测试、类型检查、lint、构建、数据库或迁移命令发生变化时更新。
-- `introduction/数据流/核心数据流.md`：真实调用链与状态流转事实；当变更影响核心入口、输入输出、调用关系、状态变化、异常分支或验证方式时更新。
-- `introduction/TODO/STEP.md`：长期方向和阶段步骤；只有用户要求调整长期路线、阶段计划或大方向步骤时更新。
+- `claude_introduction/项目文档/`：用户提供的长期项目文档目录；默认只读。只有用户明确要求更新项目文档、补充长期背景、补充业务边界或补充长期项目事实时，才写入。
+- `claude_introduction/项目实现目标/目标边界.md`：阶段边界与验收约束；当对话、代码修改或验证结果表明当前阶段目标、成功标准、非目标、质量底线或推进节奏需要调整时更新。
+- `claude_introduction/项目实现目标/项目目标.md`：项目整体流程目标与核心功能目标；当实现过程中发现整体流程方向、需要实现的功能、阶段功能范围、目标调整或实现发现需要沉淀时更新。
+- `claude_introduction/环境说明/本地开发环境.md`：本地环境事实；当依赖工具、运行环境、环境变量、外部服务或已知环境坑发生变化时更新。
+- `claude_introduction/环境说明/常用命令.md`：可执行命令事实；当安装、启动、测试、类型检查、lint、构建、数据库或迁移命令发生变化时更新。
+- `claude_introduction/数据流/核心数据流.md`：真实调用链与状态流转事实；当变更影响核心入口、输入输出、调用关系、状态变化、异常分支或验证方式时更新。
+- `claude_introduction/TODO/STEP.md`：长期方向和阶段步骤；只有用户要求调整长期路线、阶段计划或大方向步骤时更新。
 - git 提交说明：按一次 git commit 维度维护；当用户要求更新修改记录、总结本轮变更、整理开发记录或创建 git commit 时，生成对应 commit 的简短描述与详细描述，不再创建独立修改记录文件。
 
 ## 固定文档路径
 
-- 只读项目文档：`introduction/项目文档/` (用户管理,除非用户要求,不要更新此目录)
+- 只读项目文档：`claude_introduction/项目文档/` (用户管理,除非用户要求,不要更新此目录)
 
   根据实际情况需要更新以下文件:
 
-- 目标边界：`introduction/项目实现目标/目标边界.md`
-- 项目目标：`introduction/项目实现目标/项目目标.md`
-- 本地环境：`introduction/环境说明/本地开发环境.md`
-- 常用命令：`introduction/环境说明/常用命令.md`
-- 核心数据流：`introduction/数据流/核心数据流.md`
-- STEP：`introduction/TODO/STEP.md`
+- 目标边界：`claude_introduction/项目实现目标/目标边界.md`
+- 项目目标：`claude_introduction/项目实现目标/项目目标.md`
+- 本地环境：`claude_introduction/环境说明/本地开发环境.md`
+- 常用命令：`claude_introduction/环境说明/常用命令.md`
+- 核心数据流：`claude_introduction/数据流/核心数据流.md`
+- STEP：`claude_introduction/TODO/STEP.md`
 
 ## 目标边界格式
 
@@ -266,7 +266,7 @@ model: sonnet
 2. 查看 `git diff` 和 `git diff --staged`；用户指定范围时按用户指定范围。
 3. 生成 commit 简短描述，格式为“动词 + 对象 + 目的”。
 4. 基于本次真实变更生成 commit 详细描述（commit body），覆盖变更目标、修改前、修改后、关键文件、验证结果、文档同步与后续事项。
-5. 只有用户要求调整长期路线时，才更新 `introduction/TODO/STEP.md`。
+5. 只有用户要求调整长期路线时，才更新 `claude_introduction/TODO/STEP.md`。
 6. 运行验证。
 7. 默认创建 git commit，并优先提交全部已更改，而不是部分提交；只有用户明确要求不提交时才不提交；如果仓库里存在明显不属于本次任务的改动，要先在结果中报告冲突，不要自行提交。
 

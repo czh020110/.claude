@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Any
 from xml.etree import ElementTree
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 SUPPORTED_EXTENSIONS = {".md", ".markdown", ".txt", ".pdf", ".docx", ".doc"}
 DEFAULT_EMBEDDING_BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
 DEFAULT_RERANK_BASE_URL = "https://dashscope.aliyuncs.com/compatible-api/v1"
@@ -95,6 +95,10 @@ def skill_md_path(root: Path) -> Path:
 
 def project_root_from_claude_root(root: Path) -> Path:
     return root.parent if root.name == ".claude" else root
+
+
+def docs_root_from_project_root(project_root: Path) -> Path:
+    return project_root / "claude_introduction"
 
 
 def load_local_env(root: Path) -> None:
@@ -380,7 +384,7 @@ def offset_to_line(offsets: list[int], offset: int) -> int:
     return max(1, low)
 
 
-def read_source_document(path: Path, introduction_dir: Path) -> SourceDocument:
+def read_source_document(path: Path, project_root: Path) -> SourceDocument:
     suffix = path.suffix.lower()
     warnings: list[str] = []
     if suffix in {".md", ".markdown", ".txt"}:
@@ -396,7 +400,7 @@ def read_source_document(path: Path, introduction_dir: Path) -> SourceDocument:
     text = text.replace("\r\n", "\n").replace("\r", "\n")
     return SourceDocument(
         path=path,
-        relative_path=path.relative_to(introduction_dir.parent).as_posix(),
+        relative_path=path.relative_to(project_root).as_posix(),
         text=text,
         line_offsets=line_offsets(text),
         warnings=warnings,
@@ -406,7 +410,7 @@ def read_source_document(path: Path, introduction_dir: Path) -> SourceDocument:
 def should_exclude(relative_path: str, args: argparse.Namespace) -> bool:
     patterns = list(args.exclude or [])
     if args.exclude_todo:
-        patterns.append("introduction/TODO/**")
+        patterns.append(f"{args.docs_root.name}/TODO/**")
     for pattern in patterns:
         normalized = pattern.replace("\\", "/")
         if fnmatch.fnmatch(relative_path, normalized):
@@ -414,20 +418,20 @@ def should_exclude(relative_path: str, args: argparse.Namespace) -> bool:
     return False
 
 
-def discover_documents(root: Path, args: argparse.Namespace) -> tuple[list[SourceDocument], list[str]]:
-    introduction_dir = root / "introduction"
-    if not introduction_dir.exists():
-        raise RuntimeError(f"Introduction directory not found: {introduction_dir}")
+def discover_documents(project_root: Path, args: argparse.Namespace) -> tuple[list[SourceDocument], list[str]]:
+    docs_root = args.docs_root
+    if not docs_root.exists():
+        raise RuntimeError(f"Introduction directory not found: {docs_root}")
 
     documents: list[SourceDocument] = []
     warnings: list[str] = []
-    for path in sorted(introduction_dir.rglob("*")):
+    for path in sorted(docs_root.rglob("*")):
         if not path.is_file() or path.suffix.lower() not in SUPPORTED_EXTENSIONS:
             continue
-        relative_path = path.relative_to(root).as_posix()
+        relative_path = path.relative_to(project_root).as_posix()
         if should_exclude(relative_path, args):
             continue
-        document = read_source_document(path, introduction_dir)
+        document = read_source_document(path, project_root)
         warnings.extend(document.warnings)
         if document.text.strip():
             documents.append(document)
@@ -591,10 +595,10 @@ def vector_recall(query: str, chunks: list[Chunk], args: argparse.Namespace) -> 
 def refresh_index(args: argparse.Namespace) -> tuple[int, int, list[str]]:
     check_gitignore(args.root_path)
     validate_config(args)
-    documents, warnings = discover_documents(args.root_path, args)
+    documents, warnings = discover_documents(args.project_root, args)
     chunks = build_chunks(documents, args)
     if not chunks:
-        raise RuntimeError("No searchable document chunks found under introduction/")
+        raise RuntimeError(f"No searchable document chunks found under {args.docs_root.as_posix()}/")
     hydrate_embeddings(chunks, args)
     return len(documents), len(chunks), warnings
 
@@ -653,6 +657,8 @@ def resolve_api_key(primary_name: str, scoped_fallback_name: str) -> str | None:
 def build_args(parser: argparse.ArgumentParser) -> argparse.Namespace:
     args = parser.parse_args()
     args.root_path = Path(args.root).resolve()
+    args.project_root = project_root_from_claude_root(args.root_path)
+    args.docs_root = Path(args.docs_root).resolve() if args.docs_root else docs_root_from_project_root(args.project_root)
     load_local_env(args.root_path)
     args.embedding_api_key = resolve_api_key("RAG_EMBEDDING_API_KEY", "EMBEDDING_API_KEY")
     args.rerank_api_key = resolve_api_key("RAG_RERANK_API_KEY", "RERANK_API_KEY")
@@ -668,6 +674,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Query introduction documents with OpenAI-compatible RAG.")
     parser.add_argument("--query", default="")
     parser.add_argument("--root", default=".claude")
+    parser.add_argument("--docs-root", default="")
     parser.add_argument("--rebuild", action="store_true")
     parser.add_argument("--no-update", action="store_true")
     parser.add_argument("--top-k", type=int, default=8)
@@ -716,10 +723,10 @@ def main() -> int:
 
         validate_config(args)
         check_gitignore(args.root_path)
-        documents, warnings = discover_documents(args.root_path, args)
+        documents, warnings = discover_documents(args.project_root, args)
         chunks = build_chunks(documents, args)
         if not chunks:
-            raise RuntimeError("No searchable document chunks found under introduction/")
+            raise RuntimeError(f"No searchable document chunks found under {args.docs_root.as_posix()}/")
         hydrate_embeddings(chunks, args)
         recalled = vector_recall(args.query, chunks, args)
         candidates = [chunk for chunk, _ in recalled]

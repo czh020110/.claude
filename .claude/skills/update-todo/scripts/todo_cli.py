@@ -76,12 +76,16 @@ class Board:
     sections: dict[str, list[Task]]
 
 
-def repo_root_from_script() -> Path:
+def claude_root_from_script() -> Path:
     return Path(__file__).resolve().parents[3]
 
 
+def project_root_from_script() -> Path:
+    return claude_root_from_script().parent
+
+
 def default_todo_path() -> Path:
-    return repo_root_from_script() / "introduction" / "TODO" / "TODO.md"
+    return project_root_from_script() / "claude_introduction" / "TODO" / "TODO.md"
 
 
 def normalize_depends(values: list[str] | None) -> str:

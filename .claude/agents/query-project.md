@@ -13,7 +13,7 @@ model: haiku
 - 对每个问题调用 `.claude/skills/query-project/scripts/query_introduction_rag.py`。
 - 只返回与问题直接相关的文档块内容、来源路径、行号和必要分数。
 - 对多个问题一并执行、去重、归并，形成闭环结果。
-- 不修改项目文档、TODO/DONE 或 git 状态。
+- 不修改项目文档、TODO 或 git 状态。
 - 不返回 API key、embedding 向量、完整索引 JSON 或无关大段内容。
 
 ## 执行前提

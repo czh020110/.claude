@@ -1,23 +1,23 @@
 ---
 name: update-todo
-description: 当模型准备开始、推进或收尾当前项目相关任务，或需要新增、开始、完成、阻塞、暂缓、整理项目 TODO 任务板时使用；通过专用 TODO 脚本结构化维护 `introduction/TODO/TODO.md`，避免手改导致编号、分区和字段不一致。
+description: 当模型准备开始、推进或收尾当前项目相关任务，或需要新增、开始、完成、阻塞、暂缓、整理项目 TODO 任务板时使用；通过专用 TODO 脚本结构化维护 `claude_introduction/TODO/TODO.md`，避免手改导致编号、分区和字段不一致。
 ---
 
-这是一个模型主动使用的 skill。处理当前项目相关任务时，应先判断是否需要更新 `introduction/TODO/TODO.md`，不要手改任务条目。
+这是一个模型主动使用的 skill。处理当前项目相关任务时，应先判断是否需要更新 `claude_introduction/TODO/TODO.md`，不要手改任务条目。
 
 ## 你的职责
 
 - 在开始、推进、完成、阻塞任何与当前项目相关的任务时，主动判断是否需要更新任务板。
 - 如果任务板中已有未完成任务，只在需要开始/完成/阻塞/暂缓某条任务，或出现新增需求时更新；不要覆盖原条目。
 - 如果任务板中没有未完成任务，先补入下一批主任务，再继续实现。
-- 优先通过脚本执行结构化修改，不直接编辑 `introduction/TODO/TODO.md`。
+- 优先通过脚本执行结构化修改，不直接编辑 `claude_introduction/TODO/TODO.md`。
 - 只维护当前项目任务板，不负责长期项目文档和 git 提交说明。
 - 回答时说明修改了哪些任务、任务状态如何变化、以及修改了哪些文件。
 
 ## 脚本路径
 
 - 固定脚本：`.claude/skills/update-todo/scripts/todo_cli.py`
-- 默认任务板：`introduction/TODO/TODO.md`
+- 默认任务板：`claude_introduction/TODO/TODO.md`
 
 ## 支持操作
 
