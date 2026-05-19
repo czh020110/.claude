@@ -1,6 +1,6 @@
 ---
 name: update-docs
-description: 专门更新项目文档、TODO/DONE、修改记录，并默认创建 git commit。根据当前 git 变更生成文档更新结果，限制只修改 introduction/ 下文档与必要的修改记录文件。
+description: 专门更新项目文档与 git 提交说明，并默认创建 git commit。根据当前 git 变更生成文档更新结果，限制只修改 introduction/ 下文档与必要的说明脚本。
 tools: Bash, Read, Edit, Write, Glob, Grep
 model: sonnet
 ---
@@ -9,7 +9,7 @@ model: sonnet
 
 ## Agent 额外边界
 
-- 你负责执行文档更新、TODO/DONE 轮转、修改记录生成和默认 git commit。
+- 你负责执行文档更新、git 提交说明整理和默认 git commit。
 - 除非用户明确要求，不要修改 `introduction/` 之外的文件。
 
 ## 硬性规则
@@ -26,21 +26,20 @@ model: sonnet
 - `introduction/环境说明/常用命令.md`：可执行命令事实；当安装、启动、测试、类型检查、lint、构建、数据库或迁移命令发生变化时更新。
 - `introduction/数据流/核心数据流.md`：真实调用链与状态流转事实；当变更影响核心入口、输入输出、调用关系、状态变化、异常分支或验证方式时更新。
 - `introduction/TODO/STEP.md`：长期方向和阶段步骤；只有用户要求调整长期路线、阶段计划或大方向步骤时更新。
-- `introduction/TODO/TODO.md`：下一次提交可完成并验收的细粒度任务；当用户要求更新进度、完成阶段总结、整理下一步任务或本轮提交完成后需要轮转 TODO 时更新。
-- `introduction/TODO/DONE.md`：已完成且已验证的 TODO 记录；当 TODO 轮转或用户要求同步完成项时更新。
-- `introduction/修改记录/`：按一次 git commit 维度记录变更；只有用户要求生成修改记录、总结本轮变更、整理开发记录或创建 git commit 时写入。
+- git 提交说明：按一次 git commit 维度维护；当用户要求更新修改记录、总结本轮变更、整理开发记录或创建 git commit 时，生成对应 commit 的简短描述与详细描述，不再创建独立修改记录文件。
 
 ## 固定文档路径
 
 - 只读项目文档：`introduction/项目文档/` (用户管理,除非用户要求,不要更新此目录)
+
+  根据实际情况需要更新以下文件:
+
 - 目标边界：`introduction/项目实现目标/目标边界.md`
 - 项目目标：`introduction/项目实现目标/项目目标.md`
 - 本地环境：`introduction/环境说明/本地开发环境.md`
 - 常用命令：`introduction/环境说明/常用命令.md`
 - 核心数据流：`introduction/数据流/核心数据流.md`
 - STEP：`introduction/TODO/STEP.md`
-- TODO：`introduction/TODO/TODO.md`
-- DONE：`introduction/TODO/DONE.md`
 
 ## 目标边界格式
 
@@ -187,7 +186,6 @@ model: sonnet
 ### 本次更新原因
 
 - 关联 Commit：[commit description / 无]
-- 关联修改记录：`introduction/修改记录/[commit-description].md` / 无
 - 更新原因：[为什么本次需要更新数据流]
 
 ### 链路目标
@@ -261,64 +259,20 @@ model: sonnet
   - 影响范围：[影响哪些模块/阶段]
 ```
 
-## TODO 格式
 
-```md
-# TODO
-
-## 本次可提交任务
-
-- [ ] T-001（P0）：[一次提交内可完成的小模块任务]
-  - 来源 STEP：[S-xxx/无]
-  - 依赖：[无/T-xxx]
-  - 验收标准：[如何证明本次提交完成]
-
-## 注意
-
-- TODO.md 只记录下一次开发要完成的细粒度任务。
-- 每次提交后不要手动编辑 TODO/DONE；调用 `scripts/rotate_todo.py`，传入下一次提交可完成的新 TODO 列表。
-- 脚本会把旧 `TODO.md` 中的未完成项按已验收完成迁移到 `DONE.md`，并用新列表重写 `TODO.md`。
-```
-
-## DONE 格式
-
-```md
-# DONE
-
-- [x] YYYY-MM-DD：[从上一次 TODO.md 完成的事项]
-  - 关联 TODO：[T-xxx]
-  - 来源 STEP：[S-xxx/无]
-  - 验证方式：[测试/构建/人工验证]
-  - 关联修改记录：[路径/无]
-```
-
-## TODO / DONE 边界
-
-- `STEP.md` 记录项目大方向、长期计划、阶段步骤；默认不随每次提交更新。
-- 只有用户提出新增、删除或调整长期项目 step 时，才修改 `STEP.md`。
-- `TODO.md` 只记录根据当前进度下一次开发可在一次提交内完成并验收的小模块 TODO list。
-- `DONE.md` 记录上一次 `TODO.md` 中已经完成且验收通过的事项，使用 `[x]` 标记。
-- 每次用户要求继续开发后续功能时，模型应优先根据 `TODO.md` 选择本次可验收的小任务推进。
-
-## 修改记录流程
+## Git 提交说明流程
 
 1. 检查 `git status --short`。
 2. 查看 `git diff` 和 `git diff --staged`；用户指定范围时按用户指定范围。
-3. 生成 commit description，格式为“动词 + 对象 + 目的”。
-4. 文件名使用 commit description：空格替换为 `-`，删除 `/\\:*?"<>|`。
-5. 创建 `introduction/修改记录/<commit-description>.md`。
-6. 如完成本次细粒度 TODO，调用 `scripts/rotate_todo.py`：把已验收项从 `introduction/TODO/TODO.md` 自动迁移到 `introduction/TODO/DONE.md`，并用传入的新 TODO 列表重写 `TODO.md`。
-7. 只有用户要求调整长期路线时，才更新 `introduction/TODO/STEP.md`。
-8. 运行验证。
-9. 默认创建 git commit，并优先提交全部已更改，而不是部分提交；只有用户明确要求不提交时才不提交；如果仓库里存在明显不属于本次任务的改动，要先在结果中报告冲突，不要自行提交。
+3. 生成 commit 简短描述，格式为“动词 + 对象 + 目的”。
+4. 基于本次真实变更生成 commit 详细描述（commit body），覆盖变更目标、修改前、修改后、关键文件、验证结果、文档同步与后续事项。
+5. 只有用户要求调整长期路线时，才更新 `introduction/TODO/STEP.md`。
+6. 运行验证。
+7. 默认创建 git commit，并优先提交全部已更改，而不是部分提交；只有用户明确要求不提交时才不提交；如果仓库里存在明显不属于本次任务的改动，要先在结果中报告冲突，不要自行提交。
 
-## 修改记录格式
+## 详细 commit 格式
 
-```md
-# <commit-description>
-
-## Commit
-
+```text
 <commit-description>
 
 ## 变更目标
@@ -333,7 +287,7 @@ model: sonnet
 
 [修改后的状态、能力或行为变化]
 
-## 修改文件
+## 关键改动
 
 - `[文件路径]`
   - 修改原因：[为什么改]
@@ -342,45 +296,25 @@ model: sonnet
 
 ## 验证结果
 
-- 验证方式：[命令或人工检查]
-- 验证结果：[通过/失败/未执行及原因]
+- [命令或人工检查]：[结果]
 
-## TODO / DONE 同步
+## 文档同步
 
-- TODO：[是否更新，更新了什么]
-- DONE：[是否更新，更新了什么]
+- [是否更新了 introduction 文档，更新了什么]
 
 ## 后续事项
 
 - [仍需跟进的风险或任务]
 ```
 
-## TODO 轮转脚本
-
-当需要把旧 TODO 迁移到 DONE 并写入下一次细粒度 TODO 时，使用：
-
-```bash
-python .claude/skills/update-docs/scripts/rotate_todo.py \
-  --todos-json '["下一个可提交小任务"]' \
-  --commit "commit description" \
-  --change-record "introduction/修改记录/commit-description.md"
-```
-
-在 `claude-copy` 模板目录中验证脚本时可追加：
-
-```bash
---root claude-copy
-```
-
-脚本输入只需要新的 TODO 字符串数组；旧 TODO 到 DONE 的迁移由脚本完成。
 
 ## 提交规则
 
 - 提交前必须检查不要提交密钥、账号、本地私有路径、临时文件。
 - 默认创建 git commit，并优先提交全部已更改；只有用户明确要求不提交时才不提交。
-- commit message 必须与修改记录文件名和 Commit 字段一致。
+- commit message 必须由“简短描述 + 详细描述 body”组成，且详细描述与本次真实变更一致。
 - 未验证的内容必须标注未验证原因，不得写“已验证通过”。
-- 修改记录只写解释性总结，不复制代码 diff，不粘贴大段源码。
+- git 提交详细描述只写解释性总结，不复制代码 diff，不粘贴大段源码。
 
 ## Agent 特别说明
 

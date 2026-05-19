@@ -1,4 +1,4 @@
-# [项目名称]
+# 项目:[项目名称]
 
 项目文档：`introduction/项目文档/` (用户提供)
 目标边界：@introduction/项目实现目标/目标边界.md
@@ -6,15 +6,14 @@
 本地环境：@introduction/环境说明/本地开发环境.md
 常用命令：@introduction/环境说明/常用命令.md
 长期计划：@introduction/TODO/STEP.md
-本次待办：@introduction/TODO/TODO.md
-已完成项：@introduction/TODO/DONE.md
-项目数据流：@introduction/数据流/核心数据流.md
+当前待办：@introduction/TODO/TODO.md
+项目数据流：`introduction/数据流/核心数据流.md`(按需读取)
 
 ## 执行要求
 
 - 回答和执行前，先判断任务属于代码修改、文档更新、进度维护、修改记录、环境排查、接口查询还是架构推进。
 - 代码修改时直接改文件，不要只给代码片段；除非用户明确只要示例。
-- 开始开发新功能前，先对照 `当前待办` 和 `项目目标`，避免偏离当前阶段。
+- 开始开发新功能前，按照 `当前待办` 和 `项目目标`，避免偏离当前阶段。
 - 修改已有功能前，先读取相关代码、数据流和 TODO，确认上下游影响。
 - 完成修改后必须说明修改了哪些文件；涉及代码时说明验证方式和结果。
 - 完成阶段性工作后，必须检查 Task 工具中的任务状态；已经完成的任务要立即标记为 completed，避免遗留 in_progress/pending 任务。
@@ -24,25 +23,28 @@
 ## 按需读取
 
 - 需要理解调用链、状态流转、模块协作时，读取 `introduction/数据流/`。
-- 需要更新项目文档、TODO/DONE、修改记录或提交 git commit 时，使用 `update-docs` skill。
 - `introduction/项目文档/` 是用户维护的长期项目文档，默认只读；除非用户明确要求，不要主动写入。
 
 ## 进度维护
 
 - `introduction/TODO/STEP.md` 是项目长期方向和阶段步骤事实源，默认不随每次提交更新。
-- `introduction/TODO/TODO.md` 只记录下一次提交可完成并验收的细粒度小模块任务。
-- `introduction/TODO/DONE.md` 记录上一次 TODO.md 中已完成且已验证的事项。
-- 只有用户要求更新进度、完成阶段总结或整理文档时，才同步 STEP/TODO/DONE。
-
-## 修改记录
-
-- 修改记录只在用户要求时更新。
-- 修改记录按一次 git commit 维度记录，不再按单个文件分别记录。
-- commit description 由模型根据本次变更自动命名，并作为修改记录文件名与提交信息。
-- 记录目标、修改前、修改后、修改文件、修改原因、验证结果和后续影响。
+- `introduction/TODO/TODO.md` 只记录可完成并验收的细粒度小模块任务。
 
 ## 文档组织
 
 - 项目说明必须按 `introduction/` 下的主题文件夹维护。
-- 不要把项目文档、环境说明、数据流、目标、TODO、DONE、修改记录混在一个文件里。
 - 单个主题文档过长时，在同一文件夹下新增分块文件。
+
+# TODO
+
+项目整体计划步骤: @introduction/TODO/STEP.md
+
+项目持续任务板: @introduction/TODO/TODO.md
+
+# Git 提交说明
+
+- 所有变更说明直接内嵌到对应 git commit 中。
+- 每个 git commit 都分为两层：第一行是简短描述，commit body 是详细描述。
+- 需要回顾历史时，调用通用型 agent 去优先读取对应 commit 的详细描述，再按需查单独的修改记录文件。
+
+---

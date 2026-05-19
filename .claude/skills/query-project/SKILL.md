@@ -1,6 +1,6 @@
 ---
 name: query-project
-description: 当用户要求查询项目背景、目标边界、项目目标、环境、数据流、TODO/DONE、修改记录，或你需要按问题从 introduction/ 项目事实文档中检索上下文时使用；委托 `query-project` agent 执行 RAG 检索并返回相关文档块摘要 (rag已配置)
+description: 当用户要求查询项目背景、目标边界、项目目标、环境、数据流、TODO，或你需要按问题从 introduction/ 项目事实文档中检索上下文时使用；委托 `query-project` agent 执行 RAG 检索并返回相关文档块摘要 (rag已配置)
 ---
 
 基于 `introduction/` 下的项目事实文档做只读 RAG 检索。
