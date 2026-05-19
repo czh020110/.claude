@@ -98,7 +98,7 @@ def project_root_from_claude_root(root: Path) -> Path:
 
 
 def docs_root_from_project_root(project_root: Path) -> Path:
-    return project_root / "claude_introduction"
+    return project_root / ".claude_introduction"
 
 
 def load_local_env(root: Path) -> None:

@@ -1,13 +1,13 @@
 # 项目:Synthetic User Lab
 
-项目文档：`claude_introduction/项目文档/` (用户提供)
-目标边界：@../claude_introduction/项目实现目标/目标边界.md
-项目目标：@../claude_introduction/项目实现目标/项目目标.md
-本地环境：@../claude_introduction/环境说明/本地开发环境.md
-常用命令：@../claude_introduction/环境说明/常用命令.md
-长期计划：@../claude_introduction/TODO/STEP.md
-当前待办：@../claude_introduction/TODO/TODO.md
-项目数据流：`claude_introduction/数据流/核心数据流.md`(按需读取)
+项目文档：`.claude_introduction/项目文档/` (用户提供)
+目标边界：@../.claude_introduction/项目实现目标/目标边界.md
+项目目标：@../.claude_introduction/项目实现目标/项目目标.md
+本地环境：@../.claude_introduction/环境说明/本地开发环境.md
+常用命令：@../.claude_introduction/环境说明/常用命令.md
+长期计划：@../.claude_introduction/TODO/STEP.md
+当前待办：@../.claude_introduction/TODO/TODO.md
+项目数据流：`.claude_introduction/数据流/核心数据流.md`(按需读取)
 
 ## 执行要求
 
@@ -22,18 +22,18 @@
 
 ## 按需读取
 
-- 需要理解调用链、状态流转、模块协作时，读取 `claude_introduction/数据流/`。
-- `claude_introduction/项目文档/` 是用户维护的长期项目文档，默认只读；除非用户明确要求，不要主动写入。
+- 需要理解调用链、状态流转、模块协作时，读取 `.claude_introduction/数据流/`。
+- `.claude_introduction/项目文档/` 是用户维护的长期项目文档，默认只读；除非用户明确要求，不要主动写入。
 
 ## 文档组织
 
-- 项目说明必须按 `claude_introduction/` 下的主题文件夹维护。
+- 项目说明必须按 `.claude_introduction/` 下的主题文件夹维护。
 - 单个主题文档过长时，在同一文件夹下新增分块文件。
 
 # TODO
 
-项目长期方向和阶段步骤事实源，默认不随每次提交更新: @../claude_introduction/TODO/STEP.md
-记录可完成并验收的细粒度小模块任务板: @../claude_introduction/TODO/TODO.md
+项目长期方向和阶段步骤事实源，默认不随每次提交更新: @../.claude_introduction/TODO/STEP.md
+记录可完成并验收的细粒度小模块任务板: @../.claude_introduction/TODO/TODO.md
 
 # Git 提交说明
 

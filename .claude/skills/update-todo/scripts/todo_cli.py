@@ -85,7 +85,7 @@ def project_root_from_script() -> Path:
 
 
 def default_todo_path() -> Path:
-    return project_root_from_script() / "claude_introduction" / "TODO" / "TODO.md"
+    return project_root_from_script() / ".claude_introduction" / "TODO" / "TODO.md"
 
 
 def normalize_depends(values: list[str] | None) -> str:
