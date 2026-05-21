@@ -141,7 +141,8 @@ def parse_board(path: Path) -> Board:
             index += 1
             continue
         if current_section == RULES_SECTION:
-            rules_lines.append(line)
+            if line.strip():
+                rules_lines.append(line)
             index += 1
             continue
         if current_section not in sections:

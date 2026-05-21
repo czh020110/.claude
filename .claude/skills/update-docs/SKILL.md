@@ -3,7 +3,7 @@ name: update-docs
 description: 当用户要求更新项目文档与 git 提交说明，或需要根据当前变更生成 git commit 时使用；委托 `update-docs` agent 更新 .claude_introduction 文档与提交结果，并在完成后按需调用通用 agent 直接执行 query-project 脚本同步/刷新向量库。
 ---
 
-根据当前 git 变更更新 `claude_.claude_introduction/` 项目文档，并整理对应 git commit 的详细描述；只有用户明确要求不提交时才不提交。
+根据当前 git 变更更新 `.claude_introduction/` 项目文档与必要的 `.claude/` 引用说明，并整理对应 git commit 的详细描述；只有用户明确要求不提交时才不提交。
 
 ## 文档维护边界
 
@@ -24,6 +24,7 @@ description: 当用户要求更新项目文档与 git 提交说明，或需要�
 - 如果用户明确要求不提交，必须在 prompt 中说明；否则 `update-docs` agent 默认创建 git commit，并优先提交全部已更改。
 - `update-docs` agent 会根据上下文、git 状态和文档规则，自主判断还需要更新哪些 `.claude_introduction/` 文档，并为本次提交生成对应的简短描述与详细描述。
 - `update-docs` agent 完成文档更新和提交后，如果本次改动更新了 `.claude_introduction/` 下真实事实文档，由当前 skill 额外调用一个通用 subagent 执行 query-project 脚本的配置状态同步与向量刷新；prompt 中必须直接写明固定命令，禁止让 subagent 自行查找脚本、命令或路径。
+- 不要打断 `update-docs` agent 的执行；如果你发现用户的变更与当前文档内容存在明显冲突，或者用户的要求与文档维护边界不符，先在结果中报告冲突，再由 `update-docs` agent 根据规则判断如何调整更新内容或提交范围。
 
 ## 调用方式
 
