@@ -8,6 +8,7 @@
 长期计划：@../.claude_introduction/TODO/STEP.md
 当前待办：@../.claude_introduction/TODO/TODO.md
 项目数据流：`.claude_introduction/数据流/核心数据流.md`(按需读取)
+生已成图片索引: @../.claude_introduction/IMAGE/IMAGE.md
 
 ## 执行要求
 
@@ -24,6 +25,7 @@
 
 - 需要理解调用链、状态流转、模块协作时，读取 `.claude_introduction/数据流/`。
 - `.claude_introduction/项目文档/` 是用户维护的长期项目文档，默认只读；除非用户明确要求，不要主动写入。
+- 图片索引中存在与项目相关的重要图片时, 可以按需查看索引对应的图片加强项目理解。
 
 ## 文档组织
 
