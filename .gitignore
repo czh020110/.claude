@@ -1,6 +1,6 @@
 .claude/settings.local.json
 .claude/.cache/
-
+.claude_introduction/
 # Editor / IDE
 .vscode/
 !.vscode/extensions.json
