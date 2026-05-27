@@ -3,7 +3,16 @@ name: update-docs
 description: 当用户要求更新项目文档与 git 提交说明，或需要根据当前变更生成 git commit 时使用；委托 `update-docs` agent 更新 .claude_introduction 文档与提交结果，并在完成后按需调用通用 agent 直接执行 query-project 脚本同步/刷新向量库。
 ---
 
-根据当前 git 变更更新 `.claude_introduction/` 项目文档与必要的 `.claude/` 引用说明，并整理对应 git commit 的详细描述；只有用户明确要求不提交时才不提交。
+## Git 提交行为与文件范围开关
+
+- 当前默认行为：不提交 git commit；只有提示中明确说明需要提交时才提交，默认不提交。
+- 当前默认提交文件范围：全部已更改；只有用户本次要求或当前 skill prompt 明确指定/排除文件时，才改用指定/排除范围。
+- 如果要改成默认提交，把第一句改为：`当前默认行为：默认创建 git commit；只有用户明确要求不提交时才不提交。`
+- 如果要改成默认指定/排除文件，把第二句改为对应的默认文件范围。
+- 调用 `update-docs` agent 时，prompt 必须明确写明本次“需要提交 git commit”或“不要提交 git commit”，并明确写明提交文件范围是“全部已更改”还是“指定/排除文件：...”，不得只写“按默认行为”。
+- 只有先更新文档，才能再根据变更生成提交说明；不要先生成提交说明再更新文档。
+
+根据当前 git 变更更新 `.claude_introduction/` 项目文档与必要的 `.claude/` 引用说明，并整理对应 git commit 的详细描述；是否提交 git commit 与提交文件范围按上方开关和用户本次要求决定。
 
 ## 文档维护边界
 
@@ -21,8 +30,8 @@ description: 当用户要求更新项目文档与 git 提交说明，或需要�
 - 不直接执行文档更新细节；优先调用 `update-docs` agent。
 - 文档更新阶段只能使用自定义 subagent `update-docs`，不要改用 `general-purpose` 或其他通用 agent；只有“后续动作”里的向量同步/刷新步骤例外，可按下文要求额外调用 `general-purpose` subagent。
 - 调用前，把当前已知的变更背景、用户要求、已知需要更新的文件、已知需要写入/同步的内容交给 subagent。
-- 如果用户明确要求不提交，必须在 prompt 中说明；否则 `update-docs` agent 默认创建 git commit，并优先提交全部已更改。
-- `update-docs` agent 会根据上下文、git 状态和文档规则，自主判断还需要更新哪些 `.claude_introduction/` 文档，并为本次提交生成对应的简短描述与详细描述。
+- 调用 `update-docs` agent 时，必须按“Git 提交行为与文件范围开关”和用户本次要求，明确写明本次是否需要创建 git commit，以及本次提交文件范围（全部已更改、指定文件或排除文件）；用户本次要求优先于默认开关。
+- `update-docs` agent 会根据上下文、git 状态和文档规则，自主判断还需要更新哪些 `.claude_introduction/` 文档，并在需要提交时生成对应的简短描述与详细描述。
 - `update-docs` agent 完成文档更新和提交后，如果本次改动更新了 `.claude_introduction/` 下真实事实文档，由当前 skill 额外调用一个通用 subagent 执行 query-project 脚本的配置状态同步与向量刷新；prompt 中必须直接写明固定命令，禁止让 subagent 自行查找脚本、命令或路径。
 - 不要打断 `update-docs` agent 的执行；如果你发现用户的变更与当前文档内容存在明显冲突，或者用户的要求与文档维护边界不符，先在结果中报告冲突，再由 `update-docs` agent 根据规则判断如何调整更新内容或提交范围。
 
@@ -36,7 +45,8 @@ description: 当用户要求更新项目文档与 git 提交说明，或需要�
   - 当前变更背景
   - 已知需要更新的文件
   - 已知需要写入或同步的内容
-  - 用户是否明确要求不提交
+  - 本次是否需要提交 git commit（必须明确写“需要提交 git commit”或“不要提交 git commit”）
+  - 本次提交文件范围（必须明确写“全部已更改”或“指定/排除文件：...”）
   - 是否有特殊约束
 
 推荐 prompt 模板：
@@ -54,7 +64,9 @@ Known updates:
 Need:
 
 - 更新相关 introduction 文档与 git 提交说明
-- 默认创建 git commit 并提交全部已更改；若用户明确要求不提交，写“用户要求不提交”
+- 本次提交行为：[需要提交 git commit / 不要提交 git commit]；原因：[用户明确要求 / 按 skill 顶部默认行为开关]
+- 本次提交文件范围：[全部已更改 / 指定文件：... / 排除文件：...]；原因：[用户明确要求 / 按 skill 顶部默认文件范围开关]
+- 如果需要提交 git commit，严格按本次提交文件范围提交；如果不要提交 git commit，只生成提交说明并明确未提交原因
 - 只返回修改文件、验证结果、提交结果、以及是否已执行 query-project 配置同步 / 向量刷新与对应结果
 ```
 
@@ -80,6 +92,8 @@ python .claude/skills/query-project/scripts/query_introduction_rag.py --refresh-
 
 ## 提交规则摘要
 
-- `update-docs` agent 默认创建 git commit，并优先提交**全部已更改**；只有用户明确要求不提交时才不提交。
-- 详细提交说明直接写入 git commit body，不再额外创建独立修改记录文件。
+- `update-docs` agent 的提交行为和提交文件范围必须由当前 skill 在 prompt 中明确指定，不允许省略。
+- 当前默认提交文件范围是**全部已更改**；如用户要求指定文件或排除文件，必须在 prompt 中列清文件范围。
+- 需要提交 git commit 时，严格按指定提交文件范围提交；不要提交 git commit 时，只生成提交说明并写清未提交原因。
+- 详细提交说明在需要提交时写入 git commit body，不再额外创建独立修改记录文件。
 - 如果存在明显不属于本次任务的改动，subagent 会先在结果中报告冲突，再由你决定。
