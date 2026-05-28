@@ -654,6 +654,13 @@ def resolve_api_key(primary_name: str, scoped_fallback_name: str) -> str | None:
     return env_value(primary_name, scoped_fallback_name, "RAG_API_KEY", "OPENAI_API_KEY", "DASHSCOPE_API_KEY")
 
 
+def preparse_root_path() -> Path:
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("--root", default=".claude")
+    args, _ = parser.parse_known_args()
+    return Path(args.root).resolve()
+
+
 def build_args(parser: argparse.ArgumentParser) -> argparse.Namespace:
     args = parser.parse_args()
     args.root_path = Path(args.root).resolve()
@@ -701,6 +708,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def parse_args() -> argparse.Namespace:
+    load_local_env(preparse_root_path())
     args = build_args(build_parser())
     return args
 
