@@ -118,6 +118,17 @@ def load_local_env(root: Path) -> None:
             os.environ.setdefault(key, value)
 
 
+def _is_covered(entry: str, entries: set[str]) -> bool:
+    if entry in entries:
+        return True
+    parts = entry.split("/")
+    for i in range(1, len(parts)):
+        parent = "/".join(parts[:i]) + "/"
+        if parent in entries:
+            return True
+    return False
+
+
 def check_gitignore(root: Path) -> None:
     project_root = project_root_from_claude_root(root)
     gitignore_path = project_root / ".gitignore"
@@ -125,7 +136,7 @@ def check_gitignore(root: Path) -> None:
         entries = {line.strip().replace("\\", "/") for line in gitignore_path.read_text(encoding="utf-8").splitlines()}
     else:
         entries = set()
-    missing = [entry for entry in REQUIRED_GITIGNORE_ENTRIES if entry not in entries]
+    missing = [entry for entry in REQUIRED_GITIGNORE_ENTRIES if not _is_covered(entry, entries)]
     if missing:
         raise GitignoreError(missing)
 
