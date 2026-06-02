@@ -133,6 +133,8 @@ python .claude/skills/query-project/scripts/query_introduction_rag.py --refresh-
 - 增量同步阶段**不创建 git commit**，只更新文档到工作区。
 - 处理顺序：先增量同步再本地变更同步，不允许颠倒。
 - 详细提交说明在需要提交时写入 git commit body，不再额外创建独立修改记录文件。
+- git commit 不得写入 AI 联合作者行（如 `Co-Authored-By: Claude ...`）。
+- commit 描述不得涉及 `.claude/` 或 `.claude_introduction/` 下的文件修改。
 - 如果存在明显不属于本次任务的改动，subagent 会先在结果中报告冲突，再由你决定。
 - 基准 commit 文件 `.claude/.cache/update-docs-base-commit` 由 skill 在 agent 返回后根据 agent 的结果判断是否刷新；agent 自身不直接写入该文件。
 - agent 必须在返回结果中明确说明增量同步是否成功；成功时 skill 刷新基准为当前 HEAD，失败时 skill 不刷新基准（下次重试）。
