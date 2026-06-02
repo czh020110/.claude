@@ -7,7 +7,8 @@
 常用命令：@../.claude_introduction/环境说明/常用命令.md
 长期计划：@../.claude_introduction/TODO/STEP.md
 当前待办：@../.claude_introduction/TODO/TODO.md
-项目数据流：`.claude_introduction/数据流/核心数据流.md`(按需读取)
+项目数据流：`../.claude_introduction/数据流/核心数据流.md`(按需读取)
+项目设计：`../.claude_introduction/项目设计/项目设计.md`(按需读取)
 生已成图片索引: @../.claude_introduction/IMAGE/IMAGE.md
 
 ## 执行要求
