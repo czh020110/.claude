@@ -1,8 +1,8 @@
 # 项目:Synthetic User Lab
 
 项目文档：`.claude_introduction/项目文档/` (用户提供)
-目标边界：@../.claude_introduction/项目实现目标/目标边界.md
-项目目标：@../.claude_introduction/项目实现目标/项目目标.md
+目标边界：@../.claude_introduction/项目目标/目标边界.md
+项目目标：@../.claude_introduction/项目目标/项目目标.md
 本地环境：@../.claude_introduction/环境说明/本地开发环境.md
 常用命令：@../.claude_introduction/环境说明/常用命令.md
 长期计划：@../.claude_introduction/TODO/STEP.md

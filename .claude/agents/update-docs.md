@@ -109,8 +109,8 @@ model: sonnet
 
 1. 本 agent（`update-docs`）在执行初始化时自行检查项目目录下是否存在实质性源代码文件。
 2. 如果项目**完全空**（无代码，环境说明/数据流/STEP 等均为空模板，只有用户管理的项目文档）→ 只更新以下三个文件：
-   - `.claude_introduction/项目实现目标/目标边界.md`
-   - `.claude_introduction/项目实现目标/项目目标.md`
+   - `.claude_introduction/项目目标/目标边界.md`
+   - `.claude_introduction/项目目标/项目目标.md`
    - `.claude_introduction/TODO/STEP.md`
 3. 如果项目**已有代码** → 除上述三个文件外，还需更新：
    - `.claude_introduction/环境说明/本地开发环境.md`
@@ -132,8 +132,8 @@ model: sonnet
 ## 文档维护边界
 
 - `.claude_introduction/项目文档/`：用户提供的长期项目文档目录；默认只读。只有用户明确要求更新项目文档、补充长期背景、补充业务边界或补充长期项目事实时，才写入。
-- `.claude_introduction/项目实现目标/目标边界.md`：阶段边界与验收约束；当对话、代码修改或验证结果表明当前阶段目标、成功标准、非目标、质量底线或推进节奏需要调整时更新。
-- `.claude_introduction/项目实现目标/项目目标.md`：项目整体流程目标与核心功能目标；当实现过程中发现整体流程方向、需要实现的功能、阶段功能范围、目标调整或实现发现需要沉淀时更新。
+- `.claude_introduction/项目目标/目标边界.md`：阶段边界与验收约束；当对话、代码修改或验证结果表明当前阶段目标、成功标准、非目标、质量底线或推进节奏需要调整时更新。
+- `.claude_introduction/项目目标/项目目标.md`：项目整体流程目标与核心功能目标；当实现过程中发现整体流程方向、需要实现的功能、阶段功能范围、目标调整或实现发现需要沉淀时更新。
 - `.claude_introduction/环境说明/本地开发环境.md`：本地环境事实；当依赖工具、运行环境、环境变量、外部服务或已知环境坑发生变化时更新。
 - `.claude_introduction/环境说明/常用命令.md`：可执行命令事实；当安装、启动、测试、类型检查、lint、构建、数据库或迁移命令发生变化时更新。
 - `.claude_introduction/数据流/核心数据流.md`：真实调用链与状态流转事实；当变更影响核心入口、输入输出、调用关系、状态变化、异常分支或验证方式时更新对应数据流描述(不要退化为修改记录,修改记录只由git管理,只需要修改或添加当前数据流的说明)。
@@ -146,8 +146,8 @@ model: sonnet
 
   根据实际情况需要更新以下文件:
 
-- 目标边界：`.claude_introduction/项目实现目标/目标边界.md`
-- 项目目标：`.claude_introduction/项目实现目标/项目目标.md`
+- 目标边界：`.claude_introduction/项目目标/目标边界.md`
+- 项目目标：`.claude_introduction/项目目标/项目目标.md`
 - 本地环境：`.claude_introduction/环境说明/本地开发环境.md`
 - 常用命令：`.claude_introduction/环境说明/常用命令.md`
 - 核心数据流：`.claude_introduction/数据流/核心数据流.md`
