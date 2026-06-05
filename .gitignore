@@ -6,6 +6,7 @@
 !.vscode/tasks.json
 !.vscode/launch.json
 .idea/
+.claude/settings.local.json
 
 # Python cache
 __pycache__/

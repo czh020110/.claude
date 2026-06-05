@@ -1,15 +1,39 @@
-# 项目:Synthetic User Lab
+# 项目文档
 
-项目文档：`.claude_introduction/项目文档/` (用户提供)
-目标边界：@../.claude_introduction/项目目标/目标边界.md
-项目目标：@../.claude_introduction/项目目标/项目目标.md
-本地环境：@../.claude_introduction/环境说明/本地开发环境.md
-常用命令：@../.claude_introduction/环境说明/常用命令.md
-长期计划：@../.claude_introduction/TODO/STEP.md
-当前待办：@../.claude_introduction/TODO/TODO.md
-项目数据流：`../.claude_introduction/数据流/核心数据流.md`(按需读取)
-项目设计：`../.claude_introduction/项目设计/项目设计.md`(按需读取)
-生已成图片索引: @../.claude_introduction/IMAGE/IMAGE.md
+本文件是所有项目共用的 Claude Code 项目管理入口说明。每个新项目 clone 本模板后，应优先依赖 `.claude_introduction/` 下的事实文档理解项目，而不是把长期项目事实写散在 prompt 或临时对话中。
+
+## 项目文档索引
+
+- 项目文档：`.claude_introduction/项目文档/`（用户提供）
+  - 用户维护的长期项目背景、需求材料、业务规则和补充说明目录。
+  - 默认只读；除非用户明确要求补充长期项目事实，不要主动写入。
+- 目标边界：@../.claude_introduction/项目目标/目标边界.md
+  - 记录项目或当前阶段的目标边界、成功标准、非目标、质量底线和推进节奏。
+  - 开始新功能、调整阶段范围或判断是否偏离目标前优先读取。
+- 项目目标：@../.claude_introduction/项目目标/项目目标.md
+  - 记录整体流程目标、核心功能目标、阶段功能范围、实现发现和后续目标调整。
+  - 开始开发新功能、拆分阶段任务或确认当前优先级前优先读取。
+- 本地环境：@../.claude_introduction/环境说明/本地开发环境.md
+  - 记录依赖工具、运行环境、环境变量、外部服务、本地启动条件和已知环境坑。
+  - 环境排查、依赖安装、服务启动失败或迁移运行环境前读取。
+- 常用命令：@../.claude_introduction/环境说明/常用命令.md
+  - 记录安装、启动、测试、类型检查、lint、构建、数据库迁移等可执行命令。
+  - 运行命令前优先读取，避免臆造命令。
+- 长期计划：@../.claude_introduction/TODO/STEP.md
+  - 项目长期方向和阶段步骤事实源，默认不随每次提交更新。
+  - 只有用户要求调整长期路线、阶段计划或大方向步骤时才更新。
+- 当前待办：@../.claude_introduction/TODO/TODO.md
+  - 记录可完成、可验收的细粒度小模块任务板。
+  - 开始、推进、完成、阻塞或暂缓项目任务时，通过 `update-todo` skill 维护，避免手改导致编号和分区不一致。
+- 当前代码数据流：`../.claude_introduction/数据流/核心数据流.md`（按需读取）
+  - 记录真实调用链、入口、输入输出、状态流转、调用关系、错误分支和相关文件路径。
+  - 修改已有功能、公共接口、数据模型、状态流或模块协作前按需读取。
+- 项目整体设计：@../.claude_introduction/项目设计/项目设计.md
+  - 记录项目架构设计、模块划分、接口规划和分阶段开发方案。
+  - 架构推进、生成项目设计或实现与既有设计出现差异时按需改动；不因日常小改自动同步。
+- 已生成图片索引：@../.claude_introduction/IMAGE/IMAGE.md
+  - 记录通过 `image-generate` skill 生成的图片路径、元数据路径、尺寸和用途。
+  - 需要理解项目相关图片资产或继续生成图片前按需读取。
 
 ## 执行要求
 
@@ -22,16 +46,30 @@
 - 不要一次性实现全部长期目标；每次推进应形成一个可验证的阶段成果。
 - 不确定第三方库、SDK、CLI、云服务或框架接口时，先委托 `docs-research` agent 查询最新官方文档或网络资料，再实现。
 
+## 工作流分流
+
+- 查询项目背景、目标边界、环境、数据流、TODO 或其他 `.claude_introduction/` 事实文档时，优先使用 `query-project` skill。
+- 开始、推进或收尾当前项目任务时，按需使用 `update-todo` skill 维护 `.claude_introduction/TODO/TODO.md`。
+- 用户要求更新项目文档、总结本轮变更、整理提交说明或创建 git commit 时，使用 `update-docs` skill。
+- 用户要求生成项目架构设计、初始化项目设计或基于需求形成设计方案时，使用 `design-project` skill。
+- 用户要求生成图片、生图、海报、插画或其他图片资产时，使用 `image-generate` skill，并维护图片索引。
+- 涉及外部库、框架、SDK、CLI、云服务、模型 API 或 MCP 服务的最新用法时，优先委托 `docs-research` agent。
+
 ## 按需读取
 
 - 需要理解调用链、状态流转、模块协作时，读取 `.claude_introduction/数据流/`。
+- 需要判断阶段边界、优先级或验收标准时，读取 `.claude_introduction/项目目标/`。
+- 需要确认长期计划或当前任务状态时，读取 `.claude_introduction/TODO/`。
+- 需要确认环境、命令或本地运行方式时，读取 `.claude_introduction/环境说明/`。
 - `.claude_introduction/项目文档/` 是用户维护的长期项目文档，默认只读；除非用户明确要求，不要主动写入。
-- 图片索引中存在与项目相关的重要图片时, 可以按需查看索引对应的图片加强项目理解。
+- 图片索引中存在与项目相关的重要图片时，可以按需查看索引对应的图片加强项目理解。
 
 ## 文档组织
 
 - 项目说明必须按 `.claude_introduction/` 下的主题文件夹维护。
 - 单个主题文档过长时，在同一文件夹下新增分块文件。
+- `.claude_introduction/` 下具体文件只写真实项目事实，不写泛泛教程、模板说明或临时修改记录。
+- 修改记录不单独建文档；需要沉淀时写入对应 git commit 的详细描述。
 
 # TODO
 
