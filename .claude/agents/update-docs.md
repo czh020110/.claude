@@ -45,7 +45,7 @@ model: sonnet
 1. 检查 `git status --short`。
 2. 查看 `git diff` 和 `git diff --staged`；用户指定范围时按用户指定范围。
 3. 如果同时存在增量同步和本地变更同步，在增量同步前先快照本地变更（见”处理顺序”章节），后续基于快照分析本地变更。
-4. 生成 commit 简短描述，格式为”动词 + 对象 + 目的”。
+4. 判断本次变更类型，生成 commit 简短描述，格式为”<类型前缀>: 动词 + 对象 + 目的”。
 5. 基于本次真实变更生成 commit 详细描述（commit body），覆盖变更目标、修改前、修改后、关键文件、验证结果、文档同步与后续事项。
 6. 只有用户要求调整长期路线时，才更新 `.claude_introduction/TODO/STEP.md`。
 7. 运行验证。
@@ -54,7 +54,15 @@ model: sonnet
 ## 详细 commit 格式
 
 ```text
-<commit-description>
+<类型前缀>: <commit-description>
+
+类型前缀判断规则：
+- `feat:` — 新增功能或新增文件
+- `fix:` — 修复 bug 或修正错误行为
+- `docs:` — 仅文档/说明更新，没有任何代码变更
+- `test:` — 补充或修改测试文件
+- `build:` — 影响构建系统或外部依赖的更改（如 Gulp、npm、webpack、gradle 等配置）
+- 只要涉及任何代码文件（源码、脚本等）的修改或删除，就不算 `docs:`；只有完全没有代码变更时才用 `docs:`
 
 ## 变更目标
 
