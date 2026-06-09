@@ -27,7 +27,7 @@ description: 当用户要求更新项目文档与 git 提交说明，或需要�
 ## 文档维护边界
 
 - `.claude_introduction/项目文档/`：用户提供的长期项目文档目录；默认只读。只有用户明确要求更新项目文档、补充长期背景、补充业务边界或补充长期项目事实时，才提示 `update-docs` agent 写入。
-- `.claude_introduction/项目目标/目标边界.md`：阶段边界与验收约束；当对话、代码修改或验证结果表明当前阶段目标、成功标准、非目标、质量底线或推进节奏需要调整时，提示 `update-docs` agent 更新。
+- `.claude_introduction/项目边界/项目边界.md`：项目设计边界（哪些属于项目、哪些不属于、哪些能做、哪些不能做）与验收约束；当对话、代码修改或验证结果表明当前项目边界、成功标准、非目标、质量底线或推进节奏需要调整时，提示 `update-docs` agent 更新。
 - `.claude_introduction/项目目标/项目目标.md`：项目整体流程目标与核心功能目标；当实现过程中发现整体流程方向、需要实现的功能、阶段功能范围、目标调整或实现发现需要沉淀时，提示 `update-docs` agent 更新。
 - `.claude_introduction/环境说明/本地开发环境.md`：本地环境事实；当依赖工具、运行环境、环境变量、外部服务或已知环境坑发生变化时，提示 `update-docs` agent 更新。
 - `.claude_introduction/环境说明/常用命令.md`：可执行命令事实；当安装、启动、测试、类型检查、lint、构建、数据库或迁移命令发生变化时，提示 `update-docs` agent 更新。
@@ -40,7 +40,7 @@ description: 当用户要求更新项目文档与 git 提交说明，或需要�
 
 - 不直接执行文档更新细节；优先调用 `update-docs` agent。
 - 文档更新阶段只能使用自定义 subagent `update-docs`，不要改用 `general-purpose` 或其他通用 agent；只有“后续动作”里的向量同步/刷新步骤例外，可按下文要求额外调用 `general-purpose` subagent。
-- 调用前，先判断当前文档更新模式；允许只为判断文档状态阅读相关 `.claude_introduction/` 文档，若项目文档尚未初始化（目标边界、项目目标、STEP.md 仍为模板空内容），则本次更新模式为”文档初始化”，否则为”文档更新”；在 prompt 中明确告知 `update-docs` agent 本次更新模式。
+- 调用前，先判断当前文档更新模式；允许只为判断文档状态阅读相关 `.claude_introduction/` 文档，若项目文档尚未初始化（项目边界、项目目标、STEP.md 仍为模板空内容），则本次更新模式为”文档初始化”，否则为”文档更新”；在 prompt 中明确告知 `update-docs` agent 本次更新模式。
 - 调用前，必须初始化并读取基准 commit：若 `.claude/.cache/update-docs-base-commit` 不存在，执行 `git rev-parse HEAD` 写入初始化；若存在则读取当前基准 SHA。
 - 调用前，必须判断增量状态：执行 `git rev-parse HEAD` 获取当前 HEAD，与基准 commit 对比，判断是否存在增量提交。
 - 调用前，必须判断本地变更状态：执行 `git status --short`，判断是否存在本地未提交变更。

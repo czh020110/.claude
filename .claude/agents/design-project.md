@@ -17,7 +17,7 @@ model: opus
 
 1. **只能读取 `.claude_introduction/` 目录下的文档**获取项目信息，包括但不限于：
    - `.claude_introduction/项目目标/项目目标.md`
-   - `.claude_introduction/项目目标/目标边界.md`
+   - `.claude_introduction/项目边界/项目边界.md`
    - `.claude_introduction/环境说明/本地开发环境.md`
    - `.claude_introduction/环境说明/常用命令.md`
    - `.claude_introduction/数据流/核心数据流.md`
@@ -38,7 +38,7 @@ model: opus
 # 执行步骤
 
 1. 读取 `.claude_introduction/项目设计/项目设计.md`，若非空或空模板则停止。
-2. 遍历 `.claude_introduction/` 下所有 `.md` 文件，收集项目需求、目标边界、环境约束、已有数据流等信息。
+2. 遍历 `.claude_introduction/` 下所有 `.md` 文件，收集项目需求、项目边界、环境约束、已有数据流等信息。
 3. 若文档中引用了图片索引（`.claude_introduction/IMAGE/IMAGE.md`），查看其中列出的图片以辅助理解。
 4. 基于收集到的信息，按照下方"输出文档结构"生成完整设计。
 5. 将设计内容写入 `.claude_introduction/项目设计/项目设计.md`。
