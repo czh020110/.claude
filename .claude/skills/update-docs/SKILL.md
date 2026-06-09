@@ -3,6 +3,7 @@ name: update-docs
 description: 当用户要求更新项目文档与 git 提交说明，或需要根据当前变更生成 git commit 时使用；委托 `update-docs` agent 更新 .claude_introduction 文档与提交结果，并在完成后按需调用通用 agent 直接执行 query-project 脚本同步/刷新向量库。
 ---
 
+- `update-docs` agent 是一次性汇总和更新文档的专用工具，只在用户主动要求时调用；不负责在开发过程中随代码变更实时调用或实时维护项目文档。每次调用是一次性的完整流程：分析变更 → 检查文档 → 更新文档 → 按需提交。
 - 当前默认行为：不提交 git commit；只有提示中明确说明需要提交时才提交，默认不提交。
 - 当前默认提交文件范围：全部已更改；只有用户本次要求或当前 skill prompt 明确指定/排除文件时，才改用指定/排除范围。
 - 调用 `update-docs` agent 时，prompt 必须明确写明本次”需要提交 git commit”或”不要提交 git commit”，并明确写明提交文件范围是”全部已更改”还是”指定/排除文件：...”，不得只写”按默认行为”。
@@ -14,6 +15,7 @@ description: 当用户要求更新项目文档与 git 提交说明，或需要�
 - 首次调用时若文件不存在，以当前 HEAD 初始化：`git rev-parse HEAD > .claude/.cache/update-docs-base-commit`
 - 判断增量：`git rev-parse HEAD` 与基准 commit 不同 → 存在远程/历史增量提交需要同步
 - 判断本地变更：`git status --short` 非空 → 存在本地未提交变更
+- 即使没有增量提交（基准 == HEAD），只要存在本地未提交变更，也必须分析这些变更并检查相关文档是否需要更新；不能因为"没有新的 commit"而跳过文档检查
 - 处理顺序严格为：**先增量同步，再本地变更同步**（原因：先让文档与当前 HEAD 对齐，再处理工作区变更）
 - 增量同步阶段**不创建 git commit**（只更新文档到工作区）
 - 增量同步成功后刷新基准 commit = 当前 HEAD
