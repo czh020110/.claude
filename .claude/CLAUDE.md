@@ -19,13 +19,16 @@
 - 常用命令：@../.claude_introduction/环境说明/常用命令.md
   - 记录安装、启动、测试、类型检查、lint、构建、数据库迁移等可执行命令。
   - 运行命令前优先读取，避免臆造命令。
-- 长期计划：@../.claude_introduction/TODO/STEP.md
+- 长期计划：`../.claude_introduction/TODO/STEP.md`
+  - 开始记录和开发时读取
   - 项目长期方向和阶段步骤事实源，默认不随每次提交更新。
   - 只有用户要求调整长期路线、阶段计划或大方向步骤时才更新。
-- 当前待办：@../.claude_introduction/TODO/TODO.md
+- 当前待办：`../.claude_introduction/TODO/TODO.md`
+  - 开始记录和开发时读取
   - 记录可完成、可验收的细粒度小模块任务板。
   - 开始、推进、完成、阻塞或暂缓项目任务时，通过 `update-todo` skill 维护，避免手改导致编号和分区不一致。
-- 当前代码数据流：`../.claude_introduction/数据流/核心数据流.md`（按需读取）
+- 当前代码数据流：@../.claude_introduction/数据流/核心数据流.md
+  - （按需读取）
   - 记录真实调用链、入口、输入输出、状态流转、调用关系、错误分支和相关文件路径。
   - 修改已有功能、公共接口、数据模型、状态流或模块协作前按需读取。
 - 项目整体设计：@../.claude_introduction/项目设计/项目设计.md
