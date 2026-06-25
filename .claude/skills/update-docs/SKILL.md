@@ -32,7 +32,6 @@ description: 当用户要求更新项目文档与 git 提交说明，或需要�
 - `.claude_introduction/环境说明/本地开发环境.md`：本地环境事实；当依赖工具、运行环境、环境变量、外部服务或已知环境坑发生变化时，提示 `update-docs` agent 更新。
 - `.claude_introduction/环境说明/常用命令.md`：可执行命令事实；当安装、启动、测试、类型检查、lint、构建、数据库或迁移命令发生变化时，提示 `update-docs` agent 更新。
 - `.claude_introduction/数据流/核心数据流.md`：真实调用链与状态流转事实；当变更影响核心入口、输入输出、调用关系、状态变化、异常分支或验证方式时，提示 `update-docs` agent 更新对应数据流描述(不要退化为修改记录,修改记录只由git管理,只需要修改或添加当前数据流的说明)。
-- `.claude_introduction/TODO/STEP.md`：长期方向和阶段步骤；只有用户要求调整长期路线、阶段计划或大方向步骤时**或者为空**时，提示 `update-docs` agent 更新。
 - `.claude_introduction/项目设计/项目设计.md`：项目架构设计与分阶段开发规划；只有当前实现与设计方案存在差异（如某模块需要新方案、技术栈变更、阶段调整）时，才提示 `update-docs` agent 更新；不因日常代码变更而自动同步。
 - git 提交说明：按一次 git commit 维度维护；当用户要求更新修改记录、总结本轮变更、整理开发记录或创建 git commit 时，提示 `update-docs` agent 生成对应 commit 的简短描述与详细描述，不再生成独立修改记录文件。
 
@@ -40,15 +39,16 @@ description: 当用户要求更新项目文档与 git 提交说明，或需要�
 
 - 不直接执行文档更新细节；优先调用 `update-docs` agent。
 - 文档更新阶段只能使用自定义 subagent `update-docs`，不要改用 `general-purpose` 或其他通用 agent；只有“后续动作”里的向量同步/刷新步骤例外，可按下文要求额外调用 `general-purpose` subagent。
-- 调用前，先判断当前文档更新模式；允许只为判断文档状态阅读相关 `.claude_introduction/` 文档，若项目文档尚未初始化（项目边界、项目目标、STEP.md 仍为模板空内容），则本次更新模式为”文档初始化”，否则为”文档更新”；在 prompt 中明确告知 `update-docs` agent 本次更新模式。
+- 调用前，先判断当前文档更新模式；允许只为判断文档状态阅读相关 `.claude_introduction/` 文档，若项目边界、项目目标等核心规划文档仍为模板空内容，则本次更新模式为”文档初始化”，否则为”文档更新”；在 prompt 中明确告知 `update-docs` agent 本次更新模式。
 - 调用前，必须初始化并读取基准 commit：若 `.claude/.cache/update-docs-base-commit` 不存在，执行 `git rev-parse HEAD` 写入初始化；若存在则读取当前基准 SHA。
 - 调用前，必须判断增量状态：执行 `git rev-parse HEAD` 获取当前 HEAD，与基准 commit 对比，判断是否存在增量提交。
 - 调用前，必须判断本地变更状态：执行 `git status --short`，判断是否存在本地未提交变更。
-- 在”文档初始化”模式下，不要在 prompt 中自行决定更新范围是否包含环境说明和数据流文档；将项目是否有代码的判断完全交给 `update-docs` agent，由其自行检查并决定更新范围（见 update-docs agent 的”文档初始化的更新范围规则”）。
+- 在”文档初始化”模式下，不要在 prompt 中自行决定更新范围是否包含环境说明和数据流文档；将项目是否有代码的判断完全交给 `update-docs` agent，由其自行检查并决定更新范围。
 - 调用前，把当前上下文中已知的变更背景、用户要求、已知需要更新的文件、已知需要写入/同步的内容交给 subagent；不要为了补充 prompt 主动阅读、搜索或分析代码。
 - 当前 skill 自己只根据已有上下文与允许读取的文档状态判断需要补充给 `update-docs` agent 的信息；代码阅读、代码搜索、变更细节确认和 git 状态分析都交给 `update-docs` agent。
 - 调用 `update-docs` agent 时，必须按“Git 提交行为与文件范围开关”和用户本次要求，明确写明本次是否需要创建 git commit，以及本次提交文件范围（全部已更改、指定文件或排除文件）；用户本次要求优先于默认开关。
 - `update-docs` agent 会根据上下文、git 状态和文档规则，自主判断还需要更新哪些 `.claude_introduction/` 文档，并在需要提交时生成对应的简短描述与详细描述。
+- `update-docs` agent 不维护 `.claude_introduction/TODO/STEP.md` 与 `.claude_introduction/TODO/TODO.md`：STEP 空模板初始化交给 `design-project` agent；开发中长期方向/阶段步骤变更由主 agent 直接修改；当前细粒度任务板由主 agent 通过 `update-todo` skill 维护。
 - `update-docs` agent 完成文档更新和提交后，如果本次改动更新了 `.claude_introduction/` 下真实事实文档，由当前 skill 额外调用一个通用 subagent 执行 query-project 脚本的配置状态同步与向量刷新；prompt 中必须直接写明固定命令，禁止让 subagent 自行查找脚本、命令或路径。
 - 不要打断 `update-docs` agent 的执行；如果你发现用户的变更与当前文档内容存在明显冲突，或者用户的要求与文档维护边界不符，先在结果中报告冲突，再由 `update-docs` agent 根据规则判断如何调整更新内容或提交范围。
 

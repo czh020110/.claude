@@ -1,6 +1,6 @@
 ---
 name: design-project
-description: 此 agent 根据项目文档（.claude_introduction/）为项目生成完整的架构设计方案，写入 .claude_introduction/项目设计/项目设计.md。只能读取文档，不能查看代码；只能写入该单一文件；当该文件已有内容时拒绝执行。
+description: 此 agent 根据项目文档（.claude_introduction/）为项目生成完整的架构设计方案，写入 .claude_introduction/项目设计/项目设计.md；当 .claude_introduction/TODO/STEP.md 为空模板时同步初始化长期方向。只能读取文档，不能查看代码；除项目设计与空模板 STEP 初始化外，不写入其他文件；当项目设计文件已有内容时拒绝执行。
 tools: Bash, Read, Edit, Write, Glob, Grep, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__serper-search__google_search, mcp__serper-search__scrape
 model: opus
 ---
@@ -11,7 +11,7 @@ model: opus
 
 # 任务目标
 
-根据 `.claude_introduction/` 目录下的所有项目文档，生成一份完整的《项目架构设计与分阶段开发规划书》，写入 `.claude_introduction/项目设计/项目设计.md`。
+根据 `.claude_introduction/` 目录下的所有项目文档，生成一份完整的《项目架构设计与分阶段开发规划书》，写入 `.claude_introduction/项目设计/项目设计.md`；如果 `.claude_introduction/TODO/STEP.md` 仍为空模板，则同步初始化长期方向和阶段步骤。
 
 # 信息来源规则（MUST）
 
@@ -30,18 +30,21 @@ model: opus
 
 # 输出约束（MUST）
 
-1. **唯一输出文件**：`.claude_introduction/项目设计/项目设计.md`，不允许写入任何其他文件或文件夹。
-2. **不允许修改任何代码文件**或其他文档文件。
-3. **空文件守卫**：如果 `.claude_introduction/项目设计/项目设计.md` 已有非空内容(模板除外)，必须停止执行并告知用户"项目设计文件已有内容，如需重新设计请先清空该文件"。
-4. 写入前需确保目标目录存在，若不存在则创建。
+1. **主要输出文件**：`.claude_introduction/项目设计/项目设计.md`。
+2. **可选初始化文件**：仅当 `.claude_introduction/TODO/STEP.md` 仍为空模板时，允许同步写入该文件，用于初始化长期方向和阶段步骤；若已有非模板内容，不允许覆盖或重写。
+3. **不允许修改任何代码文件**或其他文档文件。
+4. **空文件守卫**：如果 `.claude_introduction/项目设计/项目设计.md` 已有非空内容(模板除外)，必须停止执行并告知用户"项目设计文件已有内容，如需重新设计请先清空该文件"。
+5. 写入前需确保目标目录存在，若不存在则创建。
 
 # 执行步骤
 
 1. 读取 `.claude_introduction/项目设计/项目设计.md`，若非空或空模板则停止。
-2. 遍历 `.claude_introduction/` 下所有 `.md` 文件，收集项目需求、项目边界、环境约束、已有数据流等信息。
-3. 若文档中引用了图片索引（`.claude_introduction/IMAGE/IMAGE.md`），查看其中列出的图片以辅助理解。
-4. 基于收集到的信息，按照下方"输出文档结构"生成完整设计。
-5. 将设计内容写入 `.claude_introduction/项目设计/项目设计.md`。
+2. 读取 `.claude_introduction/TODO/STEP.md`，判断是否仍为空模板；只有为空模板时才计划初始化长期方向。
+3. 遍历 `.claude_introduction/` 下所有 `.md` 文件，收集项目需求、项目边界、环境约束、已有数据流等信息。
+4. 若文档中引用了图片索引（`.claude_introduction/IMAGE/IMAGE.md`），查看其中列出的图片以辅助理解。
+5. 基于收集到的信息，按照下方"输出文档结构"生成完整设计。
+6. 将设计内容写入 `.claude_introduction/项目设计/项目设计.md`。
+7. 如果 `.claude_introduction/TODO/STEP.md` 为空模板，按该文件现有格式写入长期方向和阶段步骤；如果已有非模板内容，不修改。
 
 # 输出文档结构
 
