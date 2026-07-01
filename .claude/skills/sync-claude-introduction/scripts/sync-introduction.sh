@@ -1,0 +1,497 @@
+#!/usr/bin/env bash
+# sync-introduction.sh — 通过 git 分支管理 .claude_introduction/ 的独立同步
+#
+# 原理：远程仓库中每个项目拥有独立分支 (docs/<project-id>)
+#       .claude_introduction/ 本身是该远程仓库的一个 git 工作副本
+#       pull/push 使用标准 git 语义，支持真正的合并与冲突处理
+#
+# 用法:
+#   sync-introduction.sh pull   — 拉取/合并远程文档到本地 (标准 git pull)
+#   sync-introduction.sh push   — 推送本地文档到远程 (标准 git push)
+#   sync-introduction.sh status — 查看文档仓库状态
+
+set -euo pipefail
+
+INTRODUCTION_DIR=".claude_introduction"
+
+info()  { printf "\033[36m[信息]\033[0m %s\n" "$*"; }
+ok()    { printf "\033[32m[  ✓]\033[0m %s\n" "$*"; }
+warn()  { printf "\033[33m[警告]\033[0m %s\n" "$*" >&2; }
+err()   { printf "\033[31m[错误]\033[0m %s\n" "$*" >&2; }
+
+# ============================ 项目标识检测 ============================ #
+
+detect_project_id() {
+  local project_dir="$1"
+  local id=""
+
+  # 1. settings.local.json 中显式配置
+  local settings_file="$project_dir/.claude/settings.local.json"
+  if [ -f "$settings_file" ]; then
+    if command -v jq &>/dev/null; then
+      id=$(jq -r '.CLAUDE_DOCS_PROJECT_ID // empty' "$settings_file" 2>/dev/null)
+    else
+      id=$(grep -o '"CLAUDE_DOCS_PROJECT_ID"[[:space:]]*:[[:space:]]*"[^"]*"' "$settings_file" 2>/dev/null | sed 's/.*: *"\(.*\)"/\1/')
+    fi
+    [ -n "$id" ] && { echo "$id"; return; }
+  fi
+
+  # 2. .claude/project-id 文件
+  if [ -f "$project_dir/.claude/project-id" ]; then
+    id=$(head -1 "$project_dir/.claude/project-id" | tr -d '[:space:]')
+    [ -n "$id" ] && { echo "$id"; return; }
+  fi
+
+  # 3. git remote origin 仓库名
+  if command -v git &>/dev/null; then
+    id=$(cd "$project_dir" && git remote get-url origin 2>/dev/null | xargs basename -s .git 2>/dev/null || true)
+    [ -n "$id" ] && { echo "$id"; return; }
+  fi
+
+  # 4. 兜底：工作目录名
+  id=$(basename "$(cd "$project_dir" && git rev-parse --show-toplevel 2>/dev/null || echo "$project_dir")")
+  echo "$id"
+}
+
+# ============================ 远程仓库 URL 检测 ============================ #
+#
+# 唯一配置位置：.claude/.cache/docs-sync.conf（一行纯文本 URL）
+# 通过 config 子命令写入，不进 git，跨设备需各自配置一次。
+
+detect_remote_repo() {
+  local project_dir="$1"
+  local cache_conf="$project_dir/.claude/.cache/docs-sync.conf"
+
+  if [ -f "$cache_conf" ]; then
+    local url
+    url=$(head -1 "$cache_conf" | tr -d '[:space:]')
+    [ -n "$url" ] && { echo "$url"; return; }
+  fi
+
+  echo ""
+}
+
+# 将 URL 写入 .claude/.cache/docs-sync.conf
+write_remote_repo() {
+  local project_dir="$1" url="$2"
+  local cache_dir="$project_dir/.claude/.cache"
+  mkdir -p "$cache_dir"
+  printf '%s\n' "$url" > "$cache_dir/docs-sync.conf"
+  echo "$cache_dir/docs-sync.conf"
+}
+
+# ============================ .gitignore 检查 ============================ #
+
+check_gitignore() {
+  local project_dir="$1"
+  local gitignore="$project_dir/.gitignore"
+  local entry="$INTRODUCTION_DIR/"
+
+  if [ -f "$gitignore" ] && grep -q "^$entry" "$gitignore" 2>/dev/null; then
+    return 0
+  fi
+
+  if cd "$project_dir" && git ls-files --error-unmatch "$INTRODUCTION_DIR/" &>/dev/null 2>&1; then
+    warn "$INTRODUCTION_DIR/ 正在被主项目 git 跟踪"
+    info "建议取消跟踪，避免文档与主项目代码耦合："
+    info "  git rm -r --cached $INTRODUCTION_DIR/"
+    info "  echo '$entry' >> .gitignore"
+    info "  git add .gitignore && git commit -m 'chore: untrack $INTRODUCTION_DIR/'"
+    return 0
+  fi
+
+  warn "$INTRODUCTION_DIR/ 不在 .gitignore 中"
+  info "建议将以下内容添加到 .gitignore："
+  info "  $entry"
+}
+
+# ============================ 切换分支（跨设备安全） ============================ #
+#
+# mode:
+#   "track"  (默认) — 当前已在该分支 no-op；本地有则 checkout；远程有则跟踪；
+#                     都没有则从当前 HEAD 创建新分支（保留工作区与暂存区内容）
+#   "orphan"        - 都没有时创建 orphan 分支并清空暂存区（用于全新初始化）
+#
+# orphan 模式仅在本地为空且远程也无分支的首次初始化时使用。
+
+switch_to_branch() {
+  local intro="$1"
+  local branch="$2"
+  local mode="${3:-track}"
+
+  cd "$intro" || { err "无法进入 $intro"; return 1; }
+
+  local current
+  current=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "none")
+  [ "$current" = "$branch" ] && { cd - >/dev/null; return 0; }
+
+  # 本地分支已存在
+  if git rev-parse --verify "$branch" >/dev/null 2>&1; then
+    git checkout "$branch" || { err "checkout $branch 失败"; cd - >/dev/null; return 1; }
+    cd - >/dev/null
+    return 0
+  fi
+
+  # 远程已存在该分支
+  if git rev-parse --verify "origin/$branch" >/dev/null 2>&1; then
+    git checkout -b "$branch" "origin/$branch" || { err "checkout -b $branch 失败"; cd - >/dev/null; return 1; }
+    cd - >/dev/null
+    return 0
+  fi
+
+  # 不存在 → 按 mode 创建
+  if [ "$mode" = "orphan" ]; then
+    warn "本地与远程均无分支 $branch，创建 orphan 分支"
+    git checkout --orphan "$branch" || { err "checkout --orphan $branch 失败"; cd - >/dev/null; return 1; }
+    git rm -rf --cached . 2>/dev/null || true
+  else
+    # track 模式：从当前 HEAD 创建新分支，保留工作区内容
+    git checkout -b "$branch" || { err "checkout -b $branch 失败"; cd - >/dev/null; return 1; }
+  fi
+
+  cd - >/dev/null
+  return 0
+}
+
+# ============================ 远程可达性 / 分支存在检测 ============================ #
+
+# 验证远程仓库可达且认证正常
+# 区分三种状态：
+#   0 = 可达（含"仓库存在但为空"）
+#   1 = 仓库不存在 / 认证失败 / 网络
+# 通过 stderr 是否有 git 报错判断：空仓库退出码 2 但无 stderr；不存在退出码 128 且有 stderr
+verify_remote_access() {
+  local repo_url="$1"
+  local err_out
+  err_out=$(git ls-remote "$repo_url" HEAD 2>&1 >/dev/null) || true
+  # 仓库不存在 / 无权限 → git 会输出错误到 stderr
+  if [ -n "$err_out" ]; then
+    return 1
+  fi
+  return 0
+}
+
+# 检测远程分支是否存在（要求已 fetch 或用 ls-remote）
+# 返回 0 存在；1 不存在
+remote_branch_exists() {
+  local repo_url="$1" branch="$2"
+  git ls-remote --exit-code --heads "$repo_url" "$branch" &>/dev/null
+}
+
+# ============================ pull ============================ #
+
+do_pull() {
+  local project_dir="$1" project_id="$2" repo_url="$3"
+  local branch="docs/$project_id"
+  local intro="$project_dir/$INTRODUCTION_DIR"
+
+  # === 已有 git 仓库 → 标准 git pull ===
+  if [ -d "$intro/.git" ]; then
+    cd "$intro"
+    # 远程无此分支时不能 pull；提示先 push
+    if ! remote_branch_exists "$repo_url" "$branch"; then
+      warn "远程尚无分支 $branch，无法拉取"
+      info "提示：本地有内容时请先运行 push 创建远程分支"
+      cd - >/dev/null
+      return 0
+    fi
+    switch_to_branch "$intro" "$branch" track
+    info "拉取远程分支 $branch ..."
+    # 显式 merge 策略：避免现代 git 在分叉时要求用户配置 pull.rebase
+    if git pull --no-rebase origin "$branch"; then
+      ok "拉取完成"
+      cd - >/dev/null
+      return 0
+    else
+      err ""
+      err "合并冲突，请手动解决后完成合并："
+      err "  1. 编辑冲突文件，解决 <<<<<<< / ======= / >>>>>>> 标记"
+      err "  2. git add -A"
+      err "  3. git commit -m 'merge: 解决冲突'"
+      err ""
+      err "如需取消本次合并："
+      err "  git merge --abort"
+      cd - >/dev/null
+      return 1
+    fi
+  fi
+
+  # === 本地已有内容但不是 git 仓库 ===
+  # 不自动移走/丢弃本地文档，避免数据丢失
+  if [ -e "$intro" ] && [ -n "$(find "$intro" -mindepth 1 -maxdepth 1 2>/dev/null)" ]; then
+    warn "本地 $INTRODUCTION_DIR/ 已有内容但不是 git 仓库"
+    info "远程分支 $branch 是否存在："
+    if remote_branch_exists "$repo_url" "$branch"; then
+      err "远程分支 $branch 已存在，本地内容与远程关系未知，拒绝自动覆盖。"
+      err "请手动决定如何合并："
+      err "  方案 A（保留本地，纳入版本管理）："
+      err "    cd $intro && git init -q && git remote add origin $repo_url"
+      err "    git fetch origin $branch && git checkout -b $branch origin/$branch"
+      err "    （如有冲突手动解决）"
+      err "  方案 B（确信本地可丢弃，从远程全新检出）："
+      err "    mv $intro ${intro}.bak.\$(date +%Y%m%d%H%M%S)"
+      err "    再重新运行 pull"
+    else
+      err "远程尚无分支 $branch，本地内容不可丢弃。"
+      err "请手动纳入版本管理："
+      err "  cd $intro && git init -q && git remote add origin $repo_url"
+      err "  git checkout -b $branch"
+      err "  git add -A && git commit -m 'chore: init docs'"
+      err "  然后运行 push 创建远程分支"
+    fi
+    return 1
+  fi
+
+  # === 首次初始化（本地为空，远程已有分支） ===
+  if remote_branch_exists "$repo_url" "$branch"; then
+    info "首次拉取：从远程分支 $branch 初始化 $INTRODUCTION_DIR/ ..."
+    mkdir -p "$intro"
+    cd "$intro"
+    git init -q
+    git remote add origin "$repo_url"
+    git fetch origin "$branch"
+    git checkout -b "$branch" "origin/$branch"
+    ok "已检出远程分支 $branch"
+    cd - >/dev/null
+    return 0
+  fi
+
+  # === 本地为空，远程也无分支 ===
+  err "本地 $INTRODUCTION_DIR/ 为空，远程也无分支 $branch"
+  err "请先在工作目录中创建项目文档，然后运行 push 初始化远程分支"
+  return 1
+}
+
+# ============================ push ============================ #
+
+do_push() {
+  local project_dir="$1" project_id="$2" repo_url="$3"
+  local branch="docs/$project_id"
+  local intro="$project_dir/$INTRODUCTION_DIR"
+
+  # === 本地有内容但还不是 git 仓库 → 首次初始化 ===
+  local just_initialized=0
+  if [ ! -d "$intro/.git" ]; then
+    if [ -e "$intro" ] && [ -n "$(find "$intro" -mindepth 1 -maxdepth 1 2>/dev/null)" ]; then
+      info "首次推送：将本地 $INTRODUCTION_DIR/ 纳入版本管理 ..."
+      cd "$intro"
+      git init -q
+      git remote add origin "$repo_url"
+      # 远程已有分支则跟踪，没有则新建
+      if git fetch origin "$branch" 2>/dev/null && git rev-parse --verify "origin/$branch" >/dev/null 2>&1; then
+        git checkout -b "$branch" "origin/$branch"
+        info "已跟踪远程分支 $branch（本地新内容将与远程合并）"
+      else
+        git checkout -b "$branch"
+        info "新建本地分支 $branch"
+      fi
+      cd - >/dev/null
+      just_initialized=1
+    else
+      err "$INTRODUCTION_DIR/ 不存在或为空，请先创建项目文档再推送"
+      return 1
+    fi
+  fi
+
+  cd "$intro"
+
+  # 确保在正确分支（首次刚初始化已切到目标分支，跳过）
+  if [ "$just_initialized" -eq 0 ]; then
+    switch_to_branch "$intro" "$branch" track
+  fi
+
+  # git 全局 user 未配置时 commit 会失败，提前检测
+  if [ -z "$(git config user.name)" ] || [ -z "$(git config user.email)" ]; then
+    err "未配置 git 用户信息，无法提交"
+    err "请运行（可替换为你的信息）："
+    err "  git config --global user.name 'Your Name'"
+    err "  git config --global user.email 'you@example.com'"
+    err "或在 $INTRODUCTION_DIR/ 内只用局部配置："
+    err "  cd $intro && git config user.name '...' && git config user.email '...'"
+    cd - >/dev/null
+    return 1
+  fi
+
+  # 检查是否有变更（含未跟踪文件）
+  # - git diff --quiet        : worktree vs index
+  # - git diff --cached --quiet: index vs HEAD
+  # - 检查未跟踪文件           : 新增文件尚未 add
+  local has_changes=0
+  git diff --quiet || has_changes=1
+  git diff --cached --quiet || has_changes=1
+  if [ -n "$(git ls-files --others --exclude-standard 2>/dev/null)" ]; then
+    has_changes=1
+  fi
+
+  if [ "$has_changes" -eq 0 ]; then
+    ok "文档内容无变更，无需推送"
+    cd - >/dev/null
+    return 0
+  fi
+
+  git add -A
+  local timestamp
+  timestamp=$(date "+%Y-%m-%d %H:%M:%S")
+  local project_name
+  project_name=$(basename "$project_dir")
+  git commit -m "docs($project_id): sync $INTRODUCTION_DIR
+
+自动同步于 $timestamp
+项目: $project_name"
+
+  info "推送到远程 (branch: $branch) ..."
+  if git push -u origin "$branch"; then
+    ok "推送完成！远程: $repo_url (branch: $branch)"
+  else
+    err "推送失败，远程有更新的提交未合并"
+    err "请先运行 pull 合并远程变更，再重新 push"
+    cd - >/dev/null
+    return 1
+  fi
+
+  cd - >/dev/null
+}
+
+# ============================ status ============================ #
+
+do_status() {
+  local project_dir="$1" project_id="$2"
+  local branch="docs/$project_id"
+  local intro="$project_dir/$INTRODUCTION_DIR"
+
+  if [ ! -d "$intro/.git" ]; then
+    err "$INTRODUCTION_DIR/ 尚未初始化为 git 仓库"
+    warn "请先运行: bash $(basename "$0") pull"
+    return 1
+  fi
+
+  cd "$intro"
+
+  echo "=== $INTRODUCTION_DIR/ 文档仓库状态 ==="
+  echo "项目标识: $project_id"
+  echo "分支:      $(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'none')"
+  echo "远程:      $(git remote get-url origin 2>/dev/null || echo '未配置')"
+  echo ""
+
+  if [ -n "$(git status --short 2>/dev/null)" ]; then
+    git status
+  else
+    echo "工作区干净，无未提交变更"
+  fi
+
+  # 检查 ahead/behind
+  echo ""
+  git fetch origin "$branch" 2>/dev/null || true
+  local ahead behind
+  ahead=$(git rev-list --count "@{upstream}..HEAD" 2>/dev/null || echo "?")
+  behind=$(git rev-list --count "HEAD..@{upstream}" 2>/dev/null || echo "?")
+  echo "领先远程: $ahead 个提交  |  落后远程: $behind 个提交"
+
+  # 最近提交
+  echo ""
+  echo "--- 最近提交 ---"
+  git log --oneline -5 2>/dev/null || echo "(暂无提交)"
+
+  cd - >/dev/null
+}
+
+# ============================ 主流程 ============================ #
+
+main() {
+  local op="${1:-}"
+
+  if [ "$op" != "push" ] && [ "$op" != "pull" ] && [ "$op" != "status" ] && [ "$op" != "config" ]; then
+    echo "用法: bash $(basename "$0") <push|pull|status|config> [URL]"
+    echo ""
+    echo "  pull    — 从远程拉取 .claude_introduction/ 文档到本地（标准 git pull 合并）"
+    echo "  push    — 将本地 .claude_introduction/ 文档推送到远程（标准 git push）"
+    echo "  status  — 查看 .claude_introduction/ 仓库状态"
+    echo "  config <url> — 写入文档仓库 URL 到 .claude/.cache/docs-sync.conf"
+    exit 1
+  fi
+
+  echo "=== sync-claude-introduction ($op) ==="
+
+  local project_dir
+  project_dir="$(cd "$(dirname "$0")/../../../../" && pwd)"
+  echo "项目目录: $project_dir"
+
+  # config 子命令：写入 URL 后退出（不需要项目标识）
+  if [ "$op" = "config" ]; then
+    local url="${2:-}"
+    if [ -z "$url" ]; then
+      err "用法: bash $(basename "$0") config <url>"
+      err "示例: bash $(basename "$0") config https://github.com/youruser/claude-project-docs.git"
+      exit 1
+    fi
+    local conf_path
+    conf_path=$(write_remote_repo "$project_dir" "$url")
+    ok "已写入文档仓库 URL: $url"
+    info "配置文件: $conf_path"
+    info "现在可以运行 pull / push 同步文档了"
+    exit 0
+  fi
+
+  local project_id
+  project_id=$(detect_project_id "$project_dir")
+  if [ -z "$project_id" ]; then
+    err "无法确定项目标识"
+    err "请在 .claude/settings.local.json 中设置 CLAUDE_DOCS_PROJECT_ID"
+    err "或创建 .claude/project-id 文件"
+    exit 1
+  fi
+  echo "项目标识: $project_id"
+
+  local repo_url
+  repo_url=$(detect_remote_repo "$project_dir")
+  if [ -z "$repo_url" ]; then
+    err "未配置远程文档仓库 URL"
+    err "请先在 GitHub 创建一个空仓库（用于存放各项目的文档），然后配置 URL："
+    echo ""
+    info "运行（把 URL 换成你创建的仓库地址）："
+    echo "  bash .claude/skills/sync-claude-introduction/scripts/sync-introduction.sh config https://github.com/youruser/claude-project-docs.git"
+    echo ""
+    err "配置后再次运行 pull / push / status"
+    exit 1
+  fi
+  echo "远程仓库: $repo_url"
+  echo ""
+
+  # 远程可达性 / 认证预检
+  info "验证远程仓库可达性 ..."
+  if ! verify_remote_access "$repo_url"; then
+    err "无法访问远程仓库：$repo_url"
+    err "可能原因："
+    err "  1. 仓库不存在（需先在 GitHub/GitLab 手动创建空仓库）"
+    err "  2. 认证失败（检查 SSH key 或 HTTPS token / 凭证）"
+    err "  3. 网络问题"
+    exit 1
+  fi
+
+  # .gitignore / 父 git 跟踪检查（pull 和 push 都提示）
+  check_gitignore "$project_dir"
+  echo ""
+
+  local rc=0
+  case "$op" in
+    pull)
+      do_pull "$project_dir" "$project_id" "$repo_url" || rc=$?
+      ;;
+    push)
+      do_push "$project_dir" "$project_id" "$repo_url" || rc=$?
+      ;;
+    status)
+      do_status "$project_dir" "$project_id" || rc=$?
+      ;;
+  esac
+
+  echo ""
+  if [ "$rc" -ne 0 ]; then
+    echo "=== 完成（有错误，退出码 ${rc}）==="
+  else
+    echo "=== 完成 ==="
+  fi
+  exit "$rc"
+}
+
+main "$@"
