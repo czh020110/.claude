@@ -216,30 +216,65 @@ do_pull() {
     fi
   fi
 
-  # === 本地已有内容但不是 git 仓库 ===
-  # 不自动移走/丢弃本地文档，避免数据丢失
+  # === 本地已有内容但不是 git 仓库 → 自动纳入版本管理并合并远程 ===
+  # 场景：sync-claude-config 刚填充了模板文件，或用户手动放了文档。
+  # 既然用了本 skill，.claude_introduction/ 必然要当 git 仓库，直接自动 init，
+  # 不停下来问。本地内容先 commit，再 merge 远程分支，冲突时报告具体文件。
   if [ -e "$intro" ] && [ -n "$(find "$intro" -mindepth 1 -maxdepth 1 2>/dev/null)" ]; then
-    warn "本地 $INTRODUCTION_DIR/ 已有内容但不是 git 仓库"
-    info "远程分支 $branch 是否存在："
-    if remote_branch_exists "$repo_url" "$branch"; then
-      err "远程分支 $branch 已存在，本地内容与远程关系未知，拒绝自动覆盖。"
-      err "请手动决定如何合并："
-      err "  方案 A（保留本地，纳入版本管理）："
-      err "    cd $intro && git init -q && git remote add origin $repo_url"
-      err "    git fetch origin $branch && git checkout -b $branch origin/$branch"
-      err "    （如有冲突手动解决）"
-      err "  方案 B（确信本地可丢弃，从远程全新检出）："
-      err "    mv $intro ${intro}.bak.\$(date +%Y%m%d%H%M%S)"
-      err "    再重新运行 pull"
-    else
-      err "远程尚无分支 $branch，本地内容不可丢弃。"
-      err "请手动纳入版本管理："
-      err "  cd $intro && git init -q && git remote add origin $repo_url"
-      err "  git checkout -b $branch"
-      err "  git add -A && git commit -m 'chore: init docs'"
-      err "  然后运行 push 创建远程分支"
+    info "本地 $INTRODUCTION_DIR/ 有内容但未纳入版本管理，自动初始化 ..."
+    cd "$intro"
+    git init -q
+    git remote add origin "$repo_url"
+
+    # 远程无此分支 → 本地建分支、提交本地内容、提示用 push 创建远程分支
+    if ! remote_branch_exists "$repo_url" "$branch"; then
+      git checkout -b "$branch"
+      info "远程尚无分支 $branch，本地内容已纳入版本管理"
+      info "请运行 push 创建远程分支"
+      cd - >/dev/null
+      return 0
     fi
-    return 1
+
+    # 远程有分支 → fetch，把本地内容合并进来
+    git fetch origin "$branch"
+
+    # 配置局部 user（若全局没配，用占位值，让 commit 不失败）
+    if [ -z "$(git config user.name)" ]; then
+      git config user.email "docs-sync@local"
+      git config user.name "docs-sync"
+    fi
+
+    # 策略：本地内容先 commit 到默认分支 → 切到跟踪远程的本地分支 →
+    # 用 --allow-unrelated-histories 合并本地提交。
+    # 不同文件自动并存；同名文件真冲突才需手动解决（不静默覆盖）。
+    # 1. 本地内容 commit 到默认分支
+    git add -A
+    git commit -q -m "chore: 本地内容纳入版本管理" 2>/dev/null || true
+    local default_branch local_commit
+    default_branch=$(git symbolic-ref --short HEAD 2>/dev/null || echo main)
+    local_commit=$(git rev-parse HEAD 2>/dev/null)
+
+    # 2. 切到跟踪远程的本地分支（工作区变成远程内容）
+    git checkout -b "$branch" "origin/$branch" -q 2>/dev/null || git checkout "$branch" -q 2>/dev/null
+
+    # 3. 合并本地提交（允许无关历史，不同文件自动并存）
+    if [ -n "$local_commit" ]; then
+      if git merge "$local_commit" --allow-unrelated-histories --no-edit -q 2>/dev/null; then
+        ok "已合并本地内容到远程分支 ${branch}"
+      else
+        # 真正的内容冲突（同名文件两边都改过）→ 报告冲突文件
+        warn "合并时出现内容冲突（同名文件两边都有），需手动解决："
+        git diff --name-only --diff-filter=U 2>/dev/null | sed 's/^/  冲突文件: /'
+        err "请编辑上述文件解决 <<<<<<< / ======= / >>>>>>> 标记后："
+        err "  cd $intro && git add -A && git commit -m 'merge: 解决冲突'"
+        err "或放弃本地内容用远程覆盖：cd $intro && git merge --abort && git checkout -f ."
+        cd - >/dev/null
+        return 1
+      fi
+    fi
+    ok "拉取完成（远程分支 ${branch}）"
+    cd - >/dev/null
+    return 0
   fi
 
   # === 首次初始化（本地为空，远程已有分支） ===
@@ -550,7 +585,26 @@ main() {
 
   # 方向校验：只接受 pull / push / info / status / config / diagnose
   # 非法或空 → 结构化报错（面向模型读取），退出 2（区分于正常失败的非零）
+  # 空参时先输出 diagnose 状态（URL/初始化情况），让模型一眼看到配置是否就绪
   if [ "$op" != "push" ] && [ "$op" != "pull" ] && [ "$op" != "info" ] && [ "$op" != "status" ] && [ "$op" != "config" ] && [ "$op" != "diagnose" ]; then
+    # 空参 → 先输出当前状态，帮助模型判断是否还需配置 URL
+    if [ -z "$op" ]; then
+      local _project_dir
+      _project_dir="$(cd "$(dirname "$0")/../../../../" && pwd)"
+      local _project_id _repo_url
+      _project_id=$(detect_project_id "$_project_dir" 2>/dev/null || echo "")
+      _repo_url=$(detect_remote_repo "$_project_dir")
+      echo "--- 当前配置状态 ---"
+      echo "项目标识: ${_project_id:-（未确定）}"
+      if [ -n "$_repo_url" ]; then
+        echo "文档仓库 URL: $_repo_url"
+        echo "URL 已配置: 是"
+      else
+        echo "文档仓库 URL: （未配置）"
+        echo "URL 已配置: 否"
+      fi
+      echo "-------------------"
+    fi
     echo "[SYNC_ERROR] 参数校验失败"
     if [ -z "$op" ]; then
       echo "原因: 未指定方向（参数为空）"
