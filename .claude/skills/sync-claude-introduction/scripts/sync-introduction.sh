@@ -352,6 +352,154 @@ do_push() {
   cd - >/dev/null
 }
 
+# ============================ diagnose ============================ #
+#
+# 专供 SKILL.md 的 `!` 动态注入使用：
+#   - 永远以 0 退出（即使未配置/未初始化），不触发 set -e 抖动
+#   - 只输出模型决策需要的关键状态：URL 是否配置、项目标识、初始化状态、分支、ahead/behind
+#   - 不做网络请求（不 fetch，不验证可达性），避免注入阶段卡住
+
+do_diagnose() {
+  local project_dir="$1" project_id="$2"
+  local branch="docs/$project_id"
+  local intro="$project_dir/$INTRODUCTION_DIR"
+  local cache_conf="$project_dir/.claude/.cache/docs-sync.conf"
+
+  echo "--- sync-claude-introduction 诊断 ---"
+  echo "项目目录: $project_dir"
+  echo "项目标识: ${project_id:-（未确定）}"
+
+  # URL 配置
+  local url=""
+  if [ -f "$cache_conf" ]; then
+    url=$(head -1 "$cache_conf" | tr -d '[:space:]')
+  fi
+  if [ -n "$url" ]; then
+    echo "文档仓库 URL: $url"
+    echo "URL 已配置: 是"
+  else
+    echo "文档仓库 URL: （未配置）"
+    echo "URL 已配置: 否"
+  fi
+
+  # 初始化状态
+  if [ -d "$intro/.git" ]; then
+    echo "本地仓库已初始化: 是"
+    (cd "$intro" && \
+      echo "当前分支: $(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo none)" && \
+      local_changes=$(git status --short 2>/dev/null | head -20) && \
+      if [ -n "$local_changes" ]; then
+        echo "本地有未提交变更: 是"
+        echo "$local_changes" | sed 's/^/  /'
+      else
+        echo "本地有未提交变更: 否"
+      fi && \
+      ahead=$(git rev-list --count "@{upstream}..HEAD" 2>/dev/null || true) && \
+      behind=$(git rev-list --count "HEAD..@{upstream}" 2>/dev/null || true) && \
+      if [ -z "$ahead" ] && [ -z "$behind" ]; then
+        echo "同步状态: 尚无上游分支（本地从未与远程同步过，需先 pull 建立跟踪）"
+      else
+        echo "领先远程: ${ahead:-0} 个提交（本地未推送的提交）"
+        echo "落后远程: ${behind:-0} 个提交（远程未拉取的更新）"
+        if [ "${ahead:-0}" = "0" ] && [ "${behind:-0}" = "0" ]; then
+          echo "与远程同步: 是"
+        else
+          echo "与远程同步: 否"
+        fi
+      fi)
+  else
+    if [ -e "$intro" ] && [ -n "$(find "$intro" -mindepth 1 -maxdepth 1 2>/dev/null)" ]; then
+      echo "本地仓库已初始化: 否（目录有内容但未纳入版本管理）"
+    else
+      echo "本地仓库已初始化: 否（目录为空或不存在）"
+    fi
+  fi
+
+  # git user
+  if [ -z "$(git config user.name 2>/dev/null)" ] || [ -z "$(git config user.email 2>/dev/null)" ]; then
+    echo "git 用户信息: 未配置（push 会失败）"
+  else
+    echo "git 用户信息: 已配置"
+  fi
+
+  echo "--- 诊断结束 ---"
+}
+
+# ============================ info ============================ #
+#
+# 面向用户的状态查询：本地是否有未提交/未推送变更、远程是否有未拉取更新。
+# 永远 0 退出（即使未初始化/未配置/网络不可达），把状态摘要打印出来。
+# 不修改任何东西，只读 + 一次 fetch（容忍失败）。
+
+do_info() {
+  local project_dir="$1" project_id="$2" repo_url="$3"
+  local branch="docs/$project_id"
+  local intro="$project_dir/$INTRODUCTION_DIR"
+
+  echo "--- sync-claude-introduction 状态 ---"
+  echo "项目标识: ${project_id:-（未确定）}"
+
+  # URL 配置
+  if [ -n "$repo_url" ]; then
+    echo "文档仓库 URL: $repo_url"
+  else
+    echo "文档仓库 URL: （未配置）"
+  fi
+
+  # 未初始化
+  if [ ! -d "$intro/.git" ]; then
+    if [ -e "$intro" ] && [ -n "$(find "$intro" -mindepth 1 -maxdepth 1 2>/dev/null)" ]; then
+      echo "本地仓库: 未初始化（目录有内容但未纳入版本管理）"
+    else
+      echo "本地仓库: 未初始化（目录为空或不存在）"
+    fi
+    echo "（需先 pull 初始化，或 push 把本地内容纳入版本管理）"
+    echo "--- 状态结束 ---"
+    return 0
+  fi
+
+  cd "$intro" || { echo "--- 状态结束 ---"; return 0; }
+
+  echo "当前分支: $(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo none)"
+
+  # 本地未提交变更
+  local local_changes
+  local_changes=$(git status --short 2>/dev/null | head -20)
+  if [ -n "$local_changes" ]; then
+    echo "本地未提交变更: 有"
+    echo "$local_changes" | sed 's/^/  /'
+  else
+    echo "本地未提交变更: 无"
+  fi
+
+  # 远程更新情况（fetch，容忍失败）
+  if [ -n "$repo_url" ]; then
+    git fetch origin "$branch" 2>/dev/null || true
+    local ahead behind
+    ahead=$(git rev-list --count "@{upstream}..HEAD" 2>/dev/null || true)
+    behind=$(git rev-list --count "HEAD..@{upstream}" 2>/dev/null || true)
+    if [ -z "$ahead" ] && [ -z "$behind" ]; then
+      echo "远程同步状态: 尚无上游分支（本地从未与远程同步过）"
+    else
+      echo "本地领先远程: ${ahead:-0} 个提交（未推送）"
+      echo "本地落后远程: ${behind:-0} 个提交（远程有未拉取的更新）"
+      if [ "${ahead:-0}" = "0" ] && [ "${behind:-0}" = "0" ]; then
+        echo "远程同步状态: 已同步"
+      fi
+    fi
+  else
+    echo "远程同步状态: 未配置 URL，无法比较"
+  fi
+
+  # 最近提交
+  echo ""
+  echo "最近提交:"
+  git log --oneline -3 2>/dev/null || echo "  （暂无提交）"
+
+  cd - >/dev/null
+  echo "--- 状态结束 ---"
+}
+
 # ============================ status ============================ #
 
 do_status() {
@@ -400,14 +548,21 @@ do_status() {
 main() {
   local op="${1:-}"
 
-  if [ "$op" != "push" ] && [ "$op" != "pull" ] && [ "$op" != "status" ] && [ "$op" != "config" ]; then
-    echo "用法: bash $(basename "$0") <push|pull|status|config> [URL]"
-    echo ""
-    echo "  pull    — 从远程拉取 .claude_introduction/ 文档到本地（标准 git pull 合并）"
-    echo "  push    — 将本地 .claude_introduction/ 文档推送到远程（标准 git push）"
-    echo "  status  — 查看 .claude_introduction/ 仓库状态"
-    echo "  config <url> — 写入文档仓库 URL 到 .claude/.cache/docs-sync.conf"
-    exit 1
+  # 方向校验：只接受 pull / push / info / status / config / diagnose
+  # 非法或空 → 结构化报错（面向模型读取），退出 2（区分于正常失败的非零）
+  if [ "$op" != "push" ] && [ "$op" != "pull" ] && [ "$op" != "info" ] && [ "$op" != "status" ] && [ "$op" != "config" ] && [ "$op" != "diagnose" ]; then
+    echo "[SYNC_ERROR] 参数校验失败"
+    if [ -z "$op" ]; then
+      echo "原因: 未指定方向（参数为空）"
+    else
+      echo "原因: 方向必须是 pull / push / info，收到: $op"
+    fi
+    echo "解决: 用法如下"
+    echo "  /sync-claude-introduction pull     从远程拉取文档到本地"
+    echo "  /sync-claude-introduction push     把本地文档推送到远程"
+    echo "  /sync-claude-introduction info     查看文档同步状态"
+    echo "  bash $(basename "$0") config <url> 配置文档仓库 URL"
+    exit 2
   fi
 
   echo "=== sync-claude-introduction ($op) ==="
@@ -432,6 +587,14 @@ main() {
     exit 0
   fi
 
+  # diagnose：只输出摘要，不做 URL 检测 / 可达性预检，永远 0 退出
+  if [ "$op" = "diagnose" ]; then
+    local project_id_for_diag
+    project_id_for_diag=$(detect_project_id "$project_dir" 2>/dev/null || echo "")
+    do_diagnose "$project_dir" "$project_id_for_diag"
+    exit 0
+  fi
+
   local project_id
   project_id=$(detect_project_id "$project_dir")
   if [ -z "$project_id" ]; then
@@ -444,6 +607,13 @@ main() {
 
   local repo_url
   repo_url=$(detect_remote_repo "$project_dir")
+
+  # info：查状态，不做可达性预检，容忍未配置 URL / 远程不可达，永远 0 退出
+  if [ "$op" = "info" ]; then
+    do_info "$project_dir" "$project_id" "$repo_url"
+    exit 0
+  fi
+
   if [ -z "$repo_url" ]; then
     err "未配置远程文档仓库 URL"
     err "请先在 GitHub 创建一个空仓库（用于存放各项目的文档），然后配置 URL："
