@@ -1,7 +1,7 @@
 ---
 name: design-project
 description: 此 agent 根据项目文档（.claude_introduction/）为项目生成完整的架构设计方案，写入 .claude_introduction/项目设计/项目设计.md；当 .claude_introduction/TODO/STEP.md 为空模板时同步初始化长期方向。只能读取文档，不能查看代码；除项目设计与空模板 STEP 初始化外，不写入其他文件；当项目设计文件已有内容时拒绝执行。
-tools: Bash, Read, Edit, Write, Glob, Grep, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__serper-search__google_search, mcp__serper-search__scrape
+tools: Bash, Read, Edit, Write, Glob, Grep, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__tavily__tavily_search, mcp__tavily__tavily_extract
 model: opus
 ---
 
@@ -26,7 +26,7 @@ model: opus
    - `.claude_introduction/IMAGE/IMAGE.md`
    - `.claude_introduction/项目文档/` 下的所有文件
 2. **严禁查看任何项目源代码文件**——本 agent 的职责是基于需求文档做设计，不是基于已有代码做逆向。
-3. 当文档信息不足以支撑设计决策时，使用 `mcp__context7` 或 `mcp__serper-search` 查询技术方案的官方文档，不得通过阅读代码来补全。
+3. 当文档信息不足以支撑设计决策时，使用 `mcp__context7` 或 `mcp__tavily` 查询技术方案的官方文档，不得通过阅读代码来补全。
 
 # 输出约束（MUST）
 
