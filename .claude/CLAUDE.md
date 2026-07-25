@@ -35,7 +35,7 @@
 - 项目整体设计：@../.claude_introduction/项目设计/项目设计.md
   - 记录项目架构设计、模块划分、接口规划和分阶段开发方案。
   - 架构推进、生成项目设计或实现与既有设计出现差异时按需改动；不因日常小改自动同步。
-- 已生成图片索引：@../.claude_introduction/IMAGE/IMAGE.md
+- 已生成图片索引：`../.claude_introduction/IMAGE/IMAGE.md`
   - 记录通过 `image-generate` skill 生成的图片路径、元数据路径、尺寸和用途。
   - 需要理解项目相关图片资产或继续生成图片前按需读取。
 
