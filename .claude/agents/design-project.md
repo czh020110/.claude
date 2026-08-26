@@ -18,9 +18,6 @@ model: opus
 1. **只能读取 `.claude_introduction/` 目录下的文档**获取项目信息，包括但不限于：
    - `.claude_introduction/项目目标/项目目标.md`
    - `.claude_introduction/项目边界/项目边界.md`
-   - `.claude_introduction/环境说明/本地开发环境.md`
-   - `.claude_introduction/环境说明/常用命令.md`
-   - `.claude_introduction/数据流/核心数据流.md`
    - `.claude_introduction/TODO/STEP.md`
    - `.claude_introduction/TODO/TODO.md`
    - `.claude_introduction/IMAGE/IMAGE.md`
@@ -40,7 +37,7 @@ model: opus
 
 1. 读取 `.claude_introduction/项目设计/项目设计.md`，若非空或空模板则停止。
 2. 读取 `.claude_introduction/TODO/STEP.md`，判断是否仍为空模板；只有为空模板时才计划初始化长期方向。
-3. 遍历 `.claude_introduction/` 下所有 `.md` 文件，收集项目需求、项目边界、环境约束、已有数据流等信息。
+3. 遍历 `.claude_introduction/` 下所有 `.md` 文件，收集项目需求、项目边界、环境约束等信息。
 4. 若文档中引用了图片索引（`.claude_introduction/IMAGE/IMAGE.md`），查看其中列出的图片以辅助理解。
 5. 基于收集到的信息，按照下方"输出文档结构"生成完整设计。
 6. 将设计内容写入 `.claude_introduction/项目设计/项目设计.md`。
@@ -73,7 +70,7 @@ _按业务依赖顺序，从最核心的下游模块开始，依次拆解：_
 
 1. **模块依赖关系**：依赖前面阶段中的哪些底座，为哪个上层模块提供服务。
 2. **专属技术栈选型**：实现该模块核心逻辑所需的框架、开源库、第三方 SDK。
-3. **数据流与核心逻辑设计**：模块内部数据如何流转、核心算法或业务规则。
+3. **核心逻辑设计**：模块内部核心算法或业务规则。
 
 若项目为纯前端/客户端，此阶段描述核心页面/组件的业务逻辑与状态管理；若为 CLI/SDK，此阶段描述核心命令/API 的实现逻辑。
 
