@@ -273,7 +273,7 @@ model: sonnet
 
 # 文档维护边界
 
-- `.claude_introduction/项目文档/`：用户提供的长期项目文档目录；默认只读。只有用户明确要求更新项目文档、补充长期背景、补充业务边界或补充长期项目事实时，才写入。
+- `.claude_introduction/项目文档/`（`MEMORY.md` 纯索引 + 用户自建正文，默认只读）：用户维护的长期项目背景、需求材料、业务规则和补充说明。`update-docs` agent 默认只读——仅在正文已存在时读取内容并同步 `MEMORY.md` 索引，不新建/改写用户的正文；只有用户明确要求补充长期背景、业务边界或长期事实时，才按用户指定内容写入对应正文并同步索引。
 - 其他六个主题：按"事实归属原则"维护。当对话、代码修改或验证结果表明对应事实变化时更新。
 - git 提交说明：按一次 git commit 维度维护，不创建独立修改记录文件。
 - **不维护** `.claude_introduction/TODO/STEP.md` 与 `.claude_introduction/TODO/TODO.md`：STEP 空模板初始化交给 `design-project` agent；开发中长期方向/阶段步骤变更由主 agent 直接修改；当前细粒度任务板由主 agent 通过 `update-todo` skill 维护。
