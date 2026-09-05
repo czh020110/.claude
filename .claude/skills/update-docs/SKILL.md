@@ -1,6 +1,6 @@
 ---
 name: update-docs
-description: 当用户要求更新项目文档与 git 提交说明，或需要根据当前变更生成 git commit 时使用；委托 `update-docs` agent 更新 .claude_introduction 文档与提交结果，并在完成后按需调用通用 agent 直接执行 query-project 脚本同步/刷新向量库。
+description: 当用户要求更新项目记忆/文档与 git 提交说明，或需要根据当前变更生成 git commit 时使用；委托 `update-docs` agent 更新 .claude_introduction 文档与提交结果，并在完成后按需调用通用 agent 直接执行 query-project 脚本同步/刷新向量库。
 ---
 
 - `update-docs` agent 是一次性汇总和更新文档的专用工具，只在用户主动要求时调用；不负责在开发过程中随代码变更实时调用或实时维护项目文档。每次调用是一次性的完整流程：分析变更 → 检查文档 → 更新文档 → 按需提交。
@@ -45,7 +45,7 @@ description: 当用户要求更新项目文档与 git 提交说明，或需要�
 - 当前 skill 自己只根据已有上下文与允许读取的文档状态判断需要补充给 `update-docs` agent 的信息；代码阅读、代码搜索、变更细节确认和 git 状态分析都交给 `update-docs` agent。
 - 调用 `update-docs` agent 时，必须按“Git 提交行为与文件范围开关”和用户本次要求，明确写明本次是否需要创建 git commit，以及本次提交文件范围（全部已更改、指定文件或排除文件）；用户本次要求优先于默认开关。
 - `update-docs` agent 会根据上下文、git 状态和文档规则，自主判断还需要更新哪些 `.claude_introduction/` 文档，并在需要提交时生成对应的简短描述与详细描述。
-- `update-docs` agent 不维护 `.claude_introduction/TODO/STEP.md` 与 `.claude_introduction/TODO/TODO.md`：STEP 空模板初始化交给 `design-project` agent；开发中长期方向/阶段步骤变更由主 agent 直接修改；当前细粒度任务板由主 agent 通过 `update-todo` skill 维护。
+- `update-docs` agent 不维护 `.claude_introduction/TODO/STEP.md` 与 `.claude_introduction/TODO/TODO.md`不由你维护，开发中长期方向/阶段步骤变更由你直接修改；当前细粒度任务板由你通过 `update-todo` skill 维护。
 - `update-docs` agent 完成文档更新和提交后，如果本次改动更新了 `.claude_introduction/` 下真实事实文档，由当前 skill 额外调用一个通用 subagent 执行 query-project 脚本的配置状态同步与向量刷新；prompt 中必须直接写明固定命令，禁止让 subagent 自行查找脚本、命令或路径。
 - 不要打断 `update-docs` agent 的执行；如果你发现用户的变更与当前文档内容存在明显冲突，或者用户的要求与文档维护边界不符，先在结果中报告冲突，再由 `update-docs` agent 根据规则判断如何调整更新内容或提交范围。
 
@@ -54,7 +54,7 @@ description: 当用户要求更新项目文档与 git 提交说明，或需要�
 使用 Agent 工具调用：
 
 - `subagent_type`: `update-docs`
-- `description`: `Update project docs`
+- `description`: `Update project memory`
 - prompt 中提供：
   - 当前变更背景
   - 已知需要更新的文件
@@ -65,8 +65,9 @@ description: 当用户要求更新项目文档与 git 提交说明，或需要�
   - 本地变更信息：是否存在本地未提交变更
   - 处理顺序：先增量同步再本地变更同步（必须在 prompt 中写明）
   - 是否有特殊约束
+  - 用户母语语言
 
-推荐 prompt 模板：
+使用的 prompt 模板：
 
 ```md
 Background:
@@ -94,11 +95,11 @@ Need:
 - 增量同步：[需要/不需要]；diff 来源：git diff [基准]..HEAD
 - 本地变更同步：[需要/不需要]；diff 来源：git diff / git diff --staged
 - 增量同步阶段：只更新文档，不创建 git commit；成功后刷新基准 commit = 当前 HEAD
-- 本地变更同步阶段：[需要提交 git commit / 不要提交 git commit]；原因：[用户明确要求 / 按 skill 顶部默认行为开关]
-- 本次提交文件范围：[全部已更改 / 指定文件：... / 排除文件：...]；原因：[用户明确要求 / 按 skill 顶部默认文件范围开关]
+- 本地变更同步阶段：[需要提交 git commit / 不要提交 git commit]；原因：[用户明确要求 / 默认行为]
+- 本次提交文件范围：[全部已更改 / 指定文件：... / 排除文件：...]；原因：[用户明确要求 / 默认范围]
 - 如果需要提交 git commit，严格按本次提交文件范围提交；如果不要提交 git commit，只生成提交说明并明确未提交原因
 - 文档更新成功后，刷新基准 commit 文件 `.claude/.cache/update-docs-base-commit` 为新 HEAD 的 SHA（一行纯文本，仅含 40 字符 SHA）
-- 只返回修改文件、验证结果、提交结果、基准 commit 刷新结果、以及是否已执行 query-project 配置同步 / 向量刷新与对应结果
+- 只返回修改文件、提交结果、基准 commit 刷新结果、以及是否已执行 query-project 配置同步 / 向量刷新与对应结果
 ```
 
 ## 后续动作
