@@ -143,7 +143,6 @@ model: sonnet
 不由本 agent 管理、不在本范式内：
 
 - `.project-memory/TODO/`（STEP/TODO 不由你修改和维护）
-- `.project-memory/IMAGE/`（为图片索引，不由你修改和维护）
 
 每个本 agent 管理的主题目录必须采用以下结构：
 
