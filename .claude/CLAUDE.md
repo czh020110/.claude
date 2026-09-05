@@ -6,19 +6,19 @@
 
 `.project-memory/` 采用「索引 + 分块文件」的项目记忆范式：每个大主题目录有一个 `MEMORY.md` 纯索引（下文用 `@` 注入），正文按需读取。命中索引描述的覆盖范围或读取条件时，必须读取对应正文文件，不得仅凭索引摘要推断实现；获得所需入口、调用链、约束和验证方式后停止扩展读取。
 
-- 项目文档： @../.project-memory/项目文档/MEMORY.md
+- Documents： @../.project-memory/Documents/MEMORY.md
   - 用户维护的长期项目背景、需求材料、业务规则和补充说明。
   - 默认只读；除非用户明确要求补充长期项目事实，不要主动写入。
-- 项目边界： @../.project-memory/项目边界/MEMORY.md
+- Boundary： @../.project-memory/Boundary/MEMORY.md
   - 记录必须遵守的限制、明确不做的事项、设计约束、禁止事项、成功标准与质量底线。
-  - 开始新功能、调整阶段范围或判断是否偏离项目边界前优先读取。
-- 项目目标： @../.project-memory/项目目标/MEMORY.md
+  - 开始新功能、调整阶段范围或判断是否偏离 Boundary 前优先读取。
+- Target： @../.project-memory/Target/MEMORY.md
   - 记录总体流程目标、核心功能目标、阶段功能范围和验收标准。
   - 开始开发新功能、拆分阶段任务或确认当前优先级前优先读取。
-- 开发环境： @../.project-memory/开发环境/MEMORY.md
+- Environment： @../.project-memory/Environment/MEMORY.md
   - 记录依赖工具、运行环境、环境变量、外部服务、路径布局和已知环境坑。
   - 环境排查、依赖安装、服务启动失败或迁移运行环境前读取。
-- 常用命令： @../.project-memory/常用命令/MEMORY.md
+- Commands： @../.project-memory/Commands/MEMORY.md
   - 记录安装、启动、训练、测试、构建、评估等可执行命令及其前置条件与常见失败恢复。
   - 运行命令前优先读取，避免臆造命令。
 - 长期计划： @../.project-memory/TODO/STEP.md
@@ -29,15 +29,15 @@
   - 开始记录和开发时读取
   - 记录可完成、可验收的细粒度小模块任务板。
   - 开始、推进、完成、阻塞或暂缓项目任务时，通过 `update-todo` skill 维护，避免手改导致编号和分区不一致。
-- 项目设计： @../.project-memory/项目设计/MEMORY.md
+- Design： @../.project-memory/Design/MEMORY.md
   - 记录项目架构设计、模块划分、设计理由、损失与训练策略和实验设计。
-  - 架构推进、生成项目设计或实现与既有设计出现差异时按需读取；不因日常小改自动同步。
+  - 架构推进、更新 Design 正文或实现与既有设计出现差异时按需读取；不因日常小改自动同步。
 
 ## 执行要求
 
 - 回答和执行前，先判断任务属于代码修改、文档更新、进度维护、修改记录、环境排查、接口查询还是架构推进。
 - 代码修改时直接改文件，不要只给代码片段；除非用户明确只要示例。
-- 开始开发新功能前，按照 `当前待办` 和 `项目目标`，避免偏离当前阶段。
+- 开始开发新功能前，按照 `当前待办` 和 `Target`，避免偏离当前阶段。
 - 修改已有功能前，先读取相关代码和 TODO，确认上下游影响。
 - 完成修改后必须说明修改了哪些文件；涉及代码时说明验证方式和结果。
 - 完成阶段性工作后，必须检查 Task 工具中的任务状态；已经完成的任务要立即标记为 completed，避免遗留 in_progress/pending 任务。
@@ -57,7 +57,7 @@
 
 ## 工作流分流
 
-- 查询项目背景、项目边界、项目目标、环境、TODO 或其他 `.project-memory/` 事实文档时，直接按 `.project-memory/` 索引读取对应正文，不使用 RAG 检索。
+- 查询项目背景、Boundary、Target、环境、TODO 或其他 `.project-memory/` 事实文档时，直接按 `.project-memory/` 索引读取对应正文，不使用 RAG 检索。
 - 开始、推进或收尾当前项目任务时，按需使用 `update-todo` skill 维护 `.project-memory/TODO/TODO.md`。
 - 代码修改后的验证脚本由主模型维护；在下游项目中新增、复用、清理脚本或同步其索引时，不交给 `update-docs` 或 `update-todo` agent。
 - 用户要求更新项目记忆、总结本轮变更、整理提交说明或创建 git commit 时，使用 `update-docs` skill。
@@ -66,10 +66,10 @@
 
 ## 按需读取
 
-- 需要判断项目设计边界（哪些能做、哪些不能做）、优先级或验收标准时，读取 `.project-memory/项目边界/` 正文。
+- 需要判断设计边界（哪些能做、哪些不能做）、优先级或验收标准时，读取 `.project-memory/Boundary/` 正文。
 - 需要确认长期计划或当前任务状态时，读取 `.project-memory/TODO/`。
-- 需要确认环境、命令或本地运行方式时，读取 `.project-memory/开发环境/` 或 `.project-memory/常用命令/` 正文。
-- `.project-memory/项目文档/` 是用户维护的长期项目相关文档，默认只读；除非用户明确要求，不要主动写入。
+- 需要确认环境、命令或本地运行方式时，读取 `.project-memory/Environment/` 或 `.project-memory/Commands/` 正文。
+- `.project-memory/Documents/` 是用户维护的长期项目相关文档，默认只读；除非用户明确要求，不要主动写入。
 
 ## 本地验证脚本
 

@@ -30,7 +30,7 @@
 
 当调用第三方 SDK、框架或模型 API：
 
-1. 先按 `文档查询.md` 查询当前官方用法。
+1. 先按 `Docs Search.md` 查询当前官方用法。
 2. 优先使用官方推荐的新接口和新导入路径。
 3. 不使用已弃用接口，除非项目明确锁定旧版本。
 
@@ -44,7 +44,7 @@
 - 明确结构化输出 schema。
 - 明确工具可执行范围和安全边界。
 - 工具调用不得绕过权限、执行破坏性操作或泄露敏感信息。
-- 对需要长期记忆的项目事实，写入 `.project-memory/项目文档/` 或 `.project-memory/项目目标/`，不要塞进 prompt 字符串。
+- 对需要长期记忆的项目事实，写入 `.project-memory/Documents/` 或 `.project-memory/Target/`，不要塞进 prompt 字符串。
 
 ---
 
@@ -61,5 +61,5 @@
 
 ## 7. 文档位置
 
-- 阶段接口规划：`.project-memory/项目目标/`。
+- 阶段接口规划：`.project-memory/Target/`。
 - 接口变更记录：对应 git commit 的详细描述。

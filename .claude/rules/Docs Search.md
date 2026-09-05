@@ -33,7 +33,7 @@
 - 当任务涉及最新技术文档、官方用法确认、版本差异、迁移说明、Release note、Issue、官方教程，或用户明确要求联网搜索时，主模型应优先委托 `docs-research` agent 查询，不要直接凭记忆或零散搜索后回答。
 - `docs-research` agent 负责使用 `context7` 与 `tavily` 检索外部技术资料，并将整理后的结果返回给主模型。
 - 主模型职责是提交问题和结果要求，在收到 `docs-research` agent 结果后，再结合当前任务做最终回答或实现。
-- 项目内部背景、项目边界、项目目标、环境、TODO 等文档细节，不属于 `docs-research` agent 范围；这类问题应直接按 `.project-memory/` 索引读取对应正文。
+- 项目内部背景、Boundary、Target、环境、TODO 等文档细节，不属于 `docs-research` agent 范围；这类问题应直接按 `.project-memory/` 索引读取对应正文。
 
 ---
 
@@ -42,4 +42,4 @@
 - 只采用当前版本适用的信息。
 - 不复制大段官方文档进项目。
 - 回答或修改时说明采用了哪个接口、哪个版本或哪个官方约束。
-- 当需要了解当前项目自身的背景、项目边界、项目目标、环境、TODO 等文档细节时，直接读取 `.project-memory/` 对应正文文件。
+- 当需要了解当前项目自身的背景、Boundary、Target、环境、TODO 等文档细节时，直接读取 `.project-memory/` 对应正文文件。
