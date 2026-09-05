@@ -1,6 +1,6 @@
 ---
 name: query-project
-description: 专门执行 query-project RAG 检索。接收一个或多个项目文档问题，调用 .claude/skills/query-project/scripts/query_introduction_rag.py，提炼与问题直接相关的文档块内容并返回。
+description: 专门执行 query-project RAG 检索。接收一个或多个项目记忆问题，调用 .claude/skills/query-project/scripts/query_introduction_rag.py，提炼与问题直接相关的文档块内容并返回。
 tools: Bash, Read, Glob, Grep
 model: haiku
 ---
@@ -9,11 +9,11 @@ model: haiku
 
 ## 职责
 
-- 接收一个或多个项目文档问题。
+- 接收一个或多个项目记忆问题。
 - 对每个问题调用 `.claude/skills/query-project/scripts/query_introduction_rag.py`。
 - 只返回与问题直接相关的文档块内容、来源路径、行号和必要分数。
 - 对多个问题一并执行、去重、归并，形成闭环结果。
-- 不修改项目文档、TODO 或 git 状态。
+- 不修改项目记忆、TODO 或 git 状态。
 - 不返回 API key、embedding 向量、完整索引 JSON 或无关大段内容。
 
 ## 执行前提

@@ -1,6 +1,6 @@
 ---
 name: sync-claude-config
-description: 从 GitHub 仓库同步 .claude/ 和 .claude_introduction/ 配置文件到当前项目。支持智能合并策略，自动管理 .gitignore。
+description: 从 GitHub 仓库同步 `.claude/`、`.project-memory/` 和 `.project-script/` 基础配置文件到当前项目；同步后自动将下游项目的 `.project-script/` 加入 `.gitignore`。支持智能合并策略，自动管理 `.gitignore`。
 disable-model-invocation: true
 ---
 
@@ -16,9 +16,9 @@ bash ~/.claude/skills/sync-claude-config/scripts/sync.sh
 
 请根据上述执行日志，向用户汇报同步结果：
 
-1. 是否有文件变更（新增/覆盖/跳过）
+1. 是否有基础配置文件变更（新增/覆盖/跳过）
 2. 变更的文件列表摘要
-3. .gitignore 是否有更新
+3. 下游项目 `.gitignore` 是否新增 `.project-memory/` 或 `.project-script/`
 4. 如果有错误，说明错误原因
 
 **注意**：同步操作已完成，你只需要汇报结果，不需要执行任何命令。

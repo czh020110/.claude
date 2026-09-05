@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Query introduction documents with OpenAI-compatible embeddings and rerank."""
+"""Query project-memory documents with OpenAI-compatible embeddings and rerank."""
 
 from __future__ import annotations
 
@@ -98,7 +98,7 @@ def project_root_from_claude_root(root: Path) -> Path:
 
 
 def docs_root_from_project_root(project_root: Path) -> Path:
-    return project_root / ".claude_introduction"
+    return project_root / ".project-memory"
 
 
 def load_local_env(root: Path) -> None:
@@ -432,7 +432,7 @@ def should_exclude(relative_path: str, args: argparse.Namespace) -> bool:
 def discover_documents(project_root: Path, args: argparse.Namespace) -> tuple[list[SourceDocument], list[str]]:
     docs_root = args.docs_root
     if not docs_root.exists():
-        raise RuntimeError(f"Introduction directory not found: {docs_root}")
+        raise RuntimeError(f"Project-memory directory not found: {docs_root}")
 
     documents: list[SourceDocument] = []
     warnings: list[str] = []
@@ -531,7 +531,7 @@ def build_chunks(documents: list[SourceDocument], args: argparse.Namespace) -> l
 
 
 def cache_path(root: Path) -> Path:
-    return root / ".cache" / "query-project" / "introduction_rag.json"
+    return root / ".cache" / "query-project" / "project_memory_rag.json"
 
 
 def load_cache(path: Path) -> dict[str, Any]:
@@ -689,7 +689,7 @@ def build_args(parser: argparse.ArgumentParser) -> argparse.Namespace:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Query introduction documents with OpenAI-compatible RAG.")
+    parser = argparse.ArgumentParser(description="Query project-memory documents with OpenAI-compatible RAG.")
     parser.add_argument("--query", default="")
     parser.add_argument("--root", default=".claude")
     parser.add_argument("--docs-root", default="")

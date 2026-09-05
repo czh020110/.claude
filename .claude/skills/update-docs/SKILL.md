@@ -1,13 +1,13 @@
 ---
 name: update-docs
-description: 当用户要求更新项目记忆/文档与 git 提交说明，或需要根据当前变更生成 git commit 时使用；委托 `update-docs` agent 更新 .claude_introduction 文档与提交结果，并在完成后按需调用通用 agent 直接执行 query-project 脚本同步/刷新向量库。
+description: 当用户要求更新项目记忆文件与 git 提交说明，或需要根据当前变更生成 git commit 时使用；委托 `update-docs` agent 更新 `.project-memory/` 项目记忆与提交结果，并在完成后按需调用通用 agent 直接执行 query-project 脚本同步/刷新向量库。
 ---
 
-- `update-docs` agent 是一次性汇总和更新文档的专用工具，只在用户主动要求时调用；不负责在开发过程中随代码变更实时调用或实时维护项目文档。每次调用是一次性的完整流程：分析变更 → 检查文档 → 更新文档 → 按需提交。
+- `update-docs` agent 是一次性汇总和更新项目记忆的专用工具，只在用户主动要求时调用；不负责在开发过程中随代码变更实时调用或实时维护项目记忆。每次调用是一次性的完整流程：分析变更 → 检查文档 → 更新项目记忆 → 按需提交。
 - 当前默认行为：不提交 git commit；只有提示中明确说明需要提交时才提交，默认不提交。
 - 当前默认提交文件范围：全部已更改；只有用户本次要求或当前 skill prompt 明确指定/排除文件时，才改用指定/排除范围。
 - 调用 `update-docs` agent 时，prompt 必须明确写明本次”需要提交 git commit”或”不要提交 git commit”，并明确写明提交文件范围是”全部已更改”还是”指定/排除文件：...”，不得只写”按默认行为”。
-- 只有先更新文档，才能再根据变更生成提交说明；不要先生成提交说明再更新文档。
+- 增量同步与本地变更同步：先更新项目记忆，再生成提交说明；不要先生成提交说明再更新项目记忆。
 
 ## 基准 commit 与增量同步
 
@@ -17,37 +17,37 @@ description: 当用户要求更新项目记忆/文档与 git 提交说明，或�
 - 判断本地变更：`git status --short` 非空 → 存在本地未提交变更
 - 即使没有增量提交（基准 == HEAD），只要存在本地未提交变更，也必须分析这些变更并检查相关文档是否需要更新；不能因为"没有新的 commit"而跳过文档检查
 - 处理顺序严格为：**先增量同步，再本地变更同步**（原因：先让文档与当前 HEAD 对齐，再处理工作区变更）
-- 增量同步阶段**不创建 git commit**（只更新文档到工作区）
+- 增量同步阶段**不创建 git commit**（只更新项目记忆到工作区）
 - 增量同步成功后刷新基准 commit = 当前 HEAD
 - 本地变更同步阶段按顶部提交开关决定是否 commit
 - 本地变更同步成功后刷新基准 commit = 新 HEAD（若提交了）
 
-根据当前 git 变更更新 `.claude_introduction/` 项目文档与必要的 `.claude/` 引用说明，并整理对应 git commit 的详细描述；是否提交 git commit 与提交文件范围按上方开关和用户本次要求决定；增量同步与本地变更的处理顺序按"基准 commit 与增量同步"章节决定。
+根据当前 git 变更更新 `.project-memory/` 项目记忆文件与必要的 `.claude/` 引用说明，并整理对应 git commit 的详细描述；是否提交 git commit 与提交文件范围按上方开关和用户本次要求决定；增量同步与本地变更的处理顺序按"基准 commit 与增量同步"章节决定。
 
-## 文档维护边界
+# 项目记忆维护边界
 
-- `.claude_introduction/项目文档/`（`MEMORY.md` 纯索引 + 用户自建正文，默认只读）：用户维护的长期项目背景、需求材料、业务规则和补充说明。`update-docs` agent 默认只读——仅在正文已存在时读取内容并同步 `MEMORY.md` 索引，不新建/改写用户的正文；只有用户明确要求补充长期背景、业务边界或长期事实时，才按用户指定内容写入对应正文并同步索引。
-- `.claude_introduction/项目边界/`（`MEMORY.md` 纯索引 + 同级正文）：项目设计边界（哪些属于项目、哪些不属于、哪些能做、哪些不能做）与验收约束；当对话、代码修改或验证结果表明当前项目边界、成功标准、非目标、质量底线需要调整时，提示 `update-docs` agent 更新对应正文并同步索引。
-- `.claude_introduction/项目目标/`（`MEMORY.md` 纯索引 + 同级正文）：项目整体流程目标与核心功能目标；当实现过程中发现整体流程方向、需要实现的功能、阶段功能范围、目标调整或实现发现需要沉淀时，提示 `update-docs` agent 更新对应正文并同步索引。
-- `.claude_introduction/项目设计/`（`MEMORY.md` 纯索引 + 同级正文）：项目架构设计与分阶段开发规划；只有当前实现与设计方案存在差异（如某模块需要新方案、技术栈变更、阶段调整）时，才提示 `update-docs` agent 更新对应正文并同步索引；不因日常代码变更而自动同步。
+- `.project-memory/项目文档/`（`MEMORY.md` 纯索引 + 用户自建正文，默认只读）：用户维护的长期项目背景、需求材料、业务规则和补充说明。`update-docs` agent 默认只读——仅在正文已存在时读取内容并同步 `MEMORY.md` 索引，不新建/改写用户的正文；只有用户明确要求补充长期背景、业务边界或长期事实时，才按用户指定内容写入对应正文并同步索引。
+- `.project-memory/项目边界/`（`MEMORY.md` 纯索引 + 同级正文）：项目设计边界（哪些属于项目、哪些不属于、哪些能做、哪些不能做）与验收约束；当对话、代码修改或验证结果表明当前项目边界、成功标准、非目标、质量底线需要调整时，提示 `update-docs` agent 更新对应正文并同步索引。
+- `.project-memory/项目目标/`（`MEMORY.md` 纯索引 + 同级正文）：项目整体流程目标与核心功能目标；当实现过程中发现整体流程方向、需要实现的功能、阶段功能范围、目标调整或实现发现需要沉淀时，提示 `update-docs` agent 更新对应正文并同步索引。
+- `.project-memory/项目设计/`（`MEMORY.md` 纯索引 + 同级正文）：项目架构设计与分阶段开发规划；只有当前实现与设计方案存在差异（如某模块需要新方案、技术栈变更、阶段调整）时，才提示 `update-docs` agent 更新对应正文并同步索引；不因日常代码变更而自动同步。
 - git 提交说明：按一次 git commit 维度维护；当用户要求更新修改记录、总结本轮变更、整理开发记录或创建 git commit 时，提示 `update-docs` agent 生成对应 commit 的简短描述与详细描述，不再生成独立修改记录文件。
 
 ## 你的职责
 
-- 不直接执行文档更新细节；优先调用 `update-docs` agent。
-- 文档更新阶段只能使用自定义 subagent `update-docs`，不要改用 `general-purpose` 或其他通用 agent；只有“后续动作”里的向量同步/刷新步骤例外，可按下文要求额外调用 `general-purpose` subagent。
-- 调用前，先判断当前文档更新模式；允许只为判断文档状态阅读相关 `.claude_introduction/` 文档，若项目边界、项目目标等核心规划文档仍为模板空内容，则本次更新模式为”文档初始化”，否则为”文档更新”；在 prompt 中明确告知 `update-docs` agent 本次更新模式。
+- 不直接执行项目记忆更新细节；优先调用 `update-docs` agent。
+- 项目记忆更新阶段应只使用自定义 subagent `update-docs`，不要改用 `general-purpose` 或其他通用 agent；只有“后续动作”里的向量同步/刷新步骤例外，可按下文要求额外调用 `general-purpose` subagent。
+- 调用前，先判断当前项目记忆更新模式；允许只为判断记忆状态阅读相关 `.project-memory/` 文件，若项目边界、项目目标等核心规划文件仍为模板空内容，则本次更新模式为”项目记忆初始化”，否则为”项目记忆更新”；在 prompt 中明确告知 `update-docs` agent 本次更新模式。
 - 调用前，必须初始化并读取基准 commit：若 `.claude/.cache/update-docs-base-commit` 不存在，执行 `git rev-parse HEAD` 写入初始化；若存在则读取当前基准 SHA。
 - 调用前，必须判断增量状态：执行 `git rev-parse HEAD` 获取当前 HEAD，与基准 commit 对比，判断是否存在增量提交。
 - 调用前，必须判断本地变更状态：执行 `git status --short`，判断是否存在本地未提交变更。
-- 在”文档初始化”模式下，不要在 prompt 中自行决定更新范围；将项目是否有代码的判断完全交给 `update-docs` agent，由其自行检查并决定更新范围。
+- 在”项目记忆初始化”模式下，不要在 prompt 中自行决定更新范围；将项目是否有代码的判断完全交给 `update-docs` agent，由其自行检查并决定更新范围。
 - 调用前，把当前上下文中已知的变更背景、用户要求、已知需要更新的文件、已知需要写入/同步的内容交给 subagent；不要为了补充 prompt 主动阅读、搜索或分析代码。
-- 当前 skill 自己只根据已有上下文与允许读取的文档状态判断需要补充给 `update-docs` agent 的信息；代码阅读、代码搜索、变更细节确认和 git 状态分析都交给 `update-docs` agent。
+- 当前 skill 自己只根据已有上下文与允许读取的项目记忆状态判断需要补充给 `update-docs` agent 的信息；代码阅读、代码搜索、变更细节确认和 git 状态分析都交给 `update-docs` agent。
 - 调用 `update-docs` agent 时，必须按“Git 提交行为与文件范围开关”和用户本次要求，明确写明本次是否需要创建 git commit，以及本次提交文件范围（全部已更改、指定文件或排除文件）；用户本次要求优先于默认开关。
-- `update-docs` agent 会根据上下文、git 状态和文档规则，自主判断还需要更新哪些 `.claude_introduction/` 文档，并在需要提交时生成对应的简短描述与详细描述。
-- `update-docs` agent 不维护 `.claude_introduction/TODO/STEP.md` 与 `.claude_introduction/TODO/TODO.md`不由你维护，开发中长期方向/阶段步骤变更由你直接修改；当前细粒度任务板由你通过 `update-todo` skill 维护。
-- `update-docs` agent 完成文档更新和提交后，如果本次改动更新了 `.claude_introduction/` 下真实事实文档，由当前 skill 额外调用一个通用 subagent 执行 query-project 脚本的配置状态同步与向量刷新；prompt 中必须直接写明固定命令，禁止让 subagent 自行查找脚本、命令或路径。
-- 不要打断 `update-docs` agent 的执行；如果你发现用户的变更与当前文档内容存在明显冲突，或者用户的要求与文档维护边界不符，先在结果中报告冲突，再由 `update-docs` agent 根据规则判断如何调整更新内容或提交范围。
+- `update-docs` agent 会根据上下文、git 状态和文档规则，自主判断还需要更新哪些 `.project-memory/` 文档，并在需要提交时生成对应的简短描述与详细描述。
+- `update-docs` agent 不维护 `.project-memory/TODO/STEP.md` 与 `.project-memory/TODO/TODO.md`不由你维护，开发中长期方向/阶段步骤变更由你直接修改；当前细粒度任务板由你通过 `update-todo` skill 维护。
+- 项目记忆更新完成后，如果本次改动更新了 `.project-memory/` 下的真实项目记忆，当前 skill 应额外调用一个通用 subagent 执行 query-project 脚本的配置状态同步与向量刷新；prompt 中必须直接写明固定命令，禁止让 subagent 自行查找脚本、命令或路径。
+- 不要打断 `update-docs` agent 的执行；如果你发现用户的变更与当前项目记忆内容存在明显冲突，或者用户的要求与项目记忆维护边界不符，先在结果中报告冲突，再由 `update-docs` agent 根据规则判断如何调整更新内容或提交范围。
 
 ## 调用方式
 
@@ -90,21 +90,21 @@ Base commit info:
 
 Need:
 
-- 更新相关 introduction 文档与 git 提交说明
-- 本次更新模式：[文档初始化/文档更新]
+- 更新相关项目记忆与 git 提交说明
+- 当前更新模式：[项目记忆初始化/项目记忆更新]
 - 增量同步：[需要/不需要]；diff 来源：git diff [基准]..HEAD
 - 本地变更同步：[需要/不需要]；diff 来源：git diff / git diff --staged
-- 增量同步阶段：只更新文档，不创建 git commit；成功后刷新基准 commit = 当前 HEAD
+- 增量同步阶段：只更新项目记忆，不创建 git commit；成功后刷新基准 commit = 当前 HEAD
 - 本地变更同步阶段：[需要提交 git commit / 不要提交 git commit]；原因：[用户明确要求 / 默认行为]
 - 本次提交文件范围：[全部已更改 / 指定文件：... / 排除文件：...]；原因：[用户明确要求 / 默认范围]
 - 如果需要提交 git commit，严格按本次提交文件范围提交；如果不要提交 git commit，只生成提交说明并明确未提交原因
-- 文档更新成功后，刷新基准 commit 文件 `.claude/.cache/update-docs-base-commit` 为新 HEAD 的 SHA（一行纯文本，仅含 40 字符 SHA）
+- 项目记忆更新完成后，刷新基准 commit 文件 `.claude/.cache/update-docs-base-commit` 为新 HEAD 的 SHA（一行纯文本，仅含 40 字符 SHA）
 - 只返回修改文件、提交结果、基准 commit 刷新结果、以及是否已执行 query-project 配置同步 / 向量刷新与对应结果
 ```
 
 ## 后续动作
 
-如果 `update-docs` agent 完成了 `.claude_introduction/` 下真实事实文档更新，当前 skill 应额外调用一个通用 subagent 处理向量数据库刷新，并刷新基准 commit。
+- `.project-memory/` 下的项目记忆更新完成后，当前 skill 应额外调用一个通用 subagent 处理向量数据库刷新，并刷新基准 commit。
 
 1. 刷新基准 commit（独立于 query-project 刷新）：
    - 若 agent 报告增量同步成功：`git rev-parse HEAD > .claude/.cache/update-docs-base-commit`
@@ -125,17 +125,16 @@ python .claude/skills/query-project/scripts/query_introduction_rag.py --refresh-
    - 只有返回状态为 `(rag已配置)` 时，才继续执行 `--refresh-index`
 5. 固定脚本路径为：`.claude/skills/query-project/scripts/query_introduction_rag.py`。
 6. subagent 返回时只需要说明：执行了哪些命令、是否检测到 `(rag已配置)`、是否成功刷新、如失败给出最小原因。
-
 ## 提交规则摘要
 
 - `update-docs` agent 的提交行为和提交文件范围必须由当前 skill 在 prompt 中明确指定，不允许省略。
 - 当前默认提交文件范围是**全部已更改**；如用户要求指定文件或排除文件，必须在 prompt 中列清文件范围。
 - 需要提交 git commit 时，严格按指定提交文件范围提交；不要提交 git commit 时，只生成提交说明并写清未提交原因。
-- 增量同步阶段**不创建 git commit**，只更新文档到工作区。
+- 增量同步阶段**不创建 git commit**，只更新项目记忆到工作区。
 - 处理顺序：先增量同步再本地变更同步，不允许颠倒。
 - 详细提交说明在需要提交时写入 git commit body，不再额外创建独立修改记录文件。
 - git commit 不得写入 AI 联合作者行（如 `Co-Authored-By: Claude ...`）。
-- commit 描述不得涉及 `.claude/` 或 `.claude_introduction/` 下的文件修改。
+- commit 描述不得涉及 `.claude/` 或 `.project-memory/` 下的文件修改。
 - 如果存在明显不属于本次任务的改动，subagent 会先在结果中报告冲突，再由你决定。
 - 基准 commit 文件 `.claude/.cache/update-docs-base-commit` 由 skill 在 agent 返回后根据 agent 的结果判断是否刷新；agent 自身不直接写入该文件。
 - agent 必须在返回结果中明确说明增量同步是否成功；成功时 skill 刷新基准为当前 HEAD，失败时 skill 不刷新基准（下次重试）。

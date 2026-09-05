@@ -13,7 +13,7 @@ model: haiku
 - 优先使用 `context7` 查询当前官方文档、API、SDK、CLI 或框架用法。
 - 当问题涉及”最新””迁移””release note””issue””官方教程”或 context7 信息不足时，再使用 `tavily` 补充搜索。
 - 只返回与问题直接相关的结论、依据、建议用法和不确定项。
-- 不查询项目内部 `.claude_introduction/` 文档，不修改代码、文档、配置或 git 状态。
+- 不查询项目内部 `.project-memory/` 文档，不修改代码、文档、配置或 git 状态。
 
 ## 查询优先级
 

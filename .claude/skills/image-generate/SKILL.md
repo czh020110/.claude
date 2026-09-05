@@ -1,6 +1,6 @@
 ---
 name: image-generate
-description: 当用户要求生成图片、生图、出图、根据描述画图、生成海报/插画/产品图/头像/封面等图片资产时使用；先把用户需求优化为高质量英文图片生成提示词，再调用脚本请求 OpenAI Images 兼容接口，图片保存到 .claude_introduction/IMAGE，元数据保存到 .claude/.cache/image。
+description: 当用户要求生成图片、生图、出图、根据描述画图、生成海报/插画/产品图/头像/封面等图片资产时使用；先把用户需求优化为高质量英文图片生成提示词，再调用脚本请求 OpenAI Images 兼容接口，图片保存到 .project-memory/IMAGE，元数据保存到 .claude/.cache/image。
 ---
 
 使用 OpenAI Images API 兼容接口生成图片。不要在 skill 或脚本中硬编码 API Base URL 或 API Key。
@@ -19,8 +19,8 @@ description: 当用户要求生成图片、生图、出图、根据描述画图�
 1. 先根据用户需求生成一段优化后的英文图片 prompt。
 2. 选择合法 `size`，默认 `2048x2048`。
 3. 调用脚本生成图片。
-4. 图片保存到 `.claude_introduction/IMAGE/`，元数据 JSON 保存到 `.claude/.cache/image/`。
-5. 更新 `.claude_introduction/IMAGE/IMAGE.md`，追加图片索引，便于之后按需查看已有图片资产。
+4. 图片保存到 `.project-memory/IMAGE/`，元数据 JSON 保存到 `.claude/.cache/image/`。
+5. 更新 `.project-memory/IMAGE/IMAGE.md`，追加图片索引，便于之后按需查看已有图片资产。
 6. 回复用户时说明优化后的 prompt、图片路径、元数据路径、尺寸、索引更新和验证结果。
 
 ## 基础提示词要求
@@ -45,12 +45,12 @@ Create a refined, tasteful image with natural composition, believable lighting, 
 - `--size`：默认 `2048x2048`，可选：`1024x1024`、`2048x2048`、`1536x1024`、`1024x1536`、`3840x2160`、`2160x3840`。
 - `--n`：默认 `1`。
 - `--model`：默认 `gpt-image-2`。
-- `--output-dir`：默认 `.claude_introduction/IMAGE`。
+- `--output-dir`：默认 `.project-memory/IMAGE`。
 - `--metadata-dir`：默认 `.claude/.cache/image`。
 
 ## 图片索引
 
-生成图片成功后，必须更新 `.claude_introduction/IMAGE/IMAGE.md`：
+生成图片成功后，必须更新 `.project-memory/IMAGE/IMAGE.md`：
 
 - 追加短编号、图片路径、元数据路径、尺寸和用途。
 - 不写提示词摘要，不复制完整 API 响应或 base64 数据。

@@ -30,7 +30,7 @@ def project_root() -> Path:
 
 
 def default_output_dir() -> Path:
-    return project_root() / ".claude_introduction" / "IMAGE"
+    return project_root() / ".project-memory" / "IMAGE"
 
 
 def default_metadata_dir() -> Path:

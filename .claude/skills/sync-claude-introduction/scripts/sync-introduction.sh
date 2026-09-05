@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
-# sync-introduction.sh — 通过 git 分支管理 .claude_introduction/ 的独立同步
+# sync-introduction.sh — 通过 git 分支管理 .project-memory/ 的独立同步
 #
 # 原理：远程仓库中每个项目拥有独立分支 (docs/<project-id>)
-#       .claude_introduction/ 本身是该远程仓库的一个 git 工作副本
+#       `.project-memory/` 本身是该远程仓库的一个项目记忆工作副本
 #       pull/push 使用标准 git 语义，支持真正的合并与冲突处理
 #
 # 用法:
-#   sync-introduction.sh pull   — 拉取/合并远程文档到本地 (标准 git pull)
-#   sync-introduction.sh push   — 推送本地文档到远程 (标准 git push)
-#   sync-introduction.sh status — 查看文档仓库状态
+#   sync-introduction.sh pull   — 拉取/合并远程项目记忆到本地 (标准 git pull)
+#   sync-introduction.sh push   — 推送本地项目记忆到远程 (标准 git push)
+#   sync-introduction.sh status — 查看项目记忆仓库状态
 
 set -euo pipefail
 
-INTRODUCTION_DIR=".claude_introduction"
+MEMORY_DIR=".project-memory"
 
 info()  { printf "\033[36m[信息]\033[0m %s\n" "$*"; }
 ok()    { printf "\033[32m[  ✓]\033[0m %s\n" "$*"; }
@@ -53,7 +53,7 @@ detect_project_id() {
   echo "$id"
 }
 
-# ============================ 远程仓库 URL 检测 ============================ #
+# ============================ 远程项目记忆仓库 URL 检测 ============================ #
 #
 # 唯一配置位置：.claude/.cache/docs-sync.conf（一行纯文本 URL）
 # 通过 config 子命令写入，不进 git，跨设备需各自配置一次。
@@ -85,22 +85,22 @@ write_remote_repo() {
 check_gitignore() {
   local project_dir="$1"
   local gitignore="$project_dir/.gitignore"
-  local entry="$INTRODUCTION_DIR/"
+  local entry="$MEMORY_DIR/"
 
   if [ -f "$gitignore" ] && grep -q "^$entry" "$gitignore" 2>/dev/null; then
     return 0
   fi
 
-  if cd "$project_dir" && git ls-files --error-unmatch "$INTRODUCTION_DIR/" &>/dev/null 2>&1; then
-    warn "$INTRODUCTION_DIR/ 正在被主项目 git 跟踪"
-    info "建议取消跟踪，避免文档与主项目代码耦合："
-    info "  git rm -r --cached $INTRODUCTION_DIR/"
+  if cd "$project_dir" && git ls-files --error-unmatch "$MEMORY_DIR/" &>/dev/null 2>&1; then
+    warn "$MEMORY_DIR/ 正在被主项目 git 跟踪"
+    info "建议取消跟踪，避免项目记忆与主项目代码耦合："
+    info "  git rm -r --cached $MEMORY_DIR/"
     info "  echo '$entry' >> .gitignore"
-    info "  git add .gitignore && git commit -m 'chore: untrack $INTRODUCTION_DIR/'"
+    info "  git add .gitignore && git commit -m 'chore: untrack $MEMORY_DIR/'"
     return 0
   fi
 
-  warn "$INTRODUCTION_DIR/ 不在 .gitignore 中"
+  warn "$MEMORY_DIR/ 不在 .gitignore 中"
   info "建议将以下内容添加到 .gitignore："
   info "  $entry"
 }
@@ -183,7 +183,7 @@ remote_branch_exists() {
 do_pull() {
   local project_dir="$1" project_id="$2" repo_url="$3"
   local branch="docs/$project_id"
-  local intro="$project_dir/$INTRODUCTION_DIR"
+  local intro="$project_dir/$MEMORY_DIR"
 
   # === 已有 git 仓库 → 标准 git pull ===
   if [ -d "$intro/.git" ]; then
@@ -217,11 +217,11 @@ do_pull() {
   fi
 
   # === 本地已有内容但不是 git 仓库 → 自动纳入版本管理并合并远程 ===
-  # 场景：sync-claude-config 刚填充了模板文件，或用户手动放了文档。
-  # 既然用了本 skill，.claude_introduction/ 必然要当 git 仓库，直接自动 init，
+  # 场景：sync-claude-config 刚填充了模板文件，或用户手动放了项目记忆。
+  # 既然用了本 skill，.project-memory/ 必然要当 git 仓库，直接自动 init，
   # 不停下来问。本地内容先 commit，再 merge 远程分支，冲突时报告具体文件。
   if [ -e "$intro" ] && [ -n "$(find "$intro" -mindepth 1 -maxdepth 1 2>/dev/null)" ]; then
-    info "本地 $INTRODUCTION_DIR/ 有内容但未纳入版本管理，自动初始化 ..."
+    info "本地 $MEMORY_DIR/ 有内容但未纳入版本管理，自动初始化 ..."
     cd "$intro"
     git init -q
     git remote add origin "$repo_url"
@@ -279,7 +279,7 @@ do_pull() {
 
   # === 首次初始化（本地为空，远程已有分支） ===
   if remote_branch_exists "$repo_url" "$branch"; then
-    info "首次拉取：从远程分支 $branch 初始化 $INTRODUCTION_DIR/ ..."
+    info "首次拉取：从远程分支 $branch 初始化 $MEMORY_DIR/ ..."
     mkdir -p "$intro"
     cd "$intro"
     git init -q
@@ -292,8 +292,8 @@ do_pull() {
   fi
 
   # === 本地为空，远程也无分支 ===
-  err "本地 $INTRODUCTION_DIR/ 为空，远程也无分支 $branch"
-  err "请先在工作目录中创建项目文档，然后运行 push 初始化远程分支"
+  err "本地 $MEMORY_DIR/ 为空，远程也无分支 $branch"
+  err "请先在工作目录中创建项目记忆，然后运行 push 初始化远程分支"
   return 1
 }
 
@@ -302,13 +302,13 @@ do_pull() {
 do_push() {
   local project_dir="$1" project_id="$2" repo_url="$3"
   local branch="docs/$project_id"
-  local intro="$project_dir/$INTRODUCTION_DIR"
+  local intro="$project_dir/$MEMORY_DIR"
 
   # === 本地有内容但还不是 git 仓库 → 首次初始化 ===
   local just_initialized=0
   if [ ! -d "$intro/.git" ]; then
     if [ -e "$intro" ] && [ -n "$(find "$intro" -mindepth 1 -maxdepth 1 2>/dev/null)" ]; then
-      info "首次推送：将本地 $INTRODUCTION_DIR/ 纳入版本管理 ..."
+      info "首次推送：将本地 $MEMORY_DIR/ 纳入版本管理 ..."
       cd "$intro"
       git init -q
       git remote add origin "$repo_url"
@@ -323,7 +323,7 @@ do_push() {
       cd - >/dev/null
       just_initialized=1
     else
-      err "$INTRODUCTION_DIR/ 不存在或为空，请先创建项目文档再推送"
+      err "$MEMORY_DIR/ 不存在或为空，请先创建项目记忆再推送"
       return 1
     fi
   fi
@@ -341,7 +341,7 @@ do_push() {
     err "请运行（可替换为你的信息）："
     err "  git config --global user.name 'Your Name'"
     err "  git config --global user.email 'you@example.com'"
-    err "或在 $INTRODUCTION_DIR/ 内只用局部配置："
+    err "或在 $MEMORY_DIR/ 内只用局部配置："
     err "  cd $intro && git config user.name '...' && git config user.email '...'"
     cd - >/dev/null
     return 1
@@ -359,7 +359,7 @@ do_push() {
   fi
 
   if [ "$has_changes" -eq 0 ]; then
-    ok "文档内容无变更，无需推送"
+    ok "项目记忆无变更，无需推送"
     cd - >/dev/null
     return 0
   fi
@@ -369,7 +369,7 @@ do_push() {
   timestamp=$(date "+%Y-%m-%d %H:%M:%S")
   local project_name
   project_name=$(basename "$project_dir")
-  git commit -m "docs($project_id): sync $INTRODUCTION_DIR
+  git commit -m "docs($project_id): sync $MEMORY_DIR
 
 自动同步于 $timestamp
 项目: $project_name"
@@ -397,7 +397,7 @@ do_push() {
 do_diagnose() {
   local project_dir="$1" project_id="$2"
   local branch="docs/$project_id"
-  local intro="$project_dir/$INTRODUCTION_DIR"
+  local intro="$project_dir/$MEMORY_DIR"
   local cache_conf="$project_dir/.claude/.cache/docs-sync.conf"
 
   echo "--- sync-claude-introduction 诊断 ---"
@@ -410,10 +410,10 @@ do_diagnose() {
     url=$(head -1 "$cache_conf" | tr -d '[:space:]')
   fi
   if [ -n "$url" ]; then
-    echo "文档仓库 URL: $url"
+    echo "项目记忆仓库 URL: $url"
     echo "URL 已配置: 是"
   else
-    echo "文档仓库 URL: （未配置）"
+    echo "项目记忆仓库 URL: （未配置）"
     echo "URL 已配置: 否"
   fi
 
@@ -469,16 +469,16 @@ do_diagnose() {
 do_info() {
   local project_dir="$1" project_id="$2" repo_url="$3"
   local branch="docs/$project_id"
-  local intro="$project_dir/$INTRODUCTION_DIR"
+  local intro="$project_dir/$MEMORY_DIR"
 
   echo "--- sync-claude-introduction 状态 ---"
   echo "项目标识: ${project_id:-（未确定）}"
 
   # URL 配置
   if [ -n "$repo_url" ]; then
-    echo "文档仓库 URL: $repo_url"
+    echo "项目记忆仓库 URL: $repo_url"
   else
-    echo "文档仓库 URL: （未配置）"
+    echo "项目记忆仓库 URL: （未配置）"
   fi
 
   # 未初始化
@@ -540,17 +540,17 @@ do_info() {
 do_status() {
   local project_dir="$1" project_id="$2"
   local branch="docs/$project_id"
-  local intro="$project_dir/$INTRODUCTION_DIR"
+  local intro="$project_dir/$MEMORY_DIR"
 
   if [ ! -d "$intro/.git" ]; then
-    err "$INTRODUCTION_DIR/ 尚未初始化为 git 仓库"
+    err "$MEMORY_DIR/ 尚未初始化为 git 仓库"
     warn "请先运行: bash $(basename "$0") pull"
     return 1
   fi
 
   cd "$intro"
 
-  echo "=== $INTRODUCTION_DIR/ 文档仓库状态 ==="
+  echo "=== $MEMORY_DIR/ 项目记忆仓库状态 ==="
   echo "项目标识: $project_id"
   echo "分支:      $(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'none')"
   echo "远程:      $(git remote get-url origin 2>/dev/null || echo '未配置')"
@@ -597,10 +597,10 @@ main() {
       echo "--- 当前配置状态 ---"
       echo "项目标识: ${_project_id:-（未确定）}"
       if [ -n "$_repo_url" ]; then
-        echo "文档仓库 URL: $_repo_url"
+        echo "项目记忆仓库 URL: $_repo_url"
         echo "URL 已配置: 是"
       else
-        echo "文档仓库 URL: （未配置）"
+        echo "项目记忆仓库 URL: （未配置）"
         echo "URL 已配置: 否"
       fi
       echo "-------------------"
@@ -612,10 +612,10 @@ main() {
       echo "原因: 方向必须是 pull / push / info，收到: $op"
     fi
     echo "解决: 用法如下"
-    echo "  /sync-claude-introduction pull     从远程拉取文档到本地"
-    echo "  /sync-claude-introduction push     把本地文档推送到远程"
-    echo "  /sync-claude-introduction info     查看文档同步状态"
-    echo "  bash $(basename "$0") config <url> 配置文档仓库 URL"
+    echo "  /sync-claude-introduction pull     从远程拉取项目记忆到本地"
+    echo "  /sync-claude-introduction push     把本地项目记忆推送到远程"
+    echo "  /sync-claude-introduction info     查看项目记忆同步状态"
+    echo "  bash $(basename "$0") config <url> 配置项目记忆仓库 URL"
     exit 2
   fi
 
@@ -635,9 +635,9 @@ main() {
     fi
     local conf_path
     conf_path=$(write_remote_repo "$project_dir" "$url")
-    ok "已写入文档仓库 URL: $url"
+    ok "已写入项目记忆仓库 URL: $url"
     info "配置文件: $conf_path"
-    info "现在可以运行 pull / push 同步文档了"
+    info "现在可以运行 pull / push 同步项目记忆了"
     exit 0
   fi
 
@@ -669,24 +669,24 @@ main() {
   fi
 
   if [ -z "$repo_url" ]; then
-    err "未配置远程文档仓库 URL"
-    err "请先在 GitHub 创建一个空仓库（用于存放各项目的文档），然后配置 URL："
+    err "未配置远程项目记忆仓库 URL"
+    err "请先在 GitHub 创建一个空仓库（用于存放各项目的项目记忆），然后配置 URL："
     echo ""
-    info "运行（把 URL 换成你创建的仓库地址）："
+    info "运行（把 URL 换成你创建的项目记忆仓库地址）："
     echo "  bash .claude/skills/sync-claude-introduction/scripts/sync-introduction.sh config https://github.com/youruser/claude-project-docs.git"
     echo ""
     err "配置后再次运行 pull / push / status"
     exit 1
   fi
-  echo "远程仓库: $repo_url"
+  echo "项目记忆仓库: $repo_url"
   echo ""
 
   # 远程可达性 / 认证预检
-  info "验证远程仓库可达性 ..."
+  info "验证远程项目记忆仓库可达性 ..."
   if ! verify_remote_access "$repo_url"; then
-    err "无法访问远程仓库：$repo_url"
+    err "远程项目记忆仓库不可访问：$repo_url"
     err "可能原因："
-    err "  1. 仓库不存在（需先在 GitHub/GitLab 手动创建空仓库）"
+    err "  1. 项目记忆仓库不存在（需先在 GitHub/GitLab 手动创建空仓库）"
     err "  2. 认证失败（检查 SSH key 或 HTTPS token / 凭证）"
     err "  3. 网络问题"
     exit 1
