@@ -77,7 +77,7 @@
 
 - **基础配置仓库（当前仓库）**：`.project-script/` 是供其他项目初始化使用的配置资产，目录中的脚本和 `MEMORY.md` 必须纳入本仓库版本管理，不能在本仓库的 `.gitignore` 中忽略。
 - **被初始化的下游项目**：`sync-claude-config` 同步该目录后，会把下游项目的 `.project-script/` 写入下游项目 `.gitignore`；下游副本供 Claude Code 本地验证使用，不随下游项目提交。
-- `.project-script/MEMORY.md` 是验证脚本索引，不是 `.project-memory/` 的主题索引。
+- `.project-script/MEMORY.md` 是验证脚本索引，不是 `.project-memory/` 主题的记忆索引。
 - 主模型负责下游项目中验证目录的创建、已有脚本复用、可复用验证脚本新增、一次性脚本清理和 `MEMORY.md` 索引同步；不交给 `update-docs` 或 `update-todo` agent 管理。
 - 可复用脚本放在 `.project-script/<验证类型>/`，不要直接堆在根目录；索引只记录脚本路径、用途、适用场景、入口命令和必要前置条件，不复制脚本正文。
 - 新增、删除、移动或重命名可复用脚本时，必须在同一轮同步 `.project-script/MEMORY.md`；没有可复用脚本时不创建空的脚本子目录或虚假索引项。

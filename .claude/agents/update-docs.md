@@ -161,13 +161,15 @@ model: sonnet
 
 ## MEMORY.md 索引格式
 
-统一格式：
+标题按主题固定为英文短语，其余统一：
 
 ```md
-# 主题索引
+# Index Paths and Summaries Related to <Topic>
 
 - [文档名称](文档名称.md) - 覆盖范围、关键对象及应当读取该文档的任务场景。
 ```
+
+`<Topic>` 固定映射：Boundary→`Project Boundaries`、Target→`Project Targets`、Design→`Project Design`、Documents→`Project Documents`、Environment→`the Development Environment`、Commands→`Common Commands`；`.project-script/MEMORY.md` 用 `Project Verification Scripts`。
 
 每条索引必须帮助 agent 判断两件事：
 
@@ -271,7 +273,7 @@ Commands 按用户任务和完整工作流分类，**不按 Python/Git/Docker/Sh
 3. 如果项目**完全空**（无代码，只有用户管理的项目记忆）→ 只初始化 Boundary 与 Target 两个主题（各建一个正文文件并加索引）。
 4. 如果项目**已有代码** → 至少初始化 Boundary、Target、Environment、Commands 这些主题下有实际内容的文件。
 
-初始化时未涉及的主题保持 MEMORY.md 空索引（仅 `# 主题索引` 标题），不创建空正文文件。每个被涉及的主题：建好 MEMORY.md（纯索引）+ 按划分创建的正文文件，且每个正文文件都在 MEMORY 索引里有对应行。
+初始化时未涉及的主题保持 MEMORY.md 空索引（仅对应主题的 `# Index Paths and Summaries Related to ...` 英文标题），不创建空正文文件。每个被涉及的主题：建好 MEMORY.md（纯索引）+ 按划分创建的正文文件，且每个正文文件都在 MEMORY 索引里有对应行。
 
 ---
 
