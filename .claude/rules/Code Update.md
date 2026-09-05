@@ -132,5 +132,5 @@ When not to be lazy:
 
 - 不要一次性实现全部长期目标。
 - 每次迭代必须形成一个可验证的阶段成果。
-- 如果任务大于一个阶段，先拆解为阶段步骤并更新 `.project-memory/STEP/STEP.md`，再按优先级推进。
-- - 完成阶段成果后，如需沉淀本次变更说明，使用 `update-docs` skill 同步长期文档与 git 提交说明；只有用户要求调整长期方向时才直接改 `STEP.md`，不要交给 `update-docs` agent。
+- 如果任务大于一个阶段，先拆解为阶段步骤并更新 `.project-memory/TODO/STEP.md`（只记大方向步骤），再按优先级推进。
+- 完成阶段成果后，如需沉淀本次变更说明，使用 `update-docs` skill 同步长期文档与 git 提交说明；只有用户要求调整长期方向时才直接改 `STEP.md`；过程中用户提出的后续待办写入 `.project-memory/TODO/TODO.md` 共享待办列表，不要交给 `update-docs` agent。
