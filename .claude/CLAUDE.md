@@ -60,12 +60,11 @@
 
 ## 工作流分流
 
-- 查询项目背景、项目边界、项目目标、环境、TODO 或其他 `.project-memory/` 事实文档时，优先使用 `query-project` skill。
+- 查询项目背景、项目边界、项目目标、环境、TODO 或其他 `.project-memory/` 事实文档时，直接按 `.project-memory/` 索引读取对应正文，不使用 RAG 检索。
 - 开始、推进或收尾当前项目任务时，按需使用 `update-todo` skill 维护 `.project-memory/TODO/TODO.md`。
-- 代码修改后的验证脚本由主模型维护；在下游项目中新增、复用、清理脚本或同步其索引时，不交给 `update-docs`、`query-project` 或 `update-todo` agent。
+- 代码修改后的验证脚本由主模型维护；在下游项目中新增、复用、清理脚本或同步其索引时，不交给 `update-docs` 或 `update-todo` agent。
 - 用户要求更新项目记忆、总结本轮变更、整理提交说明或创建 git commit 时，使用 `update-docs` skill。
 
-- 用户要求生成图片、生图、海报、插画或其他图片资产时，使用 `image-generate` skill，并维护图片索引。
 - 涉及外部库、框架、SDK、CLI、云服务、模型 API 或 MCP 服务的最新用法时，优先委托 `docs-research` agent。
 
 ## 按需读取
@@ -82,8 +81,8 @@
 
 - **基础配置仓库（当前仓库）**：`.project-script/` 是供其他项目初始化使用的配置资产，目录中的脚本和 `MEMORY.md` 必须纳入本仓库版本管理，不能在本仓库的 `.gitignore` 中忽略。
 - **被初始化的下游项目**：`sync-claude-config` 同步该目录后，会把下游项目的 `.project-script/` 写入下游项目 `.gitignore`；下游副本供 Claude Code 本地验证使用，不随下游项目提交。
-- `.project-script/MEMORY.md` 是验证脚本索引，不是 `.project-memory/` 的主题索引，也不进入 `query-project` RAG。
-- 主模型负责下游项目中验证目录的创建、已有脚本复用、可复用验证脚本新增、一次性脚本清理和 `MEMORY.md` 索引同步；不交给 `update-docs`、`query-project` 或 `update-todo` agent 管理。
+- `.project-script/MEMORY.md` 是验证脚本索引，不是 `.project-memory/` 的主题索引。
+- 主模型负责下游项目中验证目录的创建、已有脚本复用、可复用验证脚本新增、一次性脚本清理和 `MEMORY.md` 索引同步；不交给 `update-docs` 或 `update-todo` agent 管理。
 - 可复用脚本放在 `.project-script/<验证类型>/`，不要直接堆在根目录；索引只记录脚本路径、用途、适用场景、入口命令和必要前置条件，不复制脚本正文。
 - 新增、删除、移动或重命名可复用脚本时，必须在同一轮同步 `.project-script/MEMORY.md`；没有可复用脚本时不创建空的脚本子目录或虚假索引项。
 - 验证脚本只能通过环境变量或其他安全配置读取凭证，不得保存 API key、token、Cookie 或其他可直接使用的凭证。

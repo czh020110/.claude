@@ -1,6 +1,6 @@
 ---
 name: update-docs
-description: 当用户要求更新项目记忆文件与 git 提交说明，或需要根据当前变更生成 git commit 时使用；委托 `update-docs` agent 更新 `.project-memory/` 项目记忆与提交结果，并在完成后按需调用通用 agent 直接执行 query-project 脚本同步/刷新向量库。
+description: 当用户要求更新项目记忆文件与 git 提交说明，或需要根据当前变更生成 git commit 时使用；委托 `update-docs` agent 更新 `.project-memory/` 项目记忆与提交结果。
 ---
 
 - `update-docs` agent 是一次性汇总和更新项目记忆的专用工具，只在用户主动要求时调用；不负责在开发过程中随代码变更实时调用或实时维护项目记忆。每次调用是一次性的完整流程：分析变更 → 检查文档 → 更新项目记忆 → 按需提交。
@@ -35,7 +35,7 @@ description: 当用户要求更新项目记忆文件与 git 提交说明，或�
 ## 你的职责
 
 - 不直接执行项目记忆更新细节；优先调用 `update-docs` agent。
-- 项目记忆更新阶段应只使用自定义 subagent `update-docs`，不要改用 `general-purpose` 或其他通用 agent；只有“后续动作”里的向量同步/刷新步骤例外，可按下文要求额外调用 `general-purpose` subagent。
+- 项目记忆更新阶段应只使用自定义 subagent `update-docs`，不要改用 `general-purpose` 或其他通用 agent。
 - 调用前，先判断当前项目记忆更新模式；允许只为判断记忆状态阅读相关 `.project-memory/` 文件，若项目边界、项目目标等核心规划文件仍为模板空内容，则本次更新模式为”项目记忆初始化”，否则为”项目记忆更新”；在 prompt 中明确告知 `update-docs` agent 本次更新模式。
 - 调用前，必须初始化并读取基准 commit：若 `.claude/.cache/update-docs-base-commit` 不存在，执行 `git rev-parse HEAD` 写入初始化；若存在则读取当前基准 SHA。
 - 调用前，必须判断增量状态：执行 `git rev-parse HEAD` 获取当前 HEAD，与基准 commit 对比，判断是否存在增量提交。
@@ -46,7 +46,7 @@ description: 当用户要求更新项目记忆文件与 git 提交说明，或�
 - 调用 `update-docs` agent 时，必须按“Git 提交行为与文件范围开关”和用户本次要求，明确写明本次是否需要创建 git commit，以及本次提交文件范围（全部已更改、指定文件或排除文件）；用户本次要求优先于默认开关。
 - `update-docs` agent 会根据上下文、git 状态和文档规则，自主判断还需要更新哪些 `.project-memory/` 文档，并在需要提交时生成对应的简短描述与详细描述。
 - `update-docs` agent 不维护 `.project-memory/TODO/STEP.md` 与 `.project-memory/TODO/TODO.md`不由你维护，开发中长期方向/阶段步骤变更由你直接修改；当前细粒度任务板由你通过 `update-todo` skill 维护。
-- 项目记忆更新完成后，如果本次改动更新了 `.project-memory/` 下的真实项目记忆，当前 skill 应额外调用一个通用 subagent 执行 query-project 脚本的配置状态同步与向量刷新；prompt 中必须直接写明固定命令，禁止让 subagent 自行查找脚本、命令或路径。
+- 项目记忆更新完成后，只刷新基准 commit；不执行向量数据库刷新。
 - 不要打断 `update-docs` agent 的执行；如果你发现用户的变更与当前项目记忆内容存在明显冲突，或者用户的要求与项目记忆维护边界不符，先在结果中报告冲突，再由 `update-docs` agent 根据规则判断如何调整更新内容或提交范围。
 
 ## 调用方式
@@ -99,32 +99,18 @@ Need:
 - 本次提交文件范围：[全部已更改 / 指定文件：... / 排除文件：...]；原因：[用户明确要求 / 默认范围]
 - 如果需要提交 git commit，严格按本次提交文件范围提交；如果不要提交 git commit，只生成提交说明并明确未提交原因
 - 项目记忆更新完成后，刷新基准 commit 文件 `.claude/.cache/update-docs-base-commit` 为新 HEAD 的 SHA（一行纯文本，仅含 40 字符 SHA）
-- 只返回修改文件、提交结果、基准 commit 刷新结果、以及是否已执行 query-project 配置同步 / 向量刷新与对应结果
+- 只返回修改文件、提交结果和基准 commit 刷新结果
 ```
 
 ## 后续动作
 
-- `.project-memory/` 下的项目记忆更新完成后，当前 skill 应额外调用一个通用 subagent 处理向量数据库刷新，并刷新基准 commit。
+项目记忆更新完成后，刷新基准 commit。
 
-1. 刷新基准 commit（独立于 query-project 刷新）：
+1. 刷新基准 commit：
    - 若 agent 报告增量同步成功：`git rev-parse HEAD > .claude/.cache/update-docs-base-commit`
    - 若 agent 报告增量同步失败：不刷新基准
    - 若 agent 执行了本地变更同步并成功提交了 git commit：再次 `git rev-parse HEAD > .claude/.cache/update-docs-base-commit`（因为 HEAD 已因新 commit 变化）
-2. 使用 Agent 工具调用：
-   - `subagent_type`: `general-purpose`
-   - `description`: `Refresh query-project RAG`
-3. prompt 中必须直接写明以下命令示例，并明确要求 subagent 直接执行，不要自行查找脚本、命令或路径；解释时强调 `python` 只是示例占位，实际应使用当前环境可用的 Python 解释器：
 
-```bash
-python .claude/skills/query-project/scripts/query_introduction_rag.py --sync-config-status
-python .claude/skills/query-project/scripts/query_introduction_rag.py --refresh-index
-```
-
-4. 执行顺序要求：
-   - 先执行 `--sync-config-status`
-   - 只有返回状态为 `(rag已配置)` 时，才继续执行 `--refresh-index`
-5. 固定脚本路径为：`.claude/skills/query-project/scripts/query_introduction_rag.py`。
-6. subagent 返回时只需要说明：执行了哪些命令、是否检测到 `(rag已配置)`、是否成功刷新、如失败给出最小原因。
 ## 提交规则摘要
 
 - `update-docs` agent 的提交行为和提交文件范围必须由当前 skill 在 prompt 中明确指定，不允许省略。
