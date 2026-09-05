@@ -45,7 +45,7 @@ description: 当用户要求更新项目记忆文件与 git 提交说明，或�
 - 当前 skill 自己只根据已有上下文与允许读取的项目记忆状态判断需要补充给 `update-docs` agent 的信息；代码阅读、代码搜索、变更细节确认和 git 状态分析都交给 `update-docs` agent。
 - 调用 `update-docs` agent 时，必须按“Git 提交行为与文件范围开关”和用户本次要求，明确写明本次是否需要创建 git commit，以及本次提交文件范围（全部已更改、指定文件或排除文件）；用户本次要求优先于默认开关。
 - `update-docs` agent 会根据上下文、git 状态和文档规则，自主判断还需要更新哪些 `.project-memory/` 文档，并在需要提交时生成对应的简短描述与详细描述。
-- `update-docs` agent 不维护 `.project-memory/TODO/STEP.md` 与 `.project-memory/TODO/TODO.md`不由你维护，开发中长期方向/阶段步骤变更由你直接修改；当前细粒度任务板由你通过 `update-todo` skill 维护。
+- `update-docs` agent 不维护 `.project-memory/STEP/STEP.md`，开发中长期方向/阶段步骤变更由你直接修改。
 - 项目记忆更新完成后，只刷新基准 commit；不执行向量数据库刷新。
 - 不要打断 `update-docs` agent 的执行；如果你发现用户的变更与当前项目记忆内容存在明显冲突，或者用户的要求与项目记忆维护边界不符，先在结果中报告冲突，再由 `update-docs` agent 根据规则判断如何调整更新内容或提交范围。
 

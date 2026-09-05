@@ -2,7 +2,7 @@
 
 ## 1. 适用范围
 
-- 适用于设计类记忆文档（Boundary、Target、Design、STEP、TODO）的方案更新与修改。
+- 适用于设计类记忆文档（Boundary、Target、Design、STEP）的方案更新与修改。
 - 适用于对 `update-docs` agent/skill 的调用时机和职责边界的说明。
 - 适用于你在对话中识别并持久化用户偏好（工作方式、协作习惯、设计取向外显表达）时的记录规则。
 
@@ -45,8 +45,7 @@
 - `.project-memory/Boundary/`（`MEMORY.md` 纯索引 + 同级正文）— 项目设计边界、约束、禁止事项
 - `.project-memory/Target/`（`MEMORY.md` 纯索引 + 同级正文）— 项目整体流程目标、核心功能目标、阶段功能范围
 - `.project-memory/Design/`（`MEMORY.md` 纯索引 + 同级正文）— 项目架构设计与分阶段开发规划
-- `.project-memory/TODO/STEP.md` — 长期方向和阶段步骤
-- `.project-memory/TODO/TODO.md` — 细粒度任务板
+- `.project-memory/STEP/STEP.md` — 长期进度（长期方向和阶段步骤）
 
 你必须根据用户提出的内容，判断应该更新哪个或哪些文档；可能只涉及其中一个，也可能同时涉及多个。
 
@@ -67,7 +66,7 @@
    - 是否与现有架构冲突
    - 是否与当前阶段目标矛盾
    - 是否存在明显的技术风险或依赖问题
-   - 如有必要，先读取相关项目文档（Target、Boundary、Design、STEP、TODO）确认上下文
+   - 如有必要，先读取相关项目文档（Target、Boundary、Design、STEP）确认上下文
 
 2. **与用户讨论**：必须主动向用户提问确认，包括：
    - 简要说明对方案可行性的分析结论
