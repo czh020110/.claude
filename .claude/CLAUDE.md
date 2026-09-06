@@ -24,14 +24,14 @@
 - Design： @../.project-memory/Design/MEMORY.md
   - 记录项目架构设计、模块划分、设计理由、损失与训练策略和实验设计。
   - 架构推进、更新 Design 正文或实现与既有设计出现差异时按需读取；不因日常小改自动同步。
-- 长期计划： @../.project-memory/TODO/STEP.md
+- Long-term step： @../.project-memory/TODO/STEP.md
   - 开始记录和开发时读取
   - 项目长期方向和阶段步骤事实源，默认不随每次提交更新，只做大方向参考，不细化阶段内目标。
   - 空模板时，只有用户明确要求才设计完整历程表；非空时，历程有变更（方向/阶段调整）可由你直接修改；不交给 `update-docs` agent。
-- 共享待办： @../.project-memory/TODO/TODO.md
+- Shared ToDo： @../.project-memory/TODO/TODO.md
   - 你与用户共享的待办列表，任何粒度的任务都能记；只维护简单 markdown 待办行，不用多级标题。
   - 用户说"后续要做 X"时主动写入；开始任务把 `[ ]` 改 `[-]`；完成后把整条迁入 `DONE.md` 标记 `[x]`，TODO.md 不保留已完成条目。
-- 已完成归档： @../.project-memory/TODO/DONE.md
+- Archived ToDo： `.project-memory/TODO/DONE.md`
   - 已完成任务的归档列表，不限制条数；每条在原任务文本后追加小括号说明验证方式（用了 `.project-script/` 脚本写脚本名，否则一句话简述）。
   - 按需读取：用户提到过去某个已完成任务而你没有相关记忆时读取。
 
@@ -44,7 +44,6 @@
 - 完成修改后必须说明修改了哪些文件；涉及代码时说明验证方式和结果。
 - 完成阶段性工作后，必须检查 Task 工具中的任务状态；已经完成的任务要立即标记为 completed，避免遗留 in_progress/pending 任务。
 - 不要一次性实现全部长期目标；每次推进应形成一个可验证的阶段成果。
-- 不确定第三方库、SDK、CLI、云服务或框架接口时，先委托 `docs-research` agent 查询最新官方文档或网络资料，再实现。
 
 ## 会话沉淀（每轮收尾，MUST）
 
@@ -61,17 +60,9 @@
 ## 工作流分流
 
 - 查询项目背景、Boundary、Target、环境、长期计划或共享待办或其他 `.project-memory/` 事实文档时，直接按 `.project-memory/` 索引读取对应正文，不使用 RAG 检索。
-- 代码修改后的验证脚本由主模型维护；在下游项目中新增、复用、清理脚本或同步其索引时，不交给 `update-docs` agent。
 - 用户要求更新项目记忆、总结本轮变更、整理提交说明或创建 git commit 时，使用 `update-docs` skill。
-
+- 验证脚本与 STEP/TODO/DONE 的维护由你直接修改，不交 `update-docs` agent。
 - 涉及外部库、框架、SDK、CLI、云服务、模型 API 或 MCP 服务的最新用法时，优先委托 `docs-research` agent。
-
-## 按需读取
-
-- 需要判断设计边界（哪些能做、哪些不能做）、优先级或验收标准时，读取 `.project-memory/Boundary/` 正文。
-- 需要确认长期计划时读取 `.project-memory/TODO/STEP.md`；需要查看或维护待办时读取 `.project-memory/TODO/TODO.md`；用户提到过去某个已完成任务而没有相关记忆时，读取 `.project-memory/TODO/DONE.md` 查验证方式。
-- 需要确认环境、命令或本地运行方式时，读取 `.project-memory/Environment/` 或 `.project-memory/Commands/` 正文。
-- `.project-memory/Documents/` 是用户维护的长期项目相关文档，默认只读；除非用户明确要求，不要主动写入。
 
 ## 本地验证脚本
 
@@ -80,7 +71,7 @@
 - **基础配置仓库（当前仓库）**：`.project-script/` 是供其他项目初始化使用的配置资产，目录中的脚本和 `MEMORY.md` 必须纳入本仓库版本管理，不能在本仓库的 `.gitignore` 中忽略。
 - **被初始化的下游项目**：`sync-claude-config` 同步该目录后，会把下游项目的 `.project-script/` 写入下游项目 `.gitignore`；下游副本供 Claude Code 本地验证使用，不随下游项目提交。
 - `.project-script/MEMORY.md` 是验证脚本索引，不是 `.project-memory/` 主题的记忆索引。
-- 主模型负责下游项目中验证目录的创建、已有脚本复用、可复用验证脚本新增、一次性脚本清理和 `MEMORY.md` 索引同步；不交给 `update-docs` agent 管理。
+- 主模型负责下游项目中验证目录的创建、已有脚本复用、可复用验证脚本新增、一次性脚本清理和 `MEMORY.md` 索引同步。
 - 可复用脚本放在 `.project-script/<验证类型>/`，不要直接堆在根目录；索引只记录脚本路径、用途、适用场景、入口命令和必要前置条件，不复制脚本正文。
 - 新增、删除、移动或重命名可复用脚本时，必须在同一轮同步 `.project-script/MEMORY.md`；没有可复用脚本时不创建空的脚本子目录或虚假索引项。
 - 验证脚本只能通过环境变量或其他安全配置读取凭证，不得保存 API key、token、Cookie 或其他可直接使用的凭证。
@@ -92,12 +83,6 @@
 - 不设"默认正文文件""兜底文件"——每个正文文件有明确独立职责，明确可分的类型就分开建文件。
 - `.project-memory/` 下具体正文文件只写真实项目事实，不写泛泛教程、模板说明或临时修改记录。
 - 修改记录不单独建文档；需要沉淀时写入对应 git commit 的详细描述。
-
-# 长期计划与共享待办
-
-项目长期方向与阶段步骤事实源（只做大方向参考，不细化阶段内目标）: `@../.project-memory/TODO/STEP.md`
-共享待办列表（你与用户共同维护，简单 markdown 待办行）: `@../.project-memory/TODO/TODO.md`
-已完成任务归档（按需读取、不 @ 注入；不限制条数，每条注明验证方式）: `.project-memory/TODO/DONE.md`
 
 # Git 提交说明
 
