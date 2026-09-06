@@ -30,7 +30,10 @@
   - 空模板时，只有用户明确要求才设计完整历程表；非空时，历程有变更（方向/阶段调整）可由你直接修改；不交给 `update-docs` agent。
 - 共享待办： @../.project-memory/TODO/TODO.md
   - 你与用户共享的待办列表，任何粒度的任务都能记；只维护简单 markdown 待办行，不用多级标题。
-  - 用户说"后续要做 X"时主动写入；开始任务把 `[ ]` 改 `[-]`，完成改 `[x]`；已完成条目只保留最近 5 条，超出的必须删除。
+  - 用户说"后续要做 X"时主动写入；开始任务把 `[ ]` 改 `[-]`；完成后把整条迁入 `DONE.md` 标记 `[x]`，TODO.md 不保留已完成条目。
+- 已完成归档： @../.project-memory/TODO/DONE.md
+  - 已完成任务的归档列表，不限制条数；每条在原任务文本后追加小括号说明验证方式（用了 `.project-script/` 脚本写脚本名，否则一句话简述）。
+  - 按需读取：用户提到过去某个已完成任务而你没有相关记忆时读取。
 
 ## 执行要求
 
@@ -51,6 +54,7 @@
 2. **新设计决定**：用户提出方案变更、架构调整、边界调整或打算后续使用的新方向 → 先分析、确认后再直接修改对应正文并同步索引。
 3. **新长期方向**：用户提出新的大方向/阶段步骤，或判断当前 STEP 已与任务脱节 → 与用户确认后直接更新 `.project-memory/TODO/STEP.md`。
 4. **新待办**：用户提出后续要完成的事项（任何粒度）→ 在 `.project-memory/TODO/TODO.md` 末尾追加 `- [ ] 待办内容`。
+5. **任务完成**：把该条从 `TODO.md` 删除，追加到 `.project-memory/TODO/DONE.md` 末尾，改 `- [x]`，并在同行末尾追加小括号说明验证方式（用了 `.project-script/` 脚本写脚本名，否则一句话说明）。
 
 无可沉淀内容时直接结束，不做多余动作。
 
@@ -65,7 +69,7 @@
 ## 按需读取
 
 - 需要判断设计边界（哪些能做、哪些不能做）、优先级或验收标准时，读取 `.project-memory/Boundary/` 正文。
-- 需要确认长期计划时读取 `.project-memory/TODO/STEP.md`；需要查看或维护待办时读取 `.project-memory/TODO/TODO.md`。
+- 需要确认长期计划时读取 `.project-memory/TODO/STEP.md`；需要查看或维护待办时读取 `.project-memory/TODO/TODO.md`；用户提到过去某个已完成任务而没有相关记忆时，读取 `.project-memory/TODO/DONE.md` 查验证方式。
 - 需要确认环境、命令或本地运行方式时，读取 `.project-memory/Environment/` 或 `.project-memory/Commands/` 正文。
 - `.project-memory/Documents/` 是用户维护的长期项目相关文档，默认只读；除非用户明确要求，不要主动写入。
 
@@ -92,7 +96,8 @@
 # 长期计划与共享待办
 
 项目长期方向与阶段步骤事实源（只做大方向参考，不细化阶段内目标）: `@../.project-memory/TODO/STEP.md`
-共享待办列表（你与用户共同维护，简单 markdown 待办行，已完成只留最近 5 条）: `@../.project-memory/TODO/TODO.md`
+共享待办列表（你与用户共同维护，简单 markdown 待办行）: `@../.project-memory/TODO/TODO.md`
+已完成任务归档（按需读取、不 @ 注入；不限制条数，每条注明验证方式）: `.project-memory/TODO/DONE.md`
 
 # Git 提交说明
 
