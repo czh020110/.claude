@@ -17,19 +17,19 @@
 | --- | --- | --- |
 | 定位 | 实时局部更新 | 阶段性全量汇总 |
 | 执行者 | 你（主模型）亲自执行，不调用 subagent | 委托 `collect-update-memory` subagent |
-| 触发 | 对话/任务中发现需要记下来的关键信息时随时使用 | 只在用户主动要求时调用（阶段性汇总、提交说明、git commit） |
+| 触发 | 对话/任务中发现需要记下来的关键信息时随时使用 | 只在用户主动要求时调用（阶段性汇总、全量对齐） |
 | 范围 | 只更新本次涉及主题的正文与索引（可新建），不扫描全部代码、不读取全部记忆 | 基于 git 变更做全量同步，检查所有相关记忆文档 |
-| git 提交 | 不创建 git commit | 按顶部开关生成并执行提交说明 |
+| git 提交 | 不创建 git commit | agent 不提交；用户要求提交时由 skill 先调 `git-commit` skill 完成 commit，再更新记忆 |
 
 - 记忆文档的更新方法（索引 + 分块文件范式、格式模板、归属原则）只在 `update-memory` SKILL.md 中说明，本文档不重复。
 - 本规则只记录 `.project-memory/` 相关内容；`.project-memory/TODO/` 与 `.project-script/` 的维护方式只在 CLAUDE.md 中说明，本文档不重复。
 - `.project-memory/Documents/`（用户上传文档）正文默认只读，记忆索引由 `collect-update-memory` agent 同步，不由 `update-memory` 更新。
-- 在开发过程中随代码变更实时维护记忆，用 `update-memory`；阶段性收尾、提交说明与全量对齐，用 `collect-update-memory`。不要为实时小更新调用 `collect-update-memory` subagent。
+- 在开发过程中随代码变更实时维护记忆，用 `update-memory`；阶段性收尾与全量对齐，用 `collect-update-memory`（commit 由 `git-commit` skill 先行完成）。不要为实时小更新调用 `collect-update-memory` subagent。
 
-`collect-update-memory` 的调用边界（调用时机、提交开关、基准 commit 流程）唯一权威版本在 `collect-update-memory` SKILL.md，要点：
+`collect-update-memory` 的调用边界（调用时机、commit 与记忆更新的先后顺序、基准 commit 流程）唯一权威版本在 `collect-update-memory` SKILL.md，要点：
 
-- 完成阶段成果后，如需沉淀本次变更说明，使用 `collect-update-memory` skill 同步长期文档与 git 提交说明；
-- 只在用户主动要求时调用（阶段性汇总、提交说明、git commit）；**不负责开发过程中随代码变更实时更新项目文档**——过程中的记忆更新使用 `update-memory` skill，由你自己直接修改。
+- 完成阶段成果后，如需沉淀本次变更，使用 `collect-update-memory` skill 同步长期记忆文档；git commit 由其中的 `git-commit` skill 先行完成；
+- 只在用户主动要求时调用（阶段性汇总、全量对齐）；**不负责开发过程中随代码变更实时更新项目文档**——过程中的记忆更新使用 `update-memory` skill，由你自己直接修改。
 - 用户偏好、会话中新产生的设计事实与实现事实，由你在对话过程中通过 `update-memory` skill 自主沉淀，不依赖 `collect-update-memory`。
 
 ---

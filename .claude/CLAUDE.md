@@ -66,7 +66,8 @@
 
 - 查询项目背景、Boundary、Target、环境、长期计划或共享待办或其他 `.project-memory/` 事实文档时，直接按 `.project-memory/` 索引读取对应正文，不使用 RAG 检索。
 - 对话/任务中发现需要记下来的关键信息时，使用 `update-memory` skill 实时局部更新项目记忆（主模型亲自改，不提交 git）。
-- 用户要求阶段性汇总、总结本轮变更、整理提交说明或创建 git commit 时，使用 `collect-update-memory` skill（委托 subagent 全量更新），只由用户主动调用。
+- 用户要求阶段性汇总或更新项目记忆时，使用 `collect-update-memory` skill（委托 subagent 全量更新），只由用户主动调用；其中 git commit 由 `git-commit` skill 先行完成。
+- 用户要求创建 git commit 时，使用 `git-commit` skill 执行。
 - 验证脚本与 STEP/TODO/DONE 的维护由你直接修改，不使用上述两个 skill。
 - 涉及外部库、框架、SDK、CLI、云服务、模型 API 或 MCP 服务的最新用法时，优先委托 `docs-research` agent。
 
