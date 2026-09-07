@@ -22,16 +22,16 @@
 ## 3. 查询优先级（MUST）
 
 1. `context7 MCP`：查询库、框架、SDK、API 的当前官方文档。
-2. `tavily MCP`：查询官方页面、迁移说明、Issue、Release note 或 context7 不足的信息。
+2. 网络搜索工具：查询官方页面、迁移说明、Issue、Release note 或 context7 不足的信息。
 
-如果用户要求联网搜索，优先使用 tavily MCP。
+如果用户要求联网搜索，优先使用网络搜索工具。
 
 ---
 
 ## 4. 路由规则（MUST）
 
 - 当任务涉及最新技术文档、官方用法确认、版本差异、迁移说明、Release note、Issue、官方教程，或用户明确要求联网搜索时，主模型应优先委托 `docs-research` agent 查询，不要直接凭记忆或零散搜索后回答。
-- `docs-research` agent 负责使用 `context7` 与 `tavily` 检索外部技术资料，并将整理后的结果返回给主模型。
+- `docs-research` agent 负责使用 `context7` 与网络搜索工具检索外部技术资料，并将整理后的结果返回给主模型。
 - 主模型职责是提交问题和结果要求，在收到 `docs-research` agent 结果后，再结合当前任务做最终回答或实现。
 - 项目内部背景、Boundary、Target、环境、长期计划或共享待办等文档细节，不属于 `docs-research` agent 范围；这类问题应直接按 `.project-memory/` 索引读取对应正文。
 
