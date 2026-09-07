@@ -8,7 +8,7 @@
 
 - Documents： @../.project-memory/Documents/MEMORY.md
   - 用户维护的长期项目背景、需求材料、业务规则和补充说明。
-  - 默认只读：除非用户明确要求补充长期项目事实，不要主动写入正文，Dcuments 只可由 `update-docs` agent 更新索引。
+  - 默认只读：除非用户明确要求补充长期项目事实，不要主动写入正文，Dcuments 只可由 `collect-update-memory` agent 更新索引。
 - Boundary： @../.project-memory/Boundary/MEMORY.md
   - 记录必须遵守的限制、明确不做的事项、设计约束、禁止事项、成功标准与质量底线。
   - 开始新功能、调整阶段范围或判断是否偏离 Boundary 前优先读取。
@@ -66,7 +66,7 @@
 
 - 查询项目背景、Boundary、Target、环境、长期计划或共享待办或其他 `.project-memory/` 事实文档时，直接按 `.project-memory/` 索引读取对应正文，不使用 RAG 检索。
 - 对话/任务中发现需要记下来的关键信息时，使用 `update-memory` skill 实时局部更新项目记忆（主模型亲自改，不提交 git）。
-- 用户要求阶段性汇总、总结本轮变更、整理提交说明或创建 git commit 时，使用 `update-docs` skill（委托 subagent 全量更新），只由用户主动调用。
+- 用户要求阶段性汇总、总结本轮变更、整理提交说明或创建 git commit 时，使用 `collect-update-memory` skill（委托 subagent 全量更新），只由用户主动调用。
 - 验证脚本与 STEP/TODO/DONE 的维护由你直接修改，不使用上述两个 skill。
 - 涉及外部库、框架、SDK、CLI、云服务、模型 API 或 MCP 服务的最新用法时，优先委托 `docs-research` agent。
 

@@ -5,13 +5,13 @@ description: 任务进行中或任务结束都可使用，用于实时更新项�
 
 # 定位与边界（MUST）
 
-- 本 skill 由你（主模型）**亲自执行**，不调用任何 subagent；也不是全量更新。全量汇总更新走 `update-docs`（用户主动要求时调用，委托 subagent），与本 skill 互不替代。
+- 本 skill 由你（主模型）**亲自执行**，不调用任何 subagent；也不是全量更新。全量汇总更新走 `collect-update-memory`（用户主动要求时调用，委托 subagent），与本 skill 互不替代。
 - **局部更新**：只依据当前对话和任务过程中确认的事实，更新需要更新的主题文件（可新建）；不扫描全部代码，不读取全部记忆，只读取本次涉及主题的 `MEMORY.md` 索引与相关正文。
-- **不创建 git commit**：只修改工作区文件；git 提交说明与提交由 `update-docs` 流程负责。
+- **不创建 git commit**：只修改工作区文件；git 提交说明与提交由 `collect-update-memory` 流程负责。
 - **排除范围（MUST）**：
   - 不维护 `.project-memory/TODO/`（STEP.md 长期计划、TODO.md 共享待办、DONE.md 已完成归档）——实时更新方式见 CLAUDE.md「会话沉淀」。
   - 不维护 `.project-script/`（验证脚本的创建、复用、清理与 `MEMORY.md` 索引同步）——实时更新方式见 CLAUDE.md「本地验证脚本」节。
-  - 不更新 `.project-memory/Documents/`：用户上传文档的主题，正文默认只读；其记忆索引由 `update-docs` agent 同步维护，不由本 skill 更新。
+  - 不更新 `.project-memory/Documents/`：用户上传文档的主题，正文默认只读；其记忆索引由 `collect-update-memory` agent 同步维护，不由本 skill 更新。
 
 # 触发时机
 
@@ -20,7 +20,7 @@ description: 任务进行中或任务结束都可使用，用于实时更新项�
 
 # 更新流程（MUST）
 
-1. **定位主题**：判断事实归属 `.project-memory/` 哪个大主题（Commands/Environment/Target/Design/Boundary，归属原则见下文）。Documents 由 `update-docs` agent 维护，不在本 skill 范围。
+1. **定位主题**：判断事实归属 `.project-memory/` 哪个大主题（Commands/Environment/Target/Design/Boundary，归属原则见下文）。Documents 由 `collect-update-memory` agent 维护，不在本 skill 范围。
 2. **读取该主题 `MEMORY.md` 索引**：通过索引描述判断内容应归入哪个已有正文文件；需要时才读取该正文。不读取无关主题。
 3. **写入正文**：
    - 优先归入已有正文文件（同一对象/同一工作流/同一设计问题），更新或补充对应章节，替换过时内容。
@@ -93,7 +93,7 @@ description: 任务进行中或任务结束都可使用，用于实时更新项�
 | ----------- | -------------------------------------------------------------------------------------------------------------- |
 | Commands    | 怎样安装、运行、构建、评估、调试项目；命令从哪个目录执行、依赖什么、预期结果、常见失败恢复                     |
 | Environment | 项目在什么系统/运行环境工作；软件、框架及关键版本；硬件与计算资源；数据/模型/日志/输出路径；环境变量；平台限制 |
-| Documents   | 用户上传的项目相关文档（只读），只由 update-docs agent 更新索引                                                |
+| Documents   | 用户上传的项目相关文档（只读），只由 collect-update-memory agent 更新索引                                                |
 | Target      | 项目为什么存在；当前要解决什么问题；最终目标；阶段目标；用何标准判断目标达成                                   |
 | Design      | 当前项目已有代码的：系统整体怎样组织；各模块职责；模块如何协作；为何采用当前设计；关键策略/方案设计与理由      |
 | Boundary    | 哪些行为必须保持；哪些明确不做；数据/模型/接口/实验的限制；哪些修改被禁止                                      |
@@ -177,11 +177,11 @@ MEMORY 由你直接维护，不引入自动生成脚本。区分"结构变化"�
 
 设计类文档（Boundary/Target/Design）的方案变更先与用户确认后再写入；工作方式、命令约定等纯事实偏好可直接记录。
 
-# 与 update-docs 的分工
+# 与 collect-update-memory 的分工
 
 | 场景                                                 | 使用                                         |
 | ---------------------------------------------------- | -------------------------------------------- |
 | 对话/任务中发现需要记下来的关键信息，实时局部更新    | 本 skill（主模型亲自改，不提交 git）         |
-| 用户主动要求的阶段性汇总、全量同步、git 提交说明整理 | `update-docs` skill → `update-docs` subagent |
+| 用户主动要求的阶段性汇总、全量同步、git 提交说明整理 | `collect-update-memory` skill → `collect-update-memory` subagent |
 
-`.project-memory/Documents/`（用户上传文档）正文默认只读，记忆索引由 `update-docs` agent 同步；本 skill 不更新该主题。
+`.project-memory/Documents/`（用户上传文档）正文默认只读，记忆索引由 `collect-update-memory` agent 同步；本 skill 不更新该主题。

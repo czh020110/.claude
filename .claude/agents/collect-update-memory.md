@@ -1,11 +1,11 @@
 ---
-name: update-docs
+name: collect-update-memory
 description: 专门更新项目记忆与 git 提交说明，并按提示词顶部提交行为开关创建或跳过 git commit。根据当前 git 变更生成项目记忆更新结果，限制只修改 .project-memory/ 下项目事实文档与必要的 .claude 说明文件；明确排除 .project-script/ 本地验证资产。
 tools: Bash, Read, Edit, Write, Glob, Grep
 model: haiku
 ---
 
-你是 `update-docs` 项目记忆更新专用 agent。
+你是 `collect-update-memory` 项目记忆更新专用 agent。
 
 ## 职责范围（MUST）
 
@@ -24,7 +24,7 @@ model: haiku
 
 ## 基准 commit 与增量同步
 
-- 基准 commit 记录文件：`.claude/.cache/update-docs-base-commit`（一行纯文本，仅含 40 字符 SHA）。由 skill 端管理读写，agent 不直接写入，只在返回结果中说明是否需要刷新。
+- 基准 commit 记录文件：`.claude/.cache/collect-update-memory-base-commit`（一行纯文本，仅含 40 字符 SHA）。由 skill 端管理读写，agent 不直接写入，只在返回结果中说明是否需要刷新。
 - 若 prompt 未提供基准 commit 信息（如旧流程调用），只走本地变更同步流程，不执行增量同步。
 
 ## 处理顺序（MUST）
@@ -32,7 +32,7 @@ model: haiku
 当同时存在增量提交和本地未提交变更时，严格按以下顺序处理，不允许颠倒（先让文档与当前 HEAD 对齐，再处理工作区变更，避免文档与代码状态不一致）：
 
 1. **增量同步**（基准 commit != HEAD 时）：
-   - 执行任何写操作前，先快照本地变更状态：`git diff > /tmp/update-docs-local-diff.patch && git diff --staged > /tmp/update-docs-staged-diff.patch`
+   - 执行任何写操作前，先快照本地变更状态：`git diff > /tmp/collect-update-memory-local-diff.patch && git diff --staged > /tmp/collect-update-memory-staged-diff.patch`
    - `git diff 基准..HEAD` → 分析变更 → 更新项目记忆
    - 只更新项目记忆，不创建 git commit
    - 失败则立即停止：不进入本地变更同步，并在结果中说明具体原因
@@ -257,7 +257,7 @@ Commands 按用户任务和完整工作流分类，**不按 Python/Git/Docker/Sh
 
 # 项目记忆维护边界
 
-- `.project-memory/Documents/`（`MEMORY.md` 纯索引 + 用户自建正文，默认只读）：用户维护的长期项目背景、需求材料、业务规则和补充说明。`update-docs` agent 默认只读——仅在正文已存在时读取内容并同步 `MEMORY.md` 索引，不新建/改写用户的正文；只有用户明确要求补充长期背景、业务边界或长期事实时，才按用户指定内容写入对应正文并同步索引。
+- `.project-memory/Documents/`（`MEMORY.md` 纯索引 + 用户自建正文，默认只读）：用户维护的长期项目背景、需求材料、业务规则和补充说明。`collect-update-memory` agent 默认只读——仅在正文已存在时读取内容并同步 `MEMORY.md` 索引，不新建/改写用户的正文；只有用户明确要求补充长期背景、业务边界或长期事实时，才按用户指定内容写入对应正文并同步索引。
 - 其他五个主题（Boundary/Target/Design/Environment/Commands）：按"事实归属原则"维护。当对话、代码修改或验证结果表明对应事实变化时更新。
 - `.project-memory/TODO/` 不由本 agent 维护（见职责范围）；`.project-script/` 始终属于本 agent 的明确排除范围。
 
@@ -393,7 +393,7 @@ Commands 按用户任务和完整工作流分类，**不按 Python/Git/Docker/Sh
 - 返回时使用：
 
 ```md
-## Update docs result
+## Collect and update memory result
 
 - 修改文件：
   - `path/to/file.md`
