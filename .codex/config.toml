@@ -1,0 +1,6 @@
+# Codex 项目级配置
+[agents]
+max_concurrent_threads_per_session = 6
+
+[features]
+multi_agent = true

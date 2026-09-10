@@ -1,0 +1,6 @@
+interface:
+  display_name: "Sync Codex Memory"
+  short_description: "Push and pull project memory with git"
+  default_prompt: "Use $sync-codex-memory to push, pull, or check project memory."
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,23 @@
+---
+name: sync-codex-config
+description: 从 GitHub 仓库同步 `.codex/`、`.project-memory/` 和 `.project-script/` 基础配置文件到当前项目；同步后自动将下游项目的 `.project-script/` 加入 `.gitignore`。支持智能合并策略，自动管理 `.gitignore`。
+---
+
+# sync-codex-config 同步结果
+
+以下同步操作已在 skill 加载时自动执行完成：
+
+```!
+bash .agents/skills/sync-codex-config/scripts/sync.sh
+```
+
+## 你的任务
+
+请根据上述执行日志，向用户汇报同步结果：
+
+1. 是否有基础配置文件变更（新增/覆盖/跳过）
+2. 变更的文件列表摘要
+3. 下游项目 `.gitignore` 是否新增 `.project-memory/` 或 `.project-script/`
+4. 如果有错误，说明错误原因
+
+**注意**：同步操作已完成，你只需要汇报结果，不需要执行任何命令。

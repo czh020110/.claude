@@ -1,0 +1,128 @@
+# 代码更新规则
+
+## 1. 适用范围
+
+- 适用于项目内所有代码新增、修改、删除、重构场景。
+- 适用于与代码变更直接相关的验证、进度同步和 git 提交说明整理。
+
+---
+
+## 2. 术语统一
+
+- 统一使用：`git 提交说明`。两层格式细则见 §8「Git 提交说明规则」。
+
+---
+
+## 3. 修改前必须确认
+
+当任务涉及代码变更时，必须先确认：
+
+1. 当前任务属于修复、新增、重构、配置、测试还是文档同步。
+2. 相关代码入口、调用方、被调用方和验证方式。
+3. 是否存在用户未提交改动；不得覆盖、回滚或删除用户改动。
+4. 根据任务读取 `.project-memory/` 中的相关项目记忆。
+
+---
+
+## 4. 文件位置规范
+
+- 新增代码必须放在项目既有结构中，不要随意在根目录堆临时文件。
+- `.project-script` ：更新代码后的相关测试文件夹，不存放项目主代码。
+
+---
+
+## 5. 代码简洁原则（ponytail）
+
+Avoid overengineering and unnecessary complexity. Ask: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
+Example: the user asks for a date picker. Instead of installing flatpickr, writing a wrapper component, adding a stylesheet, and starting a discussion about timezones, write:
+
+```
+<input type="date">
+```
+
+Before writing any code, stop at the first rung that holds:
+
+1. Does this need to be built at all? No? Skip it. (YAGNI)
+2. Does it already exist in this codebase? Reuse the helper, util, or pattern.
+3. Does the standard library do it? Use it.
+4. Does a native platform feature cover it? Use it.
+5. Does an already-installed dependency solve it? Use it.
+6. Can this be one line? Do it.
+7. Only then: write the minimum code that works.
+
+The ladder runs after you understand the problem, not instead of it. Read the task, project memory and the code it touches, trace the real flow end to end, then climb.
+
+Bug fix = root cause, not symptom. A report names a symptom. Before editing, grep every caller of the function you are about to touch.
+
+One guard in the shared function is smaller than one guard per caller, and patching only the path the ticket names leaves sibling callers broken.
+
+Fix it once, where all callers route through.
+
+Rules:
+
+- No unrequested abstractions.
+- No avoidable dependencies.
+- No speculative scaffolding.
+- Prefer deletion over addition.
+- Boring over clever.
+- Fewest files possible.
+- Shortest working diff wins once you understand the problem.
+- Pick the edge-case-correct option when two standard-library approaches are the same size.
+- Remove obsolete logic and semi-deprecated compatibility layers.
+
+Complex request? Ship the lazy version and question it in the same response: "Did X. Y covers it. Need full X? Say so." Always tell the user what you skipped. If the user insists on the full version, build it, no re-arguing.
+
+When not to be lazy:
+
+- Do not cut validation, error handling, security, accessibility, data-loss protection, or real edge cases.
+- Do not skip understanding. A small diff you do not understand is just laziness dressed up as efficiency.
+- Non-trivial logic leaves one runnable check behind. Trivial one-liners need no test.
+- When users explicitly need to implement complex features or frontend interfaces.
+
+---
+
+## 6. 修改中必须遵守
+
+- 优先直接修改代码文件，不要只输出代码。
+- 优先复用现有函数、类型、模块和项目约定。
+- 不顺手重构无关代码。
+- 不改变用户未要求改变的行为。
+- 修改公共接口、数据模型、配置或状态流时，必须检查调用方。
+- 涉及安全边界、权限、支付、删除、发布、外部服务写入等高风险动作时，先确认再执行。
+
+---
+
+## 7. 修改后验证（MUST）
+
+- 所有代码修改都必须留下与修改范围匹配的验证证据。
+- 简单、低风险的一行修改可以使用静态检查、差异检查或已有命令验证，不强制新建验证脚本；这里的“无需测试”仅表示无需专门新建测试脚本，不表示可以不验证。
+- 非 trivial 的逻辑、接口、配置、数据流、页面或安全相关修改，优先复用已有验证脚本；没有合适脚本时，创建可复用脚本到 `.project-script/<验证类型>/`。
+- 更新验证脚本后注意同步更新`.project-script/MEMORY.md`。
+
+验证脚本需验证包括但不限于：
+
+1. 代码逻辑：运行相关测试脚本或最小复现命令。
+2. 类型/API：运行类型检查、接口测试或导入检查。
+3. 前端页面：启动并实际查看关键路径；无法查看时说明原因。
+4. 配置变更：验证配置被正确读取。
+5. 文档模板变更：搜索旧项目绑定词，检查引用路径存在。
+
+如果无法运行验证，必须说明原因和替代检查结果。若验证后发现代码问题，需修复后再进行验证。
+
+---
+
+## 8. Git 提交说明规则
+
+- 不要求每次代码修改后立即补充详细提交说明。
+- 用户明确要求创建 git commit（提交代码、保存更改）时才进行提交 git commit。
+- 提交 git commit 时需使用 `git-commit` skill 进行提交
+- 需要回顾历史代码版本时，优先读取对应 commit 的详细描述。
+
+---
+
+## 9. 架构实现节奏规范
+
+- 不要一次性实现全部长期目标；每次推进应形成一个可验证的阶段成果。
+- 回答和执行前，先判断任务属于代码修改、文档更新、进度维护、修改记录、环境排查、接口查询还是架构推进。
+- 代码修改时直接改文件，不要只给代码片段；除非用户明确只要示例。
+- 如果任务大于一个阶段，先拆解为阶段步骤并更新 `.project-memory/TODO/STEP.md`（只记大方向步骤），再按优先级推进。

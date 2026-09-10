@@ -1,0 +1,4 @@
+interface:
+  display_name: "Collect Update Memory"
+  short_description: "Collect and update all project memory"
+  default_prompt: "Use $collect-update-memory to run a full project memory sync."
