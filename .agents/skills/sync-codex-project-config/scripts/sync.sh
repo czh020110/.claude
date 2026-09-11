@@ -208,11 +208,11 @@ gitignore_has_entry() {
 }
 
 if [ ! -f "$GITIGNORE" ]; then
-  printf '.codex/\n.agents/\n.project-memory/\n.project-script/\n' > "$GITIGNORE"
+  printf '.codex/\n.agents/\n.project-memory/\n.project-script/\nAGENTS.md\n' > "$GITIGNORE"
   echo "  + 创建 .gitignore"
 else
   missing_list=""
-  for entry in '.codex/' '.agents/' '.project-memory/' '.project-script/'; do
+  for entry in '.codex/' '.agents/' '.project-memory/' '.project-script/' 'AGENTS.md'; do
     if ! gitignore_has_entry "$entry"; then
       missing_list="${missing_list}${entry}"$'\n'
     fi
