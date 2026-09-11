@@ -20,32 +20,33 @@ fi
 echo "  克隆完成"
 echo ""
 
-# 2. 同步 AGENTS.md —— 保留本地非托管区（如有）
+# 2. 同步 AGENTS.md —— 只更新规则区，保留本地「自定义提示词」区
 echo "[2/8] 同步 AGENTS.md..."
 REMOTE_AGENTS="$TMP_DIR/AGENTS.md"
 LOCAL_AGENTS="$PROJECT_DIR/AGENTS.md"
+# 规则区 = `# 自定义提示词说明` 之前的内容；自定义提示词区 = 该标题之后的内容（含该标题）。
+# 说明：规则正文里本身含 `---` 分隔线，不能用 `---` 作为切分依据。
+CUSTOM_HEADING='# 自定义提示词说明'
 if [ -f "$REMOTE_AGENTS" ]; then
   if [ ! -f "$LOCAL_AGENTS" ]; then
     mkdir -p "$(dirname "$LOCAL_AGENTS")"
     cp "$REMOTE_AGENTS" "$LOCAL_AGENTS"
     echo "  + 新增: AGENTS.md"
-  elif grep -q '<!-- CODEX-CONFIG:MANAGED:BEGIN -->' "$LOCAL_AGENTS" && grep -q '<!-- CODEX-CONFIG:MANAGED:END -->' "$LOCAL_AGENTS"; then
-    custom=$(awk '/<!-- CODEX-CONFIG:MANAGED:END -->/{found=1; next} found{print}' "$LOCAL_AGENTS")
-    managed=$(awk '/<!-- CODEX-CONFIG:MANAGED:BEGIN -->/{print; print; found=1; next} found && /<!-- CODEX-CONFIG:MANAGED:END -->/{print; found=0; next} found{next} {print}' "$REMOTE_AGENTS" | sed '/^$/N;/^\n$/D')
-    # 更稳妥：直接以远程托管区 + 本地自定义区合并
-    begin=$(grep -n '<!-- CODEX-CONFIG:MANAGED:BEGIN -->' "$REMOTE_AGENTS" | head -1 | cut -d: -f1)
-    end=$(grep -n '<!-- CODEX-CONFIG:MANAGED:END -->' "$REMOTE_AGENTS" | head -1 | cut -d: -f1)
-    if [ -n "$begin" ] && [ -n "$end" ]; then
-      head -n "$end" "$REMOTE_AGENTS" > "$LOCAL_AGENTS.tmp"
-      if [ -n "$custom" ]; then
-        printf '\n%s\n' "$custom" >> "$LOCAL_AGENTS.tmp"
-      fi
+  elif grep -qxF "$CUSTOM_HEADING" "$LOCAL_AGENTS" && grep -qxF "$CUSTOM_HEADING" "$REMOTE_AGENTS"; then
+    remote_end=$(grep -n -xF "$CUSTOM_HEADING" "$REMOTE_AGENTS" | head -1 | cut -d: -f1)
+    local_start=$(grep -n -xF "$CUSTOM_HEADING" "$LOCAL_AGENTS" | head -1 | cut -d: -f1)
+
+    if cmp -s <(head -n "$((remote_end - 1))" "$REMOTE_AGENTS") <(head -n "$((local_start - 1))" "$LOCAL_AGENTS"); then
+      echo "  = 跳过(规则区相同): AGENTS.md"
+    else
+      head -n "$((remote_end - 1))" "$REMOTE_AGENTS" > "$LOCAL_AGENTS.tmp"
+      tail -n +"$local_start" "$LOCAL_AGENTS" >> "$LOCAL_AGENTS.tmp"
       mv "$LOCAL_AGENTS.tmp" "$LOCAL_AGENTS"
-      echo "  ✓ 更新 AGENTS.md 托管区块（保留自定义区）"
+      echo "  ✓ 更新 AGENTS.md 规则区（保留自定义提示词区）"
     fi
   else
     cp "$REMOTE_AGENTS" "$LOCAL_AGENTS"
-    echo "  ✓ 覆盖 AGENTS.md"
+    echo "  ✓ 覆盖 AGENTS.md（本地缺少自定义提示词标题，无法增量合并）"
   fi
 fi
 echo ""
@@ -56,6 +57,7 @@ synced_count=0
 if [ -d "$TMP_DIR/.codex" ]; then
   cd "$TMP_DIR/.codex"
   while IFS= read -r -d '' rel_path; do
+    rel_path="${rel_path#./}"
     case "$rel_path" in
       .cache/*|settings.local.json|*.local.json|*.secret*|*.key)
         echo "  = 跳过(本地/敏感): .codex/$rel_path"
@@ -85,6 +87,7 @@ echo "[4/8] 同步 .agents/skills/ 目录..."
 if [ -d "$TMP_DIR/.agents/skills" ]; then
   cd "$TMP_DIR/.agents/skills"
   while IFS= read -r -d '' rel_path; do
+    rel_path="${rel_path#./}"
     local_path="$PROJECT_DIR/.agents/skills/$rel_path"
     if cmp -s "$rel_path" "$local_path" 2>/dev/null; then
       echo "  = 跳过(内容相同): .agents/skills/$rel_path"
@@ -109,6 +112,7 @@ memory_skipped=0
 if [ -d "$TMP_DIR/.project-memory" ]; then
   cd "$TMP_DIR/.project-memory"
   while IFS= read -r -d '' rel_path; do
+    rel_path="${rel_path#./}"
     local_path="$PROJECT_DIR/.project-memory/$rel_path"
     if [ ! -f "$local_path" ]; then
       mkdir -p "$(dirname "$local_path")"
@@ -134,6 +138,7 @@ script_skipped=0
 if [ -d "$TMP_DIR/.project-script" ]; then
   cd "$TMP_DIR/.project-script"
   while IFS= read -r -d '' rel_path; do
+    rel_path="${rel_path#./}"
     local_path="$PROJECT_DIR/.project-script/$rel_path"
     if [ ! -f "$local_path" ]; then
       mkdir -p "$(dirname "$local_path")"
@@ -155,16 +160,41 @@ echo ""
 # 7. 管理下游项目 .gitignore
 echo "[7/8] 检查下游项目 .gitignore..."
 GITIGNORE="$PROJECT_DIR/.gitignore"
+
+# 条目是否已存在（同时兼容带/不带尾斜杠的写法）
+gitignore_has_entry() {
+  local entry="$1"
+  grep -qxF "$entry" "$GITIGNORE" 2>/dev/null || grep -qxF "${entry%/}" "$GITIGNORE" 2>/dev/null
+}
+
 if [ ! -f "$GITIGNORE" ]; then
   printf '.codex/\n.agents/\n.project-memory/\n.project-script/\n' > "$GITIGNORE"
   echo "  + 创建 .gitignore"
 else
+  missing_list=""
   for entry in '.codex/' '.agents/' '.project-memory/' '.project-script/'; do
-    if ! grep -q "^$entry" "$GITIGNORE"; then
-      echo "$entry" >> "$GITIGNORE"
-      echo "  + 追加 $entry 到 .gitignore"
+    if ! gitignore_has_entry "$entry"; then
+      missing_list="${missing_list}${entry}"$'\n'
     fi
   done
+
+  if [ -n "$missing_list" ]; then
+    if [ -s "$GITIGNORE" ]; then
+      # 文件末尾无换行时先补一个，避免与已有内容粘连
+      if [ -n "$(tail -c1 "$GITIGNORE")" ]; then
+        printf '\n' >> "$GITIGNORE"
+      fi
+      printf '\n# Codex / 项目本地配置\n' >> "$GITIGNORE"
+    else
+      printf '# Codex / 项目本地配置\n' >> "$GITIGNORE"
+    fi
+    printf '%s' "$missing_list" >> "$GITIGNORE"
+    while IFS= read -r entry; do
+      [ -n "$entry" ] && echo "  + 追加 $entry 到 .gitignore"
+    done <<< "$missing_list"
+  else
+    echo "  .gitignore 已包含所需条目，无需修改"
+  fi
 fi
 echo ""
 

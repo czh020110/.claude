@@ -8,7 +8,7 @@
 
 - Documents： @../.project-memory/Documents/MEMORY.md
   - 用户维护的长期项目背景、需求材料、业务规则和补充说明。
-  - 默认只读：除非用户明确要求补充长期项目事实，不要主动写入正文，Dcuments 只可由 `collect-update-memory` agent 更新索引。
+  - 默认只读：除非用户明确要求补充长期项目事实，不要主动写入正文，Dcuments 只可由 `collect_update_memory` agent 更新索引。
 - Boundary： @../.project-memory/Boundary/MEMORY.md
   - 记录必须遵守的限制、明确不做的事项、设计约束、禁止事项、成功标准与质量底线。
   - 开始新功能、调整阶段范围或判断是否偏离 Boundary 前优先读取。
@@ -69,7 +69,7 @@
 - 用户要求阶段性汇总或更新项目记忆时，使用 `collect-update-memory` skill（委托 subagent 全量更新），只由用户主动调用；其中 git commit 由 `git-commit` skill 先行完成。
 - 用户要求创建 git commit 时，使用 `git-commit` skill 执行。
 - 验证脚本与 STEP/TODO/DONE 的维护由你直接修改，不使用上述两个 skill。
-- 涉及外部库、框架、SDK、CLI、云服务、模型 API 或 MCP 服务的最新用法时，优先委托 `docs-research` agent。
+- 涉及外部库、框架、SDK、CLI、云服务、模型 API 或 MCP 服务的最新用法时，优先委托 `docs_research` agent。
 
 ## 本地验证脚本
 
@@ -94,6 +94,418 @@
 # 语言回复
 
 使用用户的母语语言风格进行回复。
+
+# 代码更新规则
+
+## 1. 适用范围
+
+- 适用于项目内所有代码新增、修改、删除、重构场景。
+- 适用于与代码变更直接相关的验证、进度同步和 git 提交说明整理。
+
+---
+
+## 2. 术语统一
+
+- 统一使用：`git 提交说明`。两层格式细则见 §8「Git 提交说明规则」。
+
+---
+
+## 3. 修改前必须确认
+
+当任务涉及代码变更时，必须先确认：
+
+1. 当前任务属于修复、新增、重构、配置、测试还是文档同步。
+2. 相关代码入口、调用方、被调用方和验证方式。
+3. 是否存在用户未提交改动；不得覆盖、回滚或删除用户改动。
+4. 根据任务读取 `.project-memory/` 中的相关项目记忆。
+
+---
+
+## 4. 文件位置规范
+
+- 新增代码必须放在项目既有结构中，不要随意在根目录堆临时文件。
+- `.project-script` ：更新代码后的相关测试文件夹，不存放项目主代码。
+
+---
+
+## 5. 代码简洁原则（ponytail）
+
+Avoid overengineering and unnecessary complexity. Ask: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
+Example: the user asks for a date picker. Instead of installing flatpickr, writing a wrapper component, adding a stylesheet, and starting a discussion about timezones, write:
+
+```
+<input type="date">
+```
+
+Before writing any code, stop at the first rung that holds:
+
+1. Does this need to be built at all? No? Skip it. (YAGNI)
+2. Does it already exist in this codebase? Reuse the helper, util, or pattern.
+3. Does the standard library do it? Use it.
+4. Does a native platform feature cover it? Use it.
+5. Does an already-installed dependency solve it? Use it.
+6. Can this be one line? Do it.
+7. Only then: write the minimum code that works.
+
+The ladder runs after you understand the problem, not instead of it. Read the task, project memory and the code it touches, trace the real flow end to end, then climb.
+
+Bug fix = root cause, not symptom. A report names a symptom. Before editing, grep every caller of the function you are about to touch.
+
+One guard in the shared function is smaller than one guard per caller, and patching only the path the ticket names leaves sibling callers broken.
+
+Fix it once, where all callers route through.
+
+Rules:
+
+- No unrequested abstractions.
+- No avoidable dependencies.
+- No speculative scaffolding.
+- Prefer deletion over addition.
+- Boring over clever.
+- Fewest files possible.
+- Shortest working diff wins once you understand the problem.
+- Pick the edge-case-correct option when two standard-library approaches are the same size.
+- Remove obsolete logic and semi-deprecated compatibility layers.
+
+Complex request? Ship the lazy version and question it in the same response: "Did X. Y covers it. Need full X? Say so." Always tell the user what you skipped. If the user insists on the full version, build it, no re-arguing.
+
+When not to be lazy:
+
+- Do not cut validation, error handling, security, accessibility, data-loss protection, or real edge cases.
+- Do not skip understanding. A small diff you do not understand is just laziness dressed up as efficiency.
+- Non-trivial logic leaves one runnable check behind. Trivial one-liners need no test.
+- When users explicitly need to implement complex features or frontend interfaces.
+
+---
+
+## 6. 修改中必须遵守
+
+- 优先直接修改代码文件，不要只输出代码。
+- 优先复用现有函数、类型、模块和项目约定。
+- 不顺手重构无关代码。
+- 不改变用户未要求改变的行为。
+- 修改公共接口、数据模型、配置或状态流时，必须检查调用方。
+- 涉及安全边界、权限、支付、删除、发布、外部服务写入等高风险动作时，先确认再执行。
+
+---
+
+## 7. 修改后验证（MUST）
+
+- 所有代码修改都必须留下与修改范围匹配的验证证据。
+- 简单、低风险的一行修改可以使用静态检查、差异检查或已有命令验证，不强制新建验证脚本；这里的“无需测试”仅表示无需专门新建测试脚本，不表示可以不验证。
+- 非 trivial 的逻辑、接口、配置、数据流、页面或安全相关修改，优先复用已有验证脚本；没有合适脚本时，创建可复用脚本到 `.project-script/<验证类型>/`。
+- 更新验证脚本后注意同步更新`.project-script/MEMORY.md`。
+
+验证脚本需验证包括但不限于：
+
+1. 代码逻辑：运行相关测试脚本或最小复现命令。
+2. 类型/API：运行类型检查、接口测试或导入检查。
+3. 前端页面：启动并实际查看关键路径；无法查看时说明原因。
+4. 配置变更：验证配置被正确读取。
+5. 文档模板变更：搜索旧项目绑定词，检查引用路径存在。
+
+如果无法运行验证，必须说明原因和替代检查结果。若验证后发现代码问题，需修复后再进行验证。
+
+---
+
+## 8. Git 提交说明规则
+
+- 不要求每次代码修改后立即补充详细提交说明。
+- 用户明确要求创建 git commit（提交代码、保存更改）时才进行提交 git commit。
+- 提交 git commit 时需使用 `git-commit` skill 进行提交
+- 需要回顾历史代码版本时，优先读取对应 commit 的详细描述。
+
+---
+
+## 9. 架构实现节奏规范
+
+- 不要一次性实现全部长期目标；每次推进应形成一个可验证的阶段成果。
+- 回答和执行前，先判断任务属于代码修改、文档更新、进度维护、修改记录、环境排查、接口查询还是架构推进。
+- 代码修改时直接改文件，不要只给代码片段；除非用户明确只要示例。
+- 如果任务大于一个阶段，先拆解为阶段步骤并更新 `.project-memory/TODO/STEP.md`（只记大方向步骤），再按优先级推进。
+# 接口规范规则
+
+## 1. 适用范围
+
+适用于 HTTP API、RPC、SDK 调用、模型调用、数据库访问、内部模块接口、前后端数据契约和外部服务交互。
+
+---
+
+## 2. 接口设计原则（MUST）
+
+- 输入、输出、错误返回必须明确。
+- 外部输入必须校验；内部调用优先依赖类型系统和模块契约。
+- 不允许让 LLM 或外部输入直接生成任意可执行代码。
+- 不允许把密钥、token、账号写入接口示例。
+- 接口变更必须检查调用方、测试和长期计划（STEP）影响。
+- 对外接口错误格式必须保持一致。
+
+---
+
+## 3. 数据模型规范
+
+- 共享数据结构必须有明确字段含义。
+- 字段命名应与项目现有风格一致。
+- 新增字段必须说明来源、使用方和默认行为。
+- 删除或改名字段前必须检查所有引用。
+
+---
+
+## 4. API / SDK 调用规范
+
+当调用第三方 SDK、框架或模型 API：
+
+1. 先按本文「文档查询规则」查询当前官方用法。
+2. 优先使用官方推荐的新接口和新导入路径。
+3. 不使用已弃用接口，除非项目明确锁定旧版本。
+
+---
+
+## 5. AI / Agent 接口规范
+
+涉及模型、Agent、工具调用、结构化输出时：
+
+- 明确 system/user/tool 输入边界。
+- 明确结构化输出 schema。
+- 明确工具可执行范围和安全边界。
+- 工具调用不得绕过权限、执行破坏性操作或泄露敏感信息。
+- 对需要长期记忆的项目事实，写入 `.project-memory/Documents/` 或 `.project-memory/Target/`，不要塞进 prompt 字符串。
+
+---
+
+## 6. 前端接口规范
+
+涉及前端页面、组件或状态管理时：
+
+- 明确组件输入 props、事件输出和状态来源。
+- 页面级接口变更必须检查数据加载、错误态、空态、加载态。
+- 用户可见行为变更必须实际运行页面验证；无法验证时说明原因。
+- 页面设计类任务优先使用 frontend-design skill。
+
+---
+
+## 7. 文档位置
+
+- 阶段接口规划：`.project-memory/Target/`。
+- 接口变更记录：对应 git commit 的详细描述。
+# 注释说明规则
+
+## 1. 适用范围
+
+适用于代码注释、模块说明、函数说明和文档替代说明。
+
+## 2. 注释原则（MUST）
+
+- 注释必须服务于理解和维护，不能为了显得完整而堆叠。
+- 优先通过清晰命名和结构表达代码含义。
+- 注释应解释为什么这样做、有什么约束、有什么风险，而不是重复代码做了什么。
+- 修改代码时，如果原注释已经失效，必须同步更新或删除。
+- 不要在代码注释中记录本次任务、PR 背景、修改历史；这些应进入对应 git commit 的详细描述。
+
+## 3. 必须补充注释的场景
+
+- 存在隐藏业务约束。
+- 存在不直观的算法、并发、缓存、性能或安全考虑。
+- 存在第三方系统兼容、协议限制或版本差异。
+- 存在临时 workaround，且需要说明触发条件。
+- 模块边界复杂，仅靠命名难以理解。
+
+## 4. 不应添加注释的场景
+
+- 函数名、变量名已经表达清楚。
+- 注释只是翻译代码。
+- 注释写的是“新增了某功能”“修复了某问题”。
+- 大段学习笔记、教程、背景科普。
+- 与当前项目无关的技术说明。
+
+## 5. 文档替代规则
+
+当说明超过几行，优先写入文档而不是代码注释：
+
+- 模块职责：`.project-memory/Design/`
+- 项目目标和设计边界（Target）：`.project-memory/Target/`
+- 业务规则和长期要求：`.project-memory/Documents/`
+- 修改原因和结果：对应 git commit 的详细描述
+# 文档查询规则
+
+## 1. 适用范围
+
+当任务涉及外部库、框架、SDK、CLI、云服务、模型 API、MCP 服务或第三方接口时，必须按本规则处理。
+
+---
+
+## 2. 必须查文档的场景（MUST）
+
+遇到以下任一情况，不得凭记忆实现：
+
+- 接口不确定。
+- 接口疑似过时。
+- 接口报错但原因不明。
+- 版本升级、迁移、弃用接口替换。
+- 新增或修改 SDK 初始化、模型调用、工具调用、认证配置。
+- 用户明确要求“联网搜索”“查最新文档”“确认官方用法”。
+
+---
+
+## 3. 查询优先级（MUST）
+
+1. `context7 MCP`：查询库、框架、SDK、API 的当前官方文档。
+2. 网络搜索工具：查询官方页面、迁移说明、Issue、Release note 或 context7 不足的信息。
+
+如果用户要求联网搜索，优先使用网络搜索工具。
+
+---
+
+## 4. 路由规则（MUST）
+
+- 当任务涉及最新技术文档、官方用法确认、版本差异、迁移说明、Release note、Issue、官方教程，或用户明确要求联网搜索时，主模型应优先委托 `docs_research` agent 查询，不要直接凭记忆或零散搜索后回答。
+- `docs_research` agent 负责使用 `context7` 与网络搜索工具检索外部技术资料，并将整理后的结果返回给主模型。
+- 主模型职责是提交问题和结果要求，在收到 `docs_research` agent 结果后，再结合当前任务做最终回答或实现。
+- 项目内部背景、Boundary、Target、环境、长期计划或共享待办等文档细节，不属于 `docs_research` agent 范围；这类问题应直接按 `.project-memory/` 索引读取对应正文。
+
+---
+
+## 5. 查询结果使用规则
+
+- 只采用当前版本适用的信息。
+- 不复制大段官方文档进项目。
+- 回答或修改时说明采用了哪个接口、哪个版本或哪个官方约束。
+- 当需要了解当前项目自身的背景、Boundary、Target、环境、长期计划或共享待办等文档细节时，直接读取 `.project-memory/` 对应正文文件。
+# 文档更新规则
+
+## 1. 适用范围
+
+- 适用于 `.project-memory/` 项目记忆（Boundary、Target、Design、Environment、Commands、Documents）的更新与修改。
+- 适用于对 `update-memory` skill（实时局部更新）与 `collect_update_memory` agent/skill（全量汇总更新）的调用时机和职责边界的说明。
+- 适用于你在对话中识别并持久化用户偏好（工作方式、协作习惯、设计取向外显表达）时的记录规则。
+- `.project-memory/TODO/` 与 `.project-script/` 的维护方式只在 AGENTS.md 中说明，不属于本规则范围。
+
+---
+
+## 2. 两条记忆更新路径的区分
+
+项目记忆有两条互相独立的更新路径，职责不重叠：
+
+| | `update-memory` skill | `collect_update_memory` agent/skill |
+| --- | --- | --- |
+| 定位 | 实时局部更新 | 阶段性全量汇总 |
+| 执行者 | 你（主模型）亲自执行，不调用 subagent | 委托 `collect_update_memory` subagent |
+| 触发 | 对话/任务中发现需要记下来的关键信息时随时使用 | 只在用户主动要求时调用（阶段性汇总、全量对齐） |
+| 范围 | 只更新本次涉及主题的正文与索引（可新建），不扫描全部代码、不读取全部记忆 | 基于 git 变更做全量同步，检查所有相关记忆文档 |
+| git 提交 | 不创建 git commit | agent 不提交；用户要求提交时由 skill 先调 `git-commit` skill 完成 commit，再更新记忆 |
+
+- 记忆文档的更新方法（索引 + 分块文件范式、格式模板、归属原则）只在 `update-memory` SKILL.md 中说明，本文档不重复。
+- 本规则只记录 `.project-memory/` 相关内容；`.project-memory/TODO/` 与 `.project-script/` 的维护方式只在 AGENTS.md 中说明，本文档不重复。
+- `.project-memory/Documents/`（用户上传文档）正文默认只读，记忆索引由 `collect_update_memory` agent 同步，不由 `update-memory` 更新。
+- 在开发过程中随代码变更实时维护记忆，用 `update-memory`；阶段性收尾与全量对齐，用 `collect-update-memory`（commit 由 `git-commit` skill 先行完成）。不要为实时小更新调用 `collect_update_memory` subagent。
+
+`collect-update-memory` 的调用边界（调用时机、commit 与记忆更新的先后顺序、基准 commit 流程）唯一权威版本在 `collect-update-memory` SKILL.md，要点：
+
+- 完成阶段成果后，如需沉淀本次变更，使用 `collect-update-memory` skill 同步长期记忆文档；git commit 由其中的 `git-commit` skill 先行完成；
+- 只在用户主动要求时调用（阶段性汇总、全量对齐）；**不负责开发过程中随代码变更实时更新项目文档**——过程中的记忆更新使用 `update-memory` skill，由你自己直接修改。
+- 用户偏好、会话中新产生的设计事实与实现事实，由你在对话过程中通过 `update-memory` skill 自主沉淀，不依赖 `collect-update-memory`。
+
+---
+
+## 2.1 用户偏好记录规则（MUST）
+
+用户偏好是长期记忆的一部分，你在对话中识别到以下内容时**自行记录**，不打断用户：
+
+- 工作方式偏好：命令约定、目录布局、命名习惯、提交粒度、禁止事项（"不要 XX"）。
+- 协作习惯偏好：回复语言、讲解深度、验证要求、是否需要先确认。
+- 设计取向偏好：技术栈倾向、架构风格、是否偏好某类做法。
+
+记录位置与归属优先级：
+
+1. **已有 MEMORY 主题正文**：偏好能归入 Boundary（约束/禁止事项）、Design（取向、理由）、Commands（命令约定）、Environment（工具偏好）时，归入对应正文文件，并在该主题 `MEMORY.md` 补一条索引行。
+2. **新增 `<主题名>.md`**：当偏好与现有主题都不匹配，或属于该项目的专属工作方式时，按主题语义新开正文文件并注册索引；不得写入 `MEMORY.md` 正文。
+3. **写入时机**：设计类/方案类偏好走「方案更新」流程（先确认再写入）；工作方式、命令约定等纯事实偏好可**直接记录**，无需征询，但若与既有规则冲突需征询用户后进行更新。
+
+`MEMORY.md` 是索引，只放「主题名 + 一句话路由描述」；正文按需读取。用户偏好索引条目的描述要让 agent 一眼判断"这条符不符合当前任务"。
+
+---
+
+## 3. 方案更新（设计类文档的主模型直改）
+
+当与用户交流的过程中出现用户提出了：新的设计思路、方案变更、架构调整、边界调整、阶段步骤或打算后续使用的新方向时，由你（主模型）使用 update-memory skill **亲自修改**相关设计类记忆文档——不经 subagent，但须经 §3.2 确认流程后落笔。以保证项目开发的实时性。
+
+涉及的文档范围：
+
+- `.project-memory/Boundary/`（`MEMORY.md` 纯索引 + 同级正文）— 项目设计边界、约束、禁止事项
+- `.project-memory/Target/`（`MEMORY.md` 纯索引 + 同级正文）— 项目整体流程目标、核心功能目标、阶段功能范围
+- `.project-memory/Design/`（`MEMORY.md` 纯索引 + 同级正文）— 项目架构设计与分阶段开发规划
+- `.project-memory/Commands/`（`MEMORY.md` 纯索引 + 同级正文）— 命令约定与工作流命令事实
+- `.project-memory/Environment/`（`MEMORY.md` 纯索引 + 同级正文）— 环境、工具、路径与环境坑事实
+
+你必须根据用户提出的内容，判断应该更新哪个或哪些文档；可能只涉及其中一个，也可能同时涉及多个。
+
+### 3.1 触发场景
+
+当用户：
+
+- 明确提出新的设计思路或方案，打算后续使用。
+- 指出 Documents 中已有内容与当前实际情况不一致，需要变更。
+- 主动要求添加或修改设计方案。
+- 指出项目中的一个明确的边界时。
+
+### 3.2 更新流程（MUST）
+
+对于方案更新，必须遵守以下流程：
+
+1. **分析可行性**：必须先分析用户提出的方案是否可行，包括：
+   - 是否与现有架构冲突
+   - 是否与当前阶段目标矛盾
+   - 是否存在明显的技术风险或依赖问题
+   - 如有必要，先读取相关项目文档（Target、Boundary、Design）确认上下文
+
+2. **与用户讨论**：必须主动向用户提问确认，包括：
+   - 简要说明对方案可行性的分析结论
+   - 指出潜在风险或冲突（如有）
+   - 明确提问："是否确认采用这个方案？"
+   - 用户确认前不得修改文档
+
+3. **达成一致后修改**：双方（你和用户）达成一致后，才能修改相关文档。
+
+4. **修改范围**：
+   - 只修改与新方案直接相关的文档和条目
+   - 不顺手修改无关内容
+
+### 3.3 不可行的处理
+
+- 如果分析后认为方案不可行，必须向用户说明原因和替代建议，不得直接修改设计文档。
+- 如果方案部分可行但有风险，必须明确指出风险点，由用户决定是否继续。
+
+---
+
+## 4. Documents 中已有内容需要变更
+
+当 Documents 中的内容与当前实际情况不一致时（用户主动提出或 agent 在执行任务时发现），同样适用方案更新的流程：
+
+1. 先分析变更的合理性和影响范围。
+2. 向用户确认是否需要修改。
+3. 达成一致后由你直接修改。
+
+不调用 `collect_update_memory` agent 处理这类临时发现的变更。
+
+---
+
+## 5. 文档格式遵守（MUST）
+
+修改 `.project-memory/` 下任何文档时，必须遵守该文档的现有格式和模板结构：
+
+- 完全使用用户的母语语言风格，无论对方使用的是何种语言，都不要改变。
+- 优先模仿文档中已有的章节标题、字段命名、条目格式和层级结构。
+- 如果文档已有内容，新增条目必须和已有条目格式一致（如列表风格、字段顺序、缩进层级）。
+- 如果文档是空模板，必须按文档中已有模板样式填充，不要自创格式。
+- 不要破坏已有的格式一致性：不要随意增删章节、不要改字段命名。
+- 只有用户明确要求调整文档结构时，才允许修改格式模板本身。
+
+---
+
+## 6. 不适用本规则的场景
+
+- 阶段性开发完成后的文档汇总和提交：使用 `collect-update-memory` skill。
+- 项目背景、环境、命令等事实性文档的初始化或批量更新：使用 `collect-update-memory` skill。
 
 # 自定义提示词说明
 

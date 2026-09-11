@@ -1,6 +1,6 @@
 ---
 name: code-review-custom
-description: 对指定范围的代码进行审查，判断修改是否正确、能否按预期实现功能。必须委托 code-review-custom agent 执行，不使用其他 agent。
+description: 对指定范围的代码进行审查，判断修改是否正确、能否按预期实现功能。必须委托 code_review_custom agent 执行，不使用其他 agent。
 ---
 
 对指定范围的代码进行审查，判断修改是否正确、能否按预期实现功能。
@@ -13,12 +13,12 @@ description: 对指定范围的代码进行审查，判断修改是否正确、�
    - 用户给出具体 commit SHA → `SHA1..SHA2` 或单个 SHA
    - 用户说"审查某个文件"→ 指定文件路径
    - **不要自行猜测范围**，如果用户没说清楚，先问用户
-2. **必须委托 `code-review-custom` agent**，不使用其他 code-review agent
+2. **必须委托 `code_review_custom` agent**，不使用其他 code-review agent
 3. 收到结果后，向用户转述审查结论
 
 ## 调用方式
 
-使用 Agent 工具，`subagent_type` 必须为 `code-review-custom`，prompt 中必须包含：
+使用 Codex 多代理工具 `spawn_agent`，agent 名必须为 `code_review_custom`，prompt 中必须包含：
 
 - **审查范围**（必填）：明确告诉 agent 审查哪些代码
 - **修改意图**（可选）：如果用户说明了意图，一并传入；否则让 agent 从 diff 推断

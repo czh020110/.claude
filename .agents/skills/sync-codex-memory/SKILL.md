@@ -1,6 +1,6 @@
 ---
 name: sync-codex-memory
-description: 将 `.project-memory/` 项目记忆与独立远程 git 仓库同步（push / pull / info）。每个项目使用 `docs/<project-id>` 独立分支，支持标准 git 合并与冲突处理。用户要求同步记忆时使用。
+description: 将 `.project-memory/` 项目记忆与独立远程 git 仓库同步（push / pull / info）。每个项目使用 docs 下的独立分支，支持标准 git 合并与冲突处理。用户要求同步记忆时使用。
 ---
 
 # sync-codex-memory
