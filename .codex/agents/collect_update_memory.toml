@@ -1,6 +1,6 @@
 name = "collect_update_memory"
 description = "专门更新 .project-memory/ 项目记忆（阶段性全量同步）。限制只修改 .project-memory/ 下项目事实文档与必要的 .claude 说明文件；明确排除 .project-script/ 本地验证资产。"
-model = "haiku-flash"
+model = "gpt-5.6-luna"
 model_reasoning_effort = "low"
 sandbox_mode = "read-only"
 

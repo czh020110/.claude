@@ -1,6 +1,6 @@
 name = "docs_research"
 description = "专门查询最新技术文档、官方用法、教程、迁移说明、issue 与 release note。接收外部技术问题，优先使用 context7，必要时再用网络搜索工具补充，并返回整理后的结果。"
-model = "haiku-flash"
+model = "gpt-5.6-luna"
 model_reasoning_effort = "low"
 sandbox_mode = "read-only"
 

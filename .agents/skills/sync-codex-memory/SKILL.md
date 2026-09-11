@@ -37,7 +37,7 @@ bash .agents/skills/sync-codex-memory/scripts/sync-memory.sh info
 | 合并时出现内容冲突 | 引导手动解决（见「冲突处理」） |
 | 无法访问远程项目记忆仓库 | 检查 URL、GitHub 仓库是否存在、SSH key / token |
 
-> 若 `.project-memory/` 已有文件但还不是 git 仓库（例如刚被 sync-codex-config 填充模板），脚本会自动纳入版本管理并合并，无需手动处理。
+> 若 `.project-memory/` 已有文件但还不是 git 仓库（例如刚被 sync-codex-project-config 填充模板），脚本会自动纳入版本管理并合并，无需手动处理。
 
 ## 配置 URL
 

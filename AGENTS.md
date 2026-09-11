@@ -1,95 +1,72 @@
 # 项目记忆
 
-`.project-memory/` 是统一的项目记忆文件夹，会话中的长期项目记忆应该保留在其中，而不是写散在 prompt 或临时对话中。每次开始新任务应优先读取 `.project-memory/` 下的项目记忆文件理解项目，而不是还没理解任务就开始工作。
+`.project-memory/` 是统一的项目记忆文件夹，长期项目记忆保存在其中。每次开始新任务应先读取相关记忆，再动手。
+使用 `read-index-memory` skill 读取全部记忆索引（各主题 `MEMORY.md`，不含 `DONE.md`），再根据索引按需读取正文。
 
 ## 项目记忆索引
 
-`.project-memory/` 采用「索引 + 分块文件」的项目记忆范式：每个大主题目录有一个 `MEMORY.md` 纯索引（下文用 `@` 注入），正文按需读取。命中索引描述的覆盖范围或读取条件时，必须读取对应正文文件，不得仅凭索引摘要推断实现；获得所需入口、调用链、约束和验证方式后停止扩展读取。
+`.project-memory/` 采用「索引 + 分块文件」范式：每个主题目录有一个 `MEMORY.md` 纯索引，正文按需读取。命中索引描述的覆盖范围或读取条件时，必须读取对应正文文件，不得仅凭索引摘要推断实现；获得所需入口、调用链、约束和验证方式后停止扩展读取。
 
-- Documents： @../.project-memory/Documents/MEMORY.md
-  - 用户维护的长期项目背景、需求材料、业务规则和补充说明。
-  - 默认只读：除非用户明确要求补充长期项目事实，不要主动写入正文，Dcuments 只可由 `collect_update_memory` agent 更新索引。
-- Boundary： @../.project-memory/Boundary/MEMORY.md
-  - 记录必须遵守的限制、明确不做的事项、设计约束、禁止事项、成功标准与质量底线。
-  - 开始新功能、调整阶段范围或判断是否偏离 Boundary 前优先读取。
-- Target： @../.project-memory/Target/MEMORY.md
-  - 记录总体流程目标、核心功能目标、阶段功能范围和验收标准。
-  - 开始开发新功能、拆分阶段任务或确认当前优先级前优先读取。
-- Environment： @../.project-memory/Environment/MEMORY.md
-  - 记录依赖工具、运行环境、环境变量、外部服务、路径布局和已知环境坑。
-  - 环境排查、依赖安装、服务启动失败或迁移运行环境前读取。
-- Commands： @../.project-memory/Commands/MEMORY.md
-  - 记录安装、启动、训练、测试、构建、评估等可执行命令及其前置条件与常见失败恢复。
-  - 运行命令前优先读取，避免臆造命令。
-- Design： @../.project-memory/Design/MEMORY.md
-  - 记录项目架构设计、模块划分、设计理由、损失与训练策略和实验设计（针对已有代码的当前设计，而非未来需求）。
-  - 架构推进、更新 Design 正文或实现与既有设计出现差异时按需读取。
-- Long-term step： @../.project-memory/TODO/STEP.md
-  - 开始记录和开发时读取
-  - 项目长期方向和阶段步骤事实源，默认不随每次提交更新，只做大方向参考，不细化阶段内目标。
-  - 空模板时，只有用户明确要求才设计完整历程表；非空时，历程有变更（方向/阶段调整）可由你直接修改。
-- Shared ToDo： @../.project-memory/TODO/TODO.md
-  - 你与用户共享的待办列表，任何粒度的任务都能记；只维护简单 markdown 待办行，不用多级标题。
-  - 生命周期（登记 → 进行中 → 归档/废弃/微调）按「任务执行流程」执行。
-- Archived ToDo： `.project-memory/TODO/DONE.md`
-  - 已完成任务的归档列表，不限制条数。
-  - 按需读取：用户提到过去某个已完成任务而你没有相关记忆时读取。
-
-## 执行要求
-
-- 开始开发新功能前，按照 `共享待办` 和 `Target`，避免偏离当前阶段。
-- 修改已有功能前，先读取相关代码和共享待办，确认上下游影响。
-- 完成修改后必须说明修改了哪些文件；涉及代码时说明验证方式和结果。
-- 完成阶段性工作后，必须检查 Task 工具中的任务状态；已经完成的任务要立即标记为 completed，避免遗留 in_progress/pending 任务。
+- [Documents/MEMORY.md](.project-memory/Documents/MEMORY.md)：用户维护的长期项目背景、需求材料、业务规则和补充说明。默认只读，不主动写入正文，只可由 `collect_update_memory` agent 更新索引。
+- [Boundary/MEMORY.md](.project-memory/Boundary/MEMORY.md)：必须遵守的限制、明确不做的事项、设计约束、禁止事项、成功标准与质量底线。开始新功能、调整阶段范围或判断是否偏离 Boundary 前优先读取。
+- [Target/MEMORY.md](.project-memory/Target/MEMORY.md)：总体流程目标、核心功能目标、阶段功能范围和验收标准。开始开发新功能、拆分阶段任务或确认当前优先级前优先读取。
+- [Environment/MEMORY.md](.project-memory/Environment/MEMORY.md)：依赖工具、运行环境、环境变量、外部服务、路径布局和已知环境坑。环境排查、依赖安装、服务启动失败或迁移运行环境前读取。
+- [Commands/MEMORY.md](.project-memory/Commands/MEMORY.md)：安装、启动、训练、测试、构建、评估等可执行命令及其前置条件与常见失败恢复。运行命令前优先读取，避免臆造命令。
+- [Design/MEMORY.md](.project-memory/Design/MEMORY.md)：项目架构设计、模块划分、设计理由、损失与训练策略和实验设计（针对已有代码的当前设计，而非未来需求）。架构推进、更新 Design 正文或实现与既有设计出现差异时按需读取。
+- [TODO/STEP.md](.project-memory/TODO/STEP.md)：项目长期方向和阶段步骤事实源，默认不随每次提交更新，只做大方向参考。开始记录和开发时读取；空模板时只有用户明确要求才设计完整历程表；非空时历程有变更（方向/阶段调整）可由你直接修改。
+- [TODO/TODO.md](.project-memory/TODO/TODO.md)：你与用户共享的待办列表，只维护简单 markdown 待办行，不用多级标题。任务生命周期按「任务执行流程」执行。
+- [TODO/DONE.md](.project-memory/TODO/DONE.md)：已完成任务的归档列表。用户提到过去某个已完成任务而你没有相关记忆时读取。
 
 ## 任务执行流程（MUST）
 
-会话开始时，先判断用户消息是否为与项目相关的待执行任务；是则按顺序执行：
+仅适用于开发、修改类任务（新增/修复/重构/配置/测试/文档同步）。纯咨询、审查、调研请求不登记待办。
 
 1. **登记任务**：TODO.md 无该条则在末尾写入（文件不存在则新建）；开始执行前把该条标 `[-]` 进行中。
 2. **读取记忆**：按任务读取相关 `.project-memory/` 主题正文。
-3. **执行与验证**：完成任务；按需创建/清理验证脚本并同步 `.project-script/MEMORY.md`，规则按「本地验证脚本」节。
+   - 先调用 `read-index-memory` skill 读取全部记忆索引（不含 `DONE.md`）。
+   - 按索引描述的覆盖范围、读取条件和关键对象，按需读取对应正文文件。
+3. **执行与验证**：完成任务，验证要求见「代码更新规则」第 6 节。
 4. **归档任务**：把该条从 TODO.md 迁入 DONE.md 标 `[x]`，行尾小括号注明验证方式（用了脚本写脚本名，否则一句话说明）。
-5. **沉淀记忆**：结束前判断本会话是否有需要持久化的 MEMORY；有则按「会话沉淀」更新正文与索引，无则直接结束。
+5. **沉淀记忆**：按「会话沉淀」处理。
+
+完成阶段性工作后，检查 `update_plan` 中的任务状态；已完成项立即标记，不遗留未完成项。
 
 ## 会话沉淀（每轮收尾，MUST）
 
-每轮回答或执行完成后，静默审视本轮是否产生需要持久化的 MEMORY 记忆，按顺序处理。**不打断用户，完成后不汇报**（在对话/任务进行中实时更新）：
+每轮回答或执行完成后，静默审视本轮是否产生需要持久化的记忆，按顺序处理。**不打断用户，完成后不汇报**：
 
-1. **新用户偏好**：出现工作方式、协作习惯、设计取向的新表达 → 直接归入对应主题正文，并在该主题 `MEMORY.md` 登记索引。
-2. **新设计决定**：用户提出方案变更、架构调整、边界调整或打算后续使用的新方向 → 先分析、确认后再直接修改对应正文并同步索引。
-3. **新长期方向**：用户提出新的大方向/阶段步骤，或判断当前 STEP 已与任务脱节 → 与用户确认后直接更新 `.project-memory/TODO/STEP.md`。
+1. **新用户偏好**：工作方式、协作习惯、设计取向的新表达 → 归入对应主题正文并在该主题 `MEMORY.md` 登记索引。
+2. **新设计决定**：方案变更、架构调整、边界调整或打算后续使用的新方向 → 先分析、与用户确认后，再修改对应正文并同步索引。
+3. **新长期方向**：新的方向或阶段步骤，或判断当前 STEP 已与任务脱节 → 与用户确认后更新 `.project-memory/TODO/STEP.md`。
 
-以上记忆更新使用 `update-memory` skill。任务类沉淀（新待办、完成迁移、废弃迁移）不属于本节，按「任务执行流程」处理；更新 `.project-memory/TODO/` 时无需使用 skill。无可沉淀内容时直接结束，不做多余动作。
+以上记忆更新使用 `update-memory` skill（主模型亲自改，不提交 git）。任务类沉淀（新待办、完成迁移、废弃迁移）不属于本节，按「任务执行流程」处理；更新 `.project-memory/TODO/` 时无需使用 skill。无可沉淀内容时直接结束。
 
 ## 工作流分流
 
-- 查询项目背景、Boundary、Target、环境、长期计划或共享待办或其他 `.project-memory/` 事实文档时，直接按 `.project-memory/` 索引读取对应正文，不使用 RAG 检索。
-- 对话/任务中发现需要记下来的关键信息时，使用 `update-memory` skill 实时局部更新项目记忆（主模型亲自改，不提交 git）。
-- 用户要求阶段性汇总或更新项目记忆时，使用 `collect-update-memory` skill（委托 subagent 全量更新），只由用户主动调用；其中 git commit 由 `git-commit` skill 先行完成。
+- 查询项目背景、Boundary、Target、环境、长期计划或共享待办时，先调用 `read-index-memory` skill 读取全部记忆索引，再按索引读取对应正文。
+- 对话或任务中发现需要记下来的关键信息时，使用 `update-memory` skill 实时局部更新项目记忆。
+- 用户要求阶段性汇总、全量更新记忆时，使用 `collect-update-memory` skill（委托 `collect_update_memory` agent），只在用户主动要求时调用；git commit 由 `git-commit` skill 先行完成。
 - 用户要求创建 git commit 时，使用 `git-commit` skill 执行。
-- 验证脚本与 STEP/TODO/DONE 的维护由你直接修改，不使用上述两个 skill。
-- 涉及外部库、框架、SDK、CLI、云服务、模型 API 或 MCP 服务的最新用法时，优先委托 `docs_research` agent。
+- 涉及外部库、框架、SDK、CLI、云服务、模型 API 或 MCP 服务的最新用法时，委托 `docs_research` agent。
+- 验证脚本与 STEP/TODO/DONE 由主模型直接维护，不使用上述 skill。
 
 ## 本地验证脚本
 
-`.project-script/` 与 `.project-memory/` 的长期事实记忆职责不同，是随基础配置同步到项目中的本地验证脚本目录。
+`.project-script/` 是随基础配置同步到项目中的本地验证脚本目录，与 `.project-memory/` 的长期事实记忆职责不同。
 
-- **基础配置仓库（当前仓库）**：`.project-script/` 是供其他项目初始化使用的配置资产，目录中的脚本和 `MEMORY.md` 必须纳入本仓库版本管理，不能在本仓库的 `.gitignore` 中忽略。
-- **被初始化的下游项目**：`sync-claude-config` 同步该目录后，会把下游项目的 `.project-script/` 写入下游项目 `.gitignore`；下游副本供 Claude Code 本地验证使用，不随下游项目提交。
-- `.project-script/MEMORY.md` 是验证脚本索引，不是 `.project-memory/` 主题的记忆索引。
-- 主模型负责下游项目中验证目录的创建、已有脚本复用、可复用验证脚本新增、一次性脚本清理和 `MEMORY.md` 索引同步。
-- 可复用脚本放在 `.project-script/<验证类型>/`，不要直接堆在根目录；索引只记录脚本路径、用途、适用场景、入口命令和必要前置条件，不复制脚本正文。
+- 可复用脚本放在 `.project-script/<验证类型>/`，不要直接堆在根目录。
 - 新增、删除、移动或重命名可复用脚本时，必须在同一轮同步 `.project-script/MEMORY.md`；没有可复用脚本时不创建空的脚本子目录或虚假索引项。
-- 验证脚本只能通过环境变量或其他安全配置读取凭证，不得保存 API key、token、Cookie 或其他可直接使用的凭证。
+- 验证脚本只能通过环境变量或其他安全配置读取凭证，不得保存 API key、token、Cookie。
+- `.project-script/MEMORY.md` 是验证脚本索引，不是 `.project-memory/` 主题的记忆索引；索引只记录脚本路径、用途、适用场景、入口命令和必要前置条件，不复制脚本正文。
 
 ## 文档组织
 
-- 项目记忆按 `.project-memory/` 下主题文件夹维护；每个主题目录有 `MEMORY.md` 纯索引 + 同级正文文件。
-- `MEMORY.md` 只保存索引，不承载正文；正文按需读取，新内容优先归入已有正文文件，只有新独立主题才新建文件。正文文件存在则必须在对应 MEMORY 索引里有对应行。
-- 不设"默认正文文件""兜底文件"——每个正文文件有明确独立职责，明确可分的类型就分开建文件。
-- `.project-memory/` 下具体正文文件只写真实项目事实，不写泛泛教程、模板说明或临时修改记录。
-- 修改记录不单独建文档；需要沉淀时写入对应 git commit 的详细描述。
+每个主题目录有 `MEMORY.md` 纯索引 + 同级正文文件。
+
+- `MEMORY.md` 只保存索引，不承载正文。
+- 正文按需读取，新内容优先归入已有正文文件，只有形成新的独立主题才新建文件；正文文件存在则必须在对应 `MEMORY.md` 有索引行。
+- 不设"默认正文文件""兜底文件"，每个正文文件有明确独立职责，明确可分的类型就分开建文件。
+- 只写真实项目事实，不写教程、模板说明或临时修改记录。
 
 # 语言回复
 
@@ -104,13 +81,7 @@
 
 ---
 
-## 2. 术语统一
-
-- 统一使用：`git 提交说明`。两层格式细则见 §8「Git 提交说明规则」。
-
----
-
-## 3. 修改前必须确认
+## 2. 修改前必须确认
 
 当任务涉及代码变更时，必须先确认：
 
@@ -121,64 +92,20 @@
 
 ---
 
-## 4. 文件位置规范
+## 3. 文件位置规范
 
 - 新增代码必须放在项目既有结构中，不要随意在根目录堆临时文件。
 - `.project-script` ：更新代码后的相关测试文件夹，不存放项目主代码。
 
----
+## 4. 代码简洁原则（ponytail）
 
-## 5. 代码简洁原则（ponytail）
+避免过度设计和无谓复杂度：能不做就不做，能复用现有实现就复用，标准库、原生能力或已安装依赖能覆盖就不新增依赖；只有一个调用方时不要抽象到多调用方，先理解问题再写最小可用方案。Bug 修复要定位根因，不能只改症状；涉及改共用函数时先查所有调用方，在共同路由处一次修好。
 
-Avoid overengineering and unnecessary complexity. Ask: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
-Example: the user asks for a date picker. Instead of installing flatpickr, writing a wrapper component, adding a stylesheet, and starting a discussion about timezones, write:
-
-```
-<input type="date">
-```
-
-Before writing any code, stop at the first rung that holds:
-
-1. Does this need to be built at all? No? Skip it. (YAGNI)
-2. Does it already exist in this codebase? Reuse the helper, util, or pattern.
-3. Does the standard library do it? Use it.
-4. Does a native platform feature cover it? Use it.
-5. Does an already-installed dependency solve it? Use it.
-6. Can this be one line? Do it.
-7. Only then: write the minimum code that works.
-
-The ladder runs after you understand the problem, not instead of it. Read the task, project memory and the code it touches, trace the real flow end to end, then climb.
-
-Bug fix = root cause, not symptom. A report names a symptom. Before editing, grep every caller of the function you are about to touch.
-
-One guard in the shared function is smaller than one guard per caller, and patching only the path the ticket names leaves sibling callers broken.
-
-Fix it once, where all callers route through.
-
-Rules:
-
-- No unrequested abstractions.
-- No avoidable dependencies.
-- No speculative scaffolding.
-- Prefer deletion over addition.
-- Boring over clever.
-- Fewest files possible.
-- Shortest working diff wins once you understand the problem.
-- Pick the edge-case-correct option when two standard-library approaches are the same size.
-- Remove obsolete logic and semi-deprecated compatibility layers.
-
-Complex request? Ship the lazy version and question it in the same response: "Did X. Y covers it. Need full X? Say so." Always tell the user what you skipped. If the user insists on the full version, build it, no re-arguing.
-
-When not to be lazy:
-
-- Do not cut validation, error handling, security, accessibility, data-loss protection, or real edge cases.
-- Do not skip understanding. A small diff you do not understand is just laziness dressed up as efficiency.
-- Non-trivial logic leaves one runnable check behind. Trivial one-liners need no test.
-- When users explicitly need to implement complex features or frontend interfaces.
+不要省略验证、错误处理、安全、可访问性和数据丢失防护，也不要留下不理解的改动。非 trivial 逻辑要留一个可运行检查；复杂功能或用户明确要求完整实现时，按阶段推进并说明跳过了什么。
 
 ---
 
-## 6. 修改中必须遵守
+## 5. 修改中必须遵守
 
 - 优先直接修改代码文件，不要只输出代码。
 - 优先复用现有函数、类型、模块和项目约定。
@@ -189,12 +116,12 @@ When not to be lazy:
 
 ---
 
-## 7. 修改后验证（MUST）
+## 6. 修改后验证（MUST）
 
 - 所有代码修改都必须留下与修改范围匹配的验证证据。
 - 简单、低风险的一行修改可以使用静态检查、差异检查或已有命令验证，不强制新建验证脚本；这里的“无需测试”仅表示无需专门新建测试脚本，不表示可以不验证。
 - 非 trivial 的逻辑、接口、配置、数据流、页面或安全相关修改，优先复用已有验证脚本；没有合适脚本时，创建可复用脚本到 `.project-script/<验证类型>/`。
-- 更新验证脚本后注意同步更新`.project-script/MEMORY.md`。
+- 更新验证脚本后必须同步更新 `.project-script/MEMORY.md`。
 
 验证脚本需验证包括但不限于：
 
@@ -208,16 +135,13 @@ When not to be lazy:
 
 ---
 
-## 8. Git 提交说明规则
+## 7. Git 提交说明规则
 
-- 不要求每次代码修改后立即补充详细提交说明。
-- 用户明确要求创建 git commit（提交代码、保存更改）时才进行提交 git commit。
-- 提交 git commit 时需使用 `git-commit` skill 进行提交
-- 需要回顾历史代码版本时，优先读取对应 commit 的详细描述。
+用户明确要求创建 git commit（提交代码、保存更改）时才提交，并使用 `git-commit` skill 执行。
 
 ---
 
-## 9. 架构实现节奏规范
+## 8. 架构实现节奏规范
 
 - 不要一次性实现全部长期目标；每次推进应形成一个可验证的阶段成果。
 - 回答和执行前，先判断任务属于代码修改、文档更新、进度维护、修改记录、环境排查、接口查询还是架构推进。
@@ -269,7 +193,6 @@ When not to be lazy:
 - 明确结构化输出 schema。
 - 明确工具可执行范围和安全边界。
 - 工具调用不得绕过权限、执行破坏性操作或泄露敏感信息。
-- 对需要长期记忆的项目事实，写入 `.project-memory/Documents/` 或 `.project-memory/Target/`，不要塞进 prompt 字符串。
 
 ---
 
@@ -280,14 +203,12 @@ When not to be lazy:
 - 明确组件输入 props、事件输出和状态来源。
 - 页面级接口变更必须检查数据加载、错误态、空态、加载态。
 - 用户可见行为变更必须实际运行页面验证；无法验证时说明原因。
-- 页面设计类任务优先使用 frontend-design skill。
 
 ---
 
 ## 7. 文档位置
 
 - 阶段接口规划：`.project-memory/Target/`。
-- 接口变更记录：对应 git commit 的详细描述。
 # 注释说明规则
 
 ## 1. 适用范围
@@ -300,7 +221,6 @@ When not to be lazy:
 - 优先通过清晰命名和结构表达代码含义。
 - 注释应解释为什么这样做、有什么约束、有什么风险，而不是重复代码做了什么。
 - 修改代码时，如果原注释已经失效，必须同步更新或删除。
-- 不要在代码注释中记录本次任务、PR 背景、修改历史；这些应进入对应 git commit 的详细描述。
 
 ## 3. 必须补充注释的场景
 
@@ -325,7 +245,6 @@ When not to be lazy:
 - 模块职责：`.project-memory/Design/`
 - 项目目标和设计边界（Target）：`.project-memory/Target/`
 - 业务规则和长期要求：`.project-memory/Documents/`
-- 修改原因和结果：对应 git commit 的详细描述
 # 文档查询规则
 
 ## 1. 适用范围
@@ -394,40 +313,35 @@ When not to be lazy:
 | 范围 | 只更新本次涉及主题的正文与索引（可新建），不扫描全部代码、不读取全部记忆 | 基于 git 变更做全量同步，检查所有相关记忆文档 |
 | git 提交 | 不创建 git commit | agent 不提交；用户要求提交时由 skill 先调 `git-commit` skill 完成 commit，再更新记忆 |
 
-- 记忆文档的更新方法（索引 + 分块文件范式、格式模板、归属原则）只在 `update-memory` SKILL.md 中说明，本文档不重复。
-- 本规则只记录 `.project-memory/` 相关内容；`.project-memory/TODO/` 与 `.project-script/` 的维护方式只在 AGENTS.md 中说明，本文档不重复。
-- `.project-memory/Documents/`（用户上传文档）正文默认只读，记忆索引由 `collect_update_memory` agent 同步，不由 `update-memory` 更新。
-- 在开发过程中随代码变更实时维护记忆，用 `update-memory`；阶段性收尾与全量对齐，用 `collect-update-memory`（commit 由 `git-commit` skill 先行完成）。不要为实时小更新调用 `collect_update_memory` subagent。
+记忆文档的更新方法（索引 + 分块文件范式、格式模板、归属原则）只在 `update-memory` SKILL.md 中说明，本文档不重复。
 
 `collect-update-memory` 的调用边界（调用时机、commit 与记忆更新的先后顺序、基准 commit 流程）唯一权威版本在 `collect-update-memory` SKILL.md，要点：
 
-- 完成阶段成果后，如需沉淀本次变更，使用 `collect-update-memory` skill 同步长期记忆文档；git commit 由其中的 `git-commit` skill 先行完成；
-- 只在用户主动要求时调用（阶段性汇总、全量对齐）；**不负责开发过程中随代码变更实时更新项目文档**——过程中的记忆更新使用 `update-memory` skill，由你自己直接修改。
-- 用户偏好、会话中新产生的设计事实与实现事实，由你在对话过程中通过 `update-memory` skill 自主沉淀，不依赖 `collect-update-memory`。
+- 完成阶段成果后如需沉淀，使用 `collect-update-memory` skill；git commit 由其中的 `git-commit` skill 先行完成。
+- 只在用户主动要求时调用；开发过程中的实时记忆更新使用 `update-memory` skill，由你自己直接修改。
+- 涉及新偏好、设计事实与实现事实时，先在对话中通过 `update-memory` skill 沉淀，不依赖 `collect-update-memory`。
 
 ---
 
 ## 2.1 用户偏好记录规则（MUST）
 
-用户偏好是长期记忆的一部分，你在对话中识别到以下内容时**自行记录**，不打断用户：
+识别到以下用户偏好时**自行沉淀**，不打断用户：
 
 - 工作方式偏好：命令约定、目录布局、命名习惯、提交粒度、禁止事项（"不要 XX"）。
 - 协作习惯偏好：回复语言、讲解深度、验证要求、是否需要先确认。
 - 设计取向偏好：技术栈倾向、架构风格、是否偏好某类做法。
 
-记录位置与归属优先级：
+归属优先级：
 
 1. **已有 MEMORY 主题正文**：偏好能归入 Boundary（约束/禁止事项）、Design（取向、理由）、Commands（命令约定）、Environment（工具偏好）时，归入对应正文文件，并在该主题 `MEMORY.md` 补一条索引行。
 2. **新增 `<主题名>.md`**：当偏好与现有主题都不匹配，或属于该项目的专属工作方式时，按主题语义新开正文文件并注册索引；不得写入 `MEMORY.md` 正文。
-3. **写入时机**：设计类/方案类偏好走「方案更新」流程（先确认再写入）；工作方式、命令约定等纯事实偏好可**直接记录**，无需征询，但若与既有规则冲突需征询用户后进行更新。
-
-`MEMORY.md` 是索引，只放「主题名 + 一句话路由描述」；正文按需读取。用户偏好索引条目的描述要让 agent 一眼判断"这条符不符合当前任务"。
+3. **写入时机**：设计类/方案类偏好走「方案更新」流程（先确认再写入）；工作方式、命令约定等纯事实偏好可直接记录，若与既有规则冲突需先征询用户。
 
 ---
 
 ## 3. 方案更新（设计类文档的主模型直改）
 
-当与用户交流的过程中出现用户提出了：新的设计思路、方案变更、架构调整、边界调整、阶段步骤或打算后续使用的新方向时，由你（主模型）使用 update-memory skill **亲自修改**相关设计类记忆文档——不经 subagent，但须经 §3.2 确认流程后落笔。以保证项目开发的实时性。
+当用户提出新的设计方案、架构调整、边界调整、阶段步骤或新方向时，由你使用 `update-memory` skill 亲自修改相关设计类记忆文档；**不委托 subagent，须先与用户确认**。
 
 涉及的文档范围：
 
@@ -437,55 +351,18 @@ When not to be lazy:
 - `.project-memory/Commands/`（`MEMORY.md` 纯索引 + 同级正文）— 命令约定与工作流命令事实
 - `.project-memory/Environment/`（`MEMORY.md` 纯索引 + 同级正文）— 环境、工具、路径与环境坑事实
 
-你必须根据用户提出的内容，判断应该更新哪个或哪些文档；可能只涉及其中一个，也可能同时涉及多个。
+确认前的分析与提问：
 
-### 3.1 触发场景
-
-当用户：
-
-- 明确提出新的设计思路或方案，打算后续使用。
-- 指出 Documents 中已有内容与当前实际情况不一致，需要变更。
-- 主动要求添加或修改设计方案。
-- 指出项目中的一个明确的边界时。
-
-### 3.2 更新流程（MUST）
-
-对于方案更新，必须遵守以下流程：
-
-1. **分析可行性**：必须先分析用户提出的方案是否可行，包括：
-   - 是否与现有架构冲突
-   - 是否与当前阶段目标矛盾
-   - 是否存在明显的技术风险或依赖问题
-   - 如有必要，先读取相关项目文档（Target、Boundary、Design）确认上下文
-
-2. **与用户讨论**：必须主动向用户提问确认，包括：
-   - 简要说明对方案可行性的分析结论
-   - 指出潜在风险或冲突（如有）
-   - 明确提问："是否确认采用这个方案？"
-   - 用户确认前不得修改文档
-
-3. **达成一致后修改**：双方（你和用户）达成一致后，才能修改相关文档。
-
-4. **修改范围**：
-   - 只修改与新方案直接相关的文档和条目
-   - 不顺手修改无关内容
-
-### 3.3 不可行的处理
-
-- 如果分析后认为方案不可行，必须向用户说明原因和替代建议，不得直接修改设计文档。
-- 如果方案部分可行但有风险，必须明确指出风险点，由用户决定是否继续。
+1. **分析可行性**：检查是否与现有架构、阶段目标冲突，是否存在技术风险或依赖问题；必要时先读取 Target、Boundary、Design 确认上下文。
+2. **与用户讨论**：说明可行性结论，指出潜在风险或冲突，明确询问“是否确认采用这个方案”；确认前不得修改文档。
+3. **达成一致后修改**：只修改与该方案直接相关的文档与条目，不顺手改无关内容。
+4. **不可行的处理**：方案不可行时说明原因和替代建议；部分可行但有风险时明确指出风险点，由用户决定。
 
 ---
 
 ## 4. Documents 中已有内容需要变更
 
-当 Documents 中的内容与当前实际情况不一致时（用户主动提出或 agent 在执行任务时发现），同样适用方案更新的流程：
-
-1. 先分析变更的合理性和影响范围。
-2. 向用户确认是否需要修改。
-3. 达成一致后由你直接修改。
-
-不调用 `collect_update_memory` agent 处理这类临时发现的变更。
+Documents 与当前实际情况不一致时（用户提出或执行中发现），按上述「方案更新」流程处理，由你直接修改，不调用 `collect_update_memory` agent。
 
 ---
 
@@ -493,7 +370,6 @@ When not to be lazy:
 
 修改 `.project-memory/` 下任何文档时，必须遵守该文档的现有格式和模板结构：
 
-- 完全使用用户的母语语言风格，无论对方使用的是何种语言，都不要改变。
 - 优先模仿文档中已有的章节标题、字段命名、条目格式和层级结构。
 - 如果文档已有内容，新增条目必须和已有条目格式一致（如列表风格、字段顺序、缩进层级）。
 - 如果文档是空模板，必须按文档中已有模板样式填充，不要自创格式。
@@ -501,11 +377,6 @@ When not to be lazy:
 - 只有用户明确要求调整文档结构时，才允许修改格式模板本身。
 
 ---
-
-## 6. 不适用本规则的场景
-
-- 阶段性开发完成后的文档汇总和提交：使用 `collect-update-memory` skill。
-- 项目背景、环境、命令等事实性文档的初始化或批量更新：使用 `collect-update-memory` skill。
 
 # 自定义提示词说明
 

@@ -6,7 +6,35 @@ PROJECT_DIR="$(pwd)"
 TMP_DIR=$(mktemp -d)
 trap 'rm -rf "$TMP_DIR"' EXIT
 
-echo "=== sync-codex-config ==="
+# 同步 agent toml 时保留本地用户自定义 model 字段：远程默认模型不覆盖项目本地设置。
+merge_agent_model() {
+  local remote_file="$1"
+  local local_file="$2"
+  local model_line
+  model_line="$(grep -E '^model[[:space:]]*=' "$local_file" 2>/dev/null || true)"
+  if [ -n "$model_line" ]; then
+    python3 - "$remote_file" "$local_file" "$model_line" <<'PY'
+import sys
+from pathlib import Path
+
+remote, local, model_line = sys.argv[1], sys.argv[2], sys.argv[3]
+text = Path(remote).read_text(encoding="utf-8")
+out = []
+for line in text.splitlines(keepends=True):
+    if line.lstrip().startswith("model =") or line.lstrip().startswith("model="):
+        out.append(model_line.rstrip("\n") + "\n")
+    else:
+        out.append(line)
+Path(local).write_text("".join(out), encoding="utf-8")
+PY
+    echo "  ✓ 覆盖(保留本地 model): $local_file"
+  else
+    cp -f "$remote_file" "$local_file"
+    echo "  ✓ 覆盖: $local_file"
+  fi
+}
+
+echo "=== sync-codex-project-config ==="
 echo "项目目录: $PROJECT_DIR"
 echo "远程仓库: $REPO_URL"
 echo ""
@@ -69,8 +97,20 @@ if [ -d "$TMP_DIR/.codex" ]; then
       echo "  = 跳过(内容相同): .codex/$rel_path"
     else
       mkdir -p "$(dirname "$local_path")"
-      cp -f "$rel_path" "$local_path"
-      echo "  ✓ 覆盖: .codex/$rel_path"
+      case "$rel_path" in
+        agents/*.toml)
+          if [ -f "$local_path" ] && grep -E '^model[[:space:]]*=' "$local_path" >/dev/null 2>&1; then
+            merge_agent_model "$rel_path" "$local_path"
+          else
+            cp -f "$rel_path" "$local_path"
+            echo "  ✓ 覆盖: .codex/$rel_path"
+          fi
+          ;;
+        *)
+          cp -f "$rel_path" "$local_path"
+          echo "  ✓ 覆盖: .codex/$rel_path"
+          ;;
+      esac
       synced_count=$((synced_count + 1))
     fi
   done < <(find . -type f -print0 2>/dev/null)
