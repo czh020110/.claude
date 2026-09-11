@@ -8,14 +8,14 @@ description: 从 GitHub 仓库同步 `AGENTS.md`、`.codex/`、`.agents/skills/`
 当用户要求同步 Codex 项目配置，或你发现项目缺少 `AGENTS.md`、`.codex/`、`.agents/skills/` 等基础配置时，执行同步。
 
 ## 执行
-
+直接执行脚本，非必须不要查看脚本代码。
 ```bash
 bash .agents/skills/sync-codex-project-config/scripts/sync.sh
 ```
 
 ## 执行后向用户汇报
 
-根据脚本输出汇报结果：
+若脚本正常执行成功，不要做多余步骤，不要执行其他无关命令。只允许执行上述脚本，并根据脚本输出汇报：
 
 1. 是否有基础配置文件变更（新增/覆盖/跳过）
 2. 变更的文件列表摘要
