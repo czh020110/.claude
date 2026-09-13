@@ -1,11 +1,16 @@
 # Codex 项目级配置
+tools.update_plan.enabled = true
+tools.web_fetch.enabled = true
+
 
 # AGENTS.md 已包含项目记忆、协作规则与全部项目规则，默认 32 KiB 上限偏紧
 project_doc_max_bytes = 65536
 
 # 子代理并发上限（max_threads 为兼容别名，0.144.x 与更新版本均可用）
 [agents]
-max_threads = 6
+max_concurrent_threads_per_session = 4
 
 [features]
-multi_agent = true
+default_mode_request_user_input = true    # 向用户交互提问工具（request_user_input）
+undo = true                               # 改动撤销与回滚
+multi_agent = true                        # 多/子 Agent 派发调度

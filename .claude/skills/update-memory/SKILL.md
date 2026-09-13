@@ -9,7 +9,7 @@ description: 任务进行中或任务结束都可使用，用于实时更新项�
 - **局部更新**：只依据当前对话和任务过程中确认的事实，更新需要更新的主题文件（可新建）；不扫描全部代码，不读取全部记忆，只读取本次涉及主题的 `MEMORY.md` 索引与相关正文。
 - **不创建 git commit**：只修改工作区文件；git 提交说明与提交由 `collect-update-memory` 流程负责。
 - **排除范围（MUST）**：
-  - 不维护 `.project-memory/TODO/`（STEP.md 长期计划、TODO.md 共享待办、DONE.md 已完成归档）——实时更新方式见 CLAUDE.md「会话沉淀」。
+  - 不维护 `.project-memory/TODO/`（STEP.md 长期计划、TODO.md 用户待办）——TODO 状态更新由主模型直接处理，不使用本 skill。
   - 不维护 `.project-script/`（验证脚本的创建、复用、清理与 `MEMORY.md` 索引同步）——实时更新方式见 CLAUDE.md「本地验证脚本」节。
   - 不更新 `.project-memory/Documents/`：用户上传文档的主题，正文默认只读；其记忆索引由 `collect-update-memory` agent 同步维护，不由本 skill 更新。
 

@@ -1,7 +1,7 @@
 # 项目记忆
 
 `.project-memory/` 是统一的项目记忆文件夹，长期项目记忆保存在其中。每次开始新任务应先读取相关记忆，再动手。
-使用 `read-index-memory` skill 读取全部记忆索引（各主题 `MEMORY.md`，不含 `DONE.md`），再根据索引按需读取正文。
+使用 `read-index-memory` skill 读取全部记忆索引（各主题 `MEMORY.md`），再根据索引按需读取正文。
 
 ## 项目记忆索引
 
@@ -14,26 +14,25 @@
 - [Commands/MEMORY.md](.project-memory/Commands/MEMORY.md)：安装、启动、训练、测试、构建、评估等可执行命令及其前置条件与常见失败恢复。运行命令前优先读取，避免臆造命令。
 - [Design/MEMORY.md](.project-memory/Design/MEMORY.md)：项目架构设计、模块划分、设计理由、损失与训练策略和实验设计（针对已有代码的当前设计，而非未来需求）。架构推进、更新 Design 正文或实现与既有设计出现差异时按需读取。
 - [TODO/STEP.md](.project-memory/TODO/STEP.md)：项目长期方向和阶段步骤事实源，默认不随每次提交更新，只做大方向参考。开始记录和开发时读取；空模板时只有用户明确要求才设计完整历程表；非空时历程有变更（方向/阶段调整）可由你直接修改。
-- [TODO/TODO.md](.project-memory/TODO/TODO.md)：你与用户共享的待办列表，只维护简单 markdown 待办行，不用多级标题。任务生命周期按「任务执行流程」执行。
-- [TODO/DONE.md](.project-memory/TODO/DONE.md)：已完成任务的归档列表。用户提到过去某个已完成任务而你没有相关记忆时读取。
+- [TODO/TODO.md](.project-memory/TODO/TODO.md)：用户自行维护的待办列表。模型可以读取；用户要求写入 TODO.md 时才写入；完成相关待办时在该列表中直接标记状态（未完成/进行中/已完成），不再单独维护 DONE.md。
 
 ## 任务执行流程（MUST）
 
 仅适用于开发、修改类任务（新增/修复/重构/配置/测试/文档同步）。纯咨询、审查、调研请求不登记待办。
 
-1. **登记任务**：TODO.md 无该条则在末尾写入（文件不存在则新建）；开始执行前把该条标 `[-]` 进行中。
-2. **读取记忆**：按任务读取相关 `.project-memory/` 主题正文。
-   - 先调用 `read-index-memory` skill 读取全部记忆索引（不含 `DONE.md`）。
+1. **读取记忆**：按任务读取相关 `.project-memory/` 主题正文。
+   - 先调用 `read-index-memory` skill 读取全部记忆索引。
    - 按索引描述的覆盖范围、读取条件和关键对象，按需读取对应正文文件。
+2. **检查 TODO**：读取 `.project-memory/TODO/TODO.md`，若当前任务在 TODO 中，开始执行前把该条标为 `[-] 进行中`；用户临时提出的新任务不写入 TODO（除非用户明确要求写入）。
 3. **执行与验证**：完成任务，验证要求见「代码更新规则」第 6 节。
-4. **归档任务**：把该条从 TODO.md 迁入 DONE.md 标 `[x]`，行尾小括号注明验证方式（用了脚本写脚本名，否则一句话说明）。
+4. **更新 TODO**：若该任务已在 TODO 中，完成后直接在该条目标为 `[x] 已完成`；TODO 中不存在的临时任务不归档、不新增。
 5. **沉淀记忆**：按「会话沉淀」处理。
 
 ## update_plan 拆解流程（可分解任务 MUST）
 
-当任务可以拆成多个可执行步骤时，必须使用 `update_plan` 工具管理执行步骤：
+仅用于真正多步骤（通常 3 步以上）或复杂任务；单步任务不建清单。符合条件时，使用 `update_plan` 工具管理执行步骤：
 
-1. 先按「任务执行流程」登记用户任务到 TODO.md，再使用 `update_plan` 列出本任务的步骤清单。
+1. 仅在需要时检查 `.project-memory/TODO/TODO.md`（用户待办），然后使用 `update_plan` 列出本任务的步骤清单；临时任务不写入 TODO。
 2. 按清单顺序推进任务；每完成一步、调整步骤或发现新步骤时，实时更新 `update_plan` 中的进度状态。
 3. `update_plan` 只记录本任务的拆解方案和执行步骤，不写入 TODO.md；TODO.md 只记录用户任务本身，不记录任务拆解、执行步骤和方案。
 
@@ -47,7 +46,7 @@
 2. **新设计决定**：方案变更、架构调整、边界调整或打算后续使用的新方向 → 先分析、与用户确认后，再修改对应正文并同步索引。
 3. **新长期方向**：新的方向或阶段步骤，或判断当前 STEP 已与任务脱节 → 与用户确认后更新 `.project-memory/TODO/STEP.md`。
 
-以上记忆更新使用 `update-memory` skill（主模型亲自改，不提交 git）。任务类沉淀（新待办、完成迁移、废弃迁移）不属于本节，按「任务执行流程」处理；更新 `.project-memory/TODO/` 时无需使用 skill。无可沉淀内容时直接结束。
+以上记忆更新使用 `update-memory` skill（主模型亲自改，不提交 git）。TODO 状态更新（进行中/已完成）不属于记忆更新，无需使用 skill。无可沉淀内容时直接结束。
 
 ## 工作流分流
 
@@ -56,7 +55,7 @@
 - 用户要求阶段性汇总、全量更新记忆时，使用 `collect-update-memory` skill（委托 `collect-update-memory` agent），只在用户主动要求时调用；git commit 由 `git-commit` skill 先行完成。
 - 用户要求创建 git commit 时，使用 `git-commit` skill 执行。
 - 涉及外部库、框架、SDK、CLI、云服务、模型 API 或 MCP 服务的最新用法时，委托 `docs_research` agent。
-- 验证脚本与 STEP/TODO/DONE 由主模型直接维护，不使用上述 skill。
+- 验证脚本与 STEP/TODO 由主模型直接维护，不使用上述 skill。
 
 ## 本地验证脚本
 

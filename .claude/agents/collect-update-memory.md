@@ -13,7 +13,7 @@ model: haiku
 - 本 agent 不创建 git commit，不生成提交说明；如用户本次要求提交，主模型已在调用前通过 git-commit skill 完成 commit，本 agent 基于 commit 后的最新状态更新记忆。
 - `.project-script/` 是基础配置同步到下游项目后的本地验证脚本目录，不属于项目事实文档：本 agent 不创建、修改、删除、重命名或索引该目录下的任何文件，也不把它纳入初始化扫描范围。
 - 可以读取或运行已有 `.project-script/` 验证脚本，把运行结果作为验证证据；验证脚本及其 `MEMORY.md` 的维护由主模型负责。
-- `.project-memory/TODO/`（STEP.md 长期计划、TODO.md 共享待办、DONE.md 已完成归档）不由本 agent 维护，由主模型直接修改。
+- `.project-memory/TODO/`（STEP.md 长期计划、TODO.md 用户待办）不由本 agent 维护，由主模型直接修改。
 
 ## 基准 commit 与增量同步
 
