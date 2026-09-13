@@ -153,6 +153,10 @@ if [ -d "$TMP_DIR/.project-memory" ]; then
   cd "$TMP_DIR/.project-memory"
   while IFS= read -r -d '' rel_path; do
     rel_path="${rel_path#./}"
+    if [[ "$rel_path" == TODO/DONE.md ]]; then
+      echo "  = 跳过(已弃用): .project-memory/$rel_path"
+      continue
+    fi
     local_path="$PROJECT_DIR/.project-memory/$rel_path"
     if [ ! -f "$local_path" ]; then
       mkdir -p "$(dirname "$local_path")"

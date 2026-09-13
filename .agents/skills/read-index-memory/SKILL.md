@@ -1,13 +1,13 @@
 ---
 name: read-index-memory
-description: 当需要读取项目记忆索引时使用。读取 `.project-memory/` 下所有主题的 `MEMORY.md` 索引内容（不含 `DONE.md`），供主模型根据索引按需读取正文。任务开始、`任务执行流程（MUST）` 或需要判断从哪个记忆主题深入时调用。
+description: 当需要读取项目记忆索引时使用。读取 `.project-memory/` 下所有主题的 `MEMORY.md` 索引内容，供主模型根据索引按需读取正文。任务开始、`任务执行流程（MUST）` 或需要判断从哪个记忆主题深入时调用。
 ---
 
 # 用途
 
 `.project-memory/` 采用「索引 + 分块文件」范式。本 skill 用一个跨平台脚本把所有主题的 `MEMORY.md` 索引一次性读出来，让主模型先看到索引路由信息，再按需读取具体正文。
 
-此脚本只读取**索引内容**（每个主题目录下的 `MEMORY.md`），不读取正文文件，也不读取 `.project-memory/TODO/DONE.md`。
+此脚本只读取**索引内容**（每个主题目录下的 `MEMORY.md`），不读取正文文件。
 
 # 执行
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""读取 .project-memory/ 下所有主题的 MEMORY.md 索引（不含 DONE.md）。
+"""读取 .project-memory/ 下所有主题的 MEMORY.md 索引。
 
 跨平台：仅使用 Python 标准库。接受可选位置参数作为项目根目录，
 默认为当前工作目录。只读，不修改文件。
