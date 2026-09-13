@@ -5,7 +5,7 @@ REPO_URL="https://github.com/czh020110/.claude.git"
 PROJECT_DIR="$(pwd)"
 TMP_DIR=$(mktemp -d)
 
-echo "=== sync-claude-config ==="
+echo "=== sync-cc-project-config ==="
 echo "项目目录: $PROJECT_DIR"
 echo "远程仓库: $REPO_URL"
 echo ""
@@ -39,27 +39,30 @@ if [ -d "$TMP_DIR/.claude" ]; then
     fi
   done < <(find . -type f ! -name "CLAUDE.md" ! -path "./agents/*" -print0 2>/dev/null)
 
-  # 2b. CLAUDE.md — 仅更新 frontmatter（第一个 --- 之前的内容）
+  # 2b. CLAUDE.md — 只更新规则区，保留本地「自定义提示词说明」以下内容
   REMOTE_CLAUDE="$TMP_DIR/.claude/CLAUDE.md"
   LOCAL_CLAUDE="$PROJECT_DIR/.claude/CLAUDE.md"
+  CUSTOM_HEADING='# 自定义提示词说明'
   if [ -f "$REMOTE_CLAUDE" ]; then
     if [ ! -f "$LOCAL_CLAUDE" ]; then
       mkdir -p "$(dirname "$LOCAL_CLAUDE")"
       cp "$REMOTE_CLAUDE" "$LOCAL_CLAUDE"
       echo "  + 新增: .claude/CLAUDE.md"
-    else
-      remote_fm=$(awk '!found && /^---$/{found=1; next} !found{print}' "$REMOTE_CLAUDE")
-      local_fm=$(awk '!found && /^---$/{found=1; next} !found{print}' "$LOCAL_CLAUDE")
+    elif grep -qxF "$CUSTOM_HEADING" "$LOCAL_CLAUDE" && grep -qxF "$CUSTOM_HEADING" "$REMOTE_CLAUDE"; then
+      remote_end=$(grep -n -xF "$CUSTOM_HEADING" "$REMOTE_CLAUDE" | head -1 | cut -d: -f1)
+      local_start=$(grep -n -xF "$CUSTOM_HEADING" "$LOCAL_CLAUDE" | head -1 | cut -d: -f1)
 
-      if [ "$remote_fm" != "$local_fm" ]; then
-        local_body=$(awk '/^---$/{found=1; next} found{print}' "$LOCAL_CLAUDE")
-        printf '%s\n' "$remote_fm" > "$LOCAL_CLAUDE"
-        echo '---' >> "$LOCAL_CLAUDE"
-        printf '%s\n' "$local_body" >> "$LOCAL_CLAUDE"
-        echo "  ✓ 更新 frontmatter: .claude/CLAUDE.md"
+      if cmp -s <(head -n "$((remote_end - 1))" "$REMOTE_CLAUDE") <(head -n "$((local_start - 1))" "$LOCAL_CLAUDE"); then
+        echo "  = 跳过(规则区相同): .claude/CLAUDE.md"
       else
-        echo "  = 跳过(frontmatter 相同): .claude/CLAUDE.md"
+        head -n "$((remote_end - 1))" "$REMOTE_CLAUDE" > "$LOCAL_CLAUDE.tmp"
+        tail -n +"$local_start" "$LOCAL_CLAUDE" >> "$LOCAL_CLAUDE.tmp"
+        mv "$LOCAL_CLAUDE.tmp" "$LOCAL_CLAUDE"
+        echo "  ✓ 更新 .claude/CLAUDE.md 规则区（保留自定义提示词区）"
       fi
+    else
+      cp "$REMOTE_CLAUDE" "$LOCAL_CLAUDE"
+      echo "  ✓ 覆盖 .claude/CLAUDE.md（本地缺少自定义提示词标题，无法增量合并）"
     fi
   fi
 
@@ -188,8 +191,8 @@ echo ""
 echo "[6/7] 检查下游项目 .gitignore..."
 GITIGNORE="$PROJECT_DIR/.gitignore"
 if [ ! -f "$GITIGNORE" ]; then
-  printf '.claude/\n.project-memory/\n.project-script/\n' > "$GITIGNORE"
-  echo "  + 创建 .gitignore 并添加 .claude/、.project-memory/ 和 .project-script/"
+  printf '.claude/\n.project-memory/\n.project-script/\nCLAUDE.md\n' > "$GITIGNORE"
+  echo "  + 创建 .gitignore 并添加 .claude/、.project-memory/、.project-script/ 和 CLAUDE.md"
 else
   added_to_gitignore=0
   if ! grep -q '^\.claude/' "$GITIGNORE"; then
@@ -205,6 +208,11 @@ else
   if ! grep -q '^\.project-script/$' "$GITIGNORE"; then
     printf '\n# Claude Code 本地验证脚本\n.project-script/\n' >> "$GITIGNORE"
     echo "  + 追加 .project-script/ 到下游项目 .gitignore"
+    added_to_gitignore=$((added_to_gitignore + 1))
+  fi
+  if ! grep -q '^CLAUDE.md$' "$GITIGNORE"; then
+    echo 'CLAUDE.md' >> "$GITIGNORE"
+    echo "  + 追加 CLAUDE.md 到下游项目 .gitignore"
     added_to_gitignore=$((added_to_gitignore + 1))
   fi
   if [ "$added_to_gitignore" -eq 0 ]; then

@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# sync-introduction.sh — 通过 git 分支管理 .project-memory/ 的独立同步
+# sync-memory.sh — 通过 git 分支管理 .project-memory/ 的独立同步
 #
 # 原理：远程仓库中每个项目拥有独立分支 (docs/<project-id>)
 #       `.project-memory/` 本身是该远程仓库的一个项目记忆工作副本
 #       pull/push 使用标准 git 语义，支持真正的合并与冲突处理
 #
 # 用法:
-#   sync-introduction.sh pull   — 拉取/合并远程项目记忆到本地 (标准 git pull)
-#   sync-introduction.sh push   — 推送本地项目记忆到远程 (标准 git push)
-#   sync-introduction.sh status — 查看项目记忆仓库状态
+#   sync-memory.sh pull   — 拉取/合并远程项目记忆到本地 (标准 git pull)
+#   sync-memory.sh push   — 推送本地项目记忆到远程 (标准 git push)
+#   sync-memory.sh status — 查看项目记忆仓库状态
 
 set -euo pipefail
 
@@ -217,7 +217,7 @@ do_pull() {
   fi
 
   # === 本地已有内容但不是 git 仓库 → 自动纳入版本管理并合并远程 ===
-  # 场景：sync-claude-config 刚填充了模板文件，或用户手动放了项目记忆。
+  # 场景：sync-cc-project-config 刚填充了模板文件，或用户手动放了项目记忆。
   # 既然用了本 skill，.project-memory/ 必然要当 git 仓库，直接自动 init，
   # 不停下来问。本地内容先 commit，再 merge 远程分支，冲突时报告具体文件。
   if [ -e "$intro" ] && [ -n "$(find "$intro" -mindepth 1 -maxdepth 1 2>/dev/null)" ]; then
@@ -400,7 +400,7 @@ do_diagnose() {
   local intro="$project_dir/$MEMORY_DIR"
   local cache_conf="$project_dir/.claude/.cache/docs-sync.conf"
 
-  echo "--- sync-claude-introduction 诊断 ---"
+  echo "--- sync-cc-memory 诊断 ---"
   echo "项目目录: $project_dir"
   echo "项目标识: ${project_id:-（未确定）}"
 
@@ -471,7 +471,7 @@ do_info() {
   local branch="docs/$project_id"
   local intro="$project_dir/$MEMORY_DIR"
 
-  echo "--- sync-claude-introduction 状态 ---"
+  echo "--- sync-cc-memory 状态 ---"
   echo "项目标识: ${project_id:-（未确定）}"
 
   # URL 配置
@@ -612,14 +612,14 @@ main() {
       echo "原因: 方向必须是 pull / push / info，收到: $op"
     fi
     echo "解决: 用法如下"
-    echo "  /sync-claude-introduction pull     从远程拉取项目记忆到本地"
-    echo "  /sync-claude-introduction push     把本地项目记忆推送到远程"
-    echo "  /sync-claude-introduction info     查看项目记忆同步状态"
+    echo "  /sync-cc-memory pull     从远程拉取项目记忆到本地"
+    echo "  /sync-cc-memory push     把本地项目记忆推送到远程"
+    echo "  /sync-cc-memory info     查看项目记忆同步状态"
     echo "  bash $(basename "$0") config <url> 配置项目记忆仓库 URL"
     exit 2
   fi
 
-  echo "=== sync-claude-introduction ($op) ==="
+  echo "=== sync-cc-memory ($op) ==="
 
   local project_dir
   project_dir="$(cd "$(dirname "$0")/../../../../" && pwd)"
@@ -630,7 +630,7 @@ main() {
     local url="${2:-}"
     if [ -z "$url" ]; then
       err "用法: bash $(basename "$0") config <url>"
-      err "示例: bash $(basename "$0") config https://github.com/youruser/claude-project-docs.git"
+      err "示例: bash $(basename "$0") config https://github.com/youruser/codex-project-docs.git"
       exit 1
     fi
     local conf_path
@@ -673,7 +673,7 @@ main() {
     err "请先在 GitHub 创建一个空仓库（用于存放各项目的项目记忆），然后配置 URL："
     echo ""
     info "运行（把 URL 换成你创建的项目记忆仓库地址）："
-    echo "  bash .claude/skills/sync-claude-introduction/scripts/sync-introduction.sh config https://github.com/youruser/claude-project-docs.git"
+    echo "  bash .claude/skills/sync-cc-memory/scripts/sync-memory.sh config https://github.com/youruser/codex-project-docs.git"
     echo ""
     err "配置后再次运行 pull / push / status"
     exit 1

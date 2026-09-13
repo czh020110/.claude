@@ -7,7 +7,7 @@
 
 `.project-memory/` 采用「索引 + 分块文件」范式：每个主题目录有一个 `MEMORY.md` 纯索引，正文按需读取。命中索引描述的覆盖范围或读取条件时，必须读取对应正文文件，不得仅凭索引摘要推断实现；获得所需入口、调用链、约束和验证方式后停止扩展读取。
 
-- [Documents/MEMORY.md](.project-memory/Documents/MEMORY.md)：用户维护的长期项目背景、需求材料、业务规则和补充说明。默认只读，不主动写入正文，只可由 `collect_update_memory` agent 更新索引。
+- [Documents/MEMORY.md](.project-memory/Documents/MEMORY.md)：用户维护的长期项目背景、需求材料、业务规则和补充说明。默认只读，不主动写入正文，只可由 `collect-update-memory` agent 更新索引。
 - [Boundary/MEMORY.md](.project-memory/Boundary/MEMORY.md)：必须遵守的限制、明确不做的事项、设计约束、禁止事项、成功标准与质量底线。开始新功能、调整阶段范围或判断是否偏离 Boundary 前优先读取。
 - [Target/MEMORY.md](.project-memory/Target/MEMORY.md)：总体流程目标、核心功能目标、阶段功能范围和验收标准。开始开发新功能、拆分阶段任务或确认当前优先级前优先读取。
 - [Environment/MEMORY.md](.project-memory/Environment/MEMORY.md)：依赖工具、运行环境、环境变量、外部服务、路径布局和已知环境坑。环境排查、依赖安装、服务启动失败或迁移运行环境前读取。
@@ -53,7 +53,7 @@
 
 - 查询项目背景、Boundary、Target、环境、长期计划或共享待办时，先调用 `read-index-memory` skill 读取全部记忆索引，再按索引读取对应正文。
 - 对话或任务中发现需要记下来的关键信息时，使用 `update-memory` skill 实时局部更新项目记忆。
-- 用户要求阶段性汇总、全量更新记忆时，使用 `collect-update-memory` skill（委托 `collect_update_memory` agent），只在用户主动要求时调用；git commit 由 `git-commit` skill 先行完成。
+- 用户要求阶段性汇总、全量更新记忆时，使用 `collect-update-memory` skill（委托 `collect-update-memory` agent），只在用户主动要求时调用；git commit 由 `git-commit` skill 先行完成。
 - 用户要求创建 git commit 时，使用 `git-commit` skill 执行。
 - 涉及外部库、框架、SDK、CLI、云服务、模型 API 或 MCP 服务的最新用法时，委托 `docs_research` agent。
 - 验证脚本与 STEP/TODO/DONE 由主模型直接维护，不使用上述 skill。
@@ -283,9 +283,9 @@
 ## 1. 适用范围
 
 - 适用于 `.project-memory/` 项目记忆（Boundary、Target、Design、Environment、Commands、Documents）的更新与修改。
-- 适用于对 `update-memory` skill（实时局部更新）与 `collect_update_memory` agent/skill（全量汇总更新）的调用时机和职责边界的说明。
+- 适用于对 `update-memory` skill（实时局部更新）与 `collect-update-memory` agent/skill（全量汇总更新）的调用时机和职责边界的说明。
 - 适用于你在对话中识别并持久化用户偏好（工作方式、协作习惯、设计取向外显表达）时的记录规则。
-- `.project-memory/TODO/` 与 `.project-script/` 的维护方式只在 AGENTS.md 中说明，不属于本规则范围。
+- `.project-memory/TODO/` 与 `.project-script/` 的维护方式只在 CLAUDE.md 中说明，不属于本规则范围。
 
 ---
 
@@ -293,10 +293,10 @@
 
 项目记忆有两条互相独立的更新路径，职责不重叠：
 
-| | `update-memory` skill | `collect_update_memory` agent/skill |
+| | `update-memory` skill | `collect-update-memory` agent/skill |
 | --- | --- | --- |
 | 定位 | 实时局部更新 | 阶段性全量汇总 |
-| 执行者 | 你（主模型）亲自执行，不调用 subagent | 委托 `collect_update_memory` subagent |
+| 执行者 | 你（主模型）亲自执行，不调用 subagent | 委托 `collect-update-memory` subagent |
 | 触发 | 对话/任务中发现需要记下来的关键信息时随时使用 | 只在用户主动要求时调用（阶段性汇总、全量对齐） |
 | 范围 | 只更新本次涉及主题的正文与索引（可新建），不扫描全部代码、不读取全部记忆 | 基于 git 变更做全量同步，检查所有相关记忆文档 |
 | git 提交 | 不创建 git commit | agent 不提交；用户要求提交时由 skill 先调 `git-commit` skill 完成 commit，再更新记忆 |
@@ -347,7 +347,7 @@
 
 ## 4. Documents 中已有内容需要变更
 
-Documents 与当前实际情况不一致时（用户提出或执行中发现），按上述「方案更新」流程处理，由你直接修改，不调用 `collect_update_memory` agent。
+Documents 与当前实际情况不一致时（用户提出或执行中发现），按上述「方案更新」流程处理，由你直接修改，不调用 `collect-update-memory` agent。
 
 ---
 

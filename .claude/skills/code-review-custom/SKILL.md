@@ -36,7 +36,7 @@ description: 对指定范围的代码进行审查，判断修改是否正确、�
 ```
 
 ```
-审查范围：文件 .claude/skills/sync-claude-introduction/scripts/sync-introduction.sh 的 HEAD~1..HEAD 变更
+审查范围：文件 .claude/skills/sync-cc-memory/scripts/sync-memory.sh 的 HEAD~1..HEAD 变更
 修改意图：修复空参时不显示 URL 配置状态的问题
 ```
 
