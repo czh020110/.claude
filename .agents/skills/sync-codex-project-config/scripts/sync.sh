@@ -98,6 +98,41 @@ if [ -d "$TMP_DIR/.codex" ]; then
     else
       mkdir -p "$(dirname "$local_path")"
       case "$rel_path" in
+        config.toml)
+          if [ -f "$local_path" ]; then
+            # 只复制远程 config.toml 中本地不存在的内容，不覆盖本地已有字段。
+            python3 - "$rel_path" "$local_path" <<'PY'
+import sys
+from pathlib import Path
+
+remote_text = Path(sys.argv[1]).read_text(encoding="utf-8")
+local_text = Path(sys.argv[2]).read_text(encoding="utf-8")
+local_keys = set()
+for line in local_text.splitlines():
+    line = line.strip()
+    if line and not line.startswith(("#", "[")) and "=" in line:
+        local_keys.add(line.split("=", 1)[0].strip())
+
+for line in remote_text.splitlines():
+    line = line.strip()
+    if not line or line.startswith("#") or line.startswith("["):
+        continue
+    if "=" not in line:
+        continue
+    key = line.split("=", 1)[0].strip()
+    if key not in local_keys:
+        # append under a newline if missing
+        Path(sys.argv[2]).parent.mkdir(parents=True, exist_ok=True)
+        with Path(sys.argv[2]).open("a", encoding="utf-8") as f:
+            f.write("\n# synced from template\n" + line + "\n")
+        local_keys.add(key)
+PY
+            echo "  ✓ 合并 config.toml（只追加新增字段）"
+          else
+            cp -f "$rel_path" "$local_path"
+            echo "  ✓ 新增: .codex/$rel_path"
+          fi
+          ;;
         agents/*.toml)
           if [ -f "$local_path" ] && grep -E '^model[[:space:]]*=' "$local_path" >/dev/null 2>&1; then
             merge_agent_model "$rel_path" "$local_path"
