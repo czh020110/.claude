@@ -13,4 +13,7 @@ max_concurrent_threads_per_session = 4
 [features]
 default_mode_request_user_input = false    # 向用户交互提问工具（request_user_input）；用户可按需开启
 undo = true                               # 改动撤销与回滚
-multi_agent = true                        # 多/子 Agent 派发调度
+
+[features.multi_agent_v2]
+enabled = true
+tool_namespace = "agents"
