@@ -5,7 +5,13 @@ description: 将 `.project-memory/` 项目记忆与独立远程 git 仓库同步
 
 # sync-codex-memory
 
-把 `.project-memory/` 作为独立 git 仓库同步到远程项目记忆仓库的 `docs/<project-id>` 分支。
+把 `.project-memory/` 作为独立 git 仓库同步到远程项目记忆仓库。分支由主代码仓库的 `origin` 远程 URL 唯一确定：同一个代码仓库在远程记忆仓库里对应同一个 `docs/<origin-url-slug>` 分支。
+
+## 项目标识
+
+- 唯一标识是主代码仓库 `git remote get-url origin` 返回的 URL。
+- 脚本会把这个 URL 转换成稳定的 `docs/<slug>` 分支名；不要再使用目录名或 `.codex/project-id`。
+- 主代码仓库未配置 origin 时，脚本会直接报错，而不是回退到本地名称。
 
 ## 用法
 
@@ -73,4 +79,4 @@ bash .agents/skills/sync-codex-memory/scripts/sync-memory.sh config <URL>
 bash .agents/skills/sync-codex-memory/scripts/sync-memory.sh status
 ```
 
-跨设备：skill 随 `.agents/skills/` 同步过来，`.codex/project-id` 随主项目 git 同步；但项目记忆仓库 URL 需跨设备重新配置。
+跨设备：skill 随 `.agents/skills/` 同步过来；项目标识来自主仓库 origin remote，换设备无需额外配置。远程项目记忆仓库 URL 需跨设备重新配置。
