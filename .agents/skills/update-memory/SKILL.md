@@ -20,7 +20,7 @@ description: 任务进行中或任务结束都可使用，用于实时更新项�
 
 # 更新流程（MUST）
 
-1. **定位主题**：判断事实归属 `.project-memory/` 哪个大主题（Commands/Environment/Target/Design/Boundary，归属原则见下文）。Documents 由 `collect-update-memory` agent 维护，不在本 skill 范围。
+1. **定位主题**：判断事实归属 `.project-memory/` 哪个大主题（Commands/Environment/Target/Design/Boundary/Tools，归属原则见下文）。Documents 由 `collect-update-memory` agent 维护，不在本 skill 范围。
 2. **读取该主题 `MEMORY.md` 索引**：通过索引描述判断内容应归入哪个已有正文文件；需要时才读取该正文。不读取无关主题。
 3. **写入正文**：
    - 优先归入已有正文文件（同一对象/同一工作流/同一设计问题），更新或补充对应章节，替换过时内容。
@@ -34,7 +34,7 @@ description: 任务进行中或任务结束都可使用，用于实时更新项�
 
 ## 总体结构
 
-管理以下六个大主题目录（每个含 `MEMORY.md` 纯索引 + 同级若干正文文件；本 skill 只写其中五个，Documents 排除）：
+管理以下七个大主题目录（每个含 `MEMORY.md` 纯索引 + 同级若干正文文件；本 skill 只写其中六个，Documents 排除）：
 
 ```text
 .project-memory/
@@ -43,7 +43,8 @@ description: 任务进行中或任务结束都可使用，用于实时更新项�
 ├── Documents/
 ├── Target/
 ├── Design/
-└── Boundary/
+├── Boundary/
+└── Tools/
 ```
 
 每个主题目录必须采用以下结构：
@@ -72,7 +73,7 @@ description: 任务进行中或任务结束都可使用，用于实时更新项�
 - [文档名称](文档名称.md) - 覆盖范围、关键对象及应当读取该文档的任务场景。
 ```
 
-`<Topic>` 固定映射：Boundary→`Project Boundaries`、Target→`Project Targets`、Design→`Project Design`、Documents→`Project Documents`、Environment→`the Development Environment`、Commands→`Common Commands`。
+`<Topic>` 固定映射：Boundary→`Project Boundaries`、Target→`Project Targets`、Design→`Project Design`、Documents→`Project Documents`、Environment→`the Development Environment`、Commands→`Common Commands`、Tools→`Project Tools`。
 
 每条索引必须帮助判断两件事：
 
@@ -85,7 +86,7 @@ description: 任务进行中或任务结束都可使用，用于实时更新项�
 
 索引描述只用于路由定位，不得复述频繁变化的实现细节（如具体参数值、内部路径），也不得作为完成任务所需事实的替代品。索引越接近"路由契约"，越不容易失效。
 
-## 六个大主题的职责
+## 七个大主题的职责
 
 每个主题下的正文文件按"候选小主题"或项目真实主题划分，每个正文文件有明确独立职责。**不设默认/兜底正文文件**——没有内容时不建文件，有内容时按类型建独立文件并加入索引。
 
@@ -97,6 +98,7 @@ description: 任务进行中或任务结束都可使用，用于实时更新项�
 | Target      | 项目为什么存在；当前要解决什么问题；最终目标；阶段目标；用何标准判断目标达成                                   |
 | Design      | 当前项目已有代码的：系统整体怎样组织；各模块职责；模块如何协作；为何采用当前设计；关键策略/方案设计与理由      |
 | Boundary    | 哪些行为必须保持；哪些明确不做；数据/模型/接口/实验的限制；哪些修改被禁止                                      |
+| Tools       | 项目使用且可复用的非主架构工具/特殊脚本（如可视化工具、统计工具、格式化工具、辅助脚本等）；用途、入口、依赖与适用场景 |
 
 **事实归属原则**：同一项目事实只能有一个权威归属位置，其他文档通过相对链接引用，不得复制大段相同说明。实现过程中的新事实必须归入对应主题（Design/Boundary/Environment/Commands），不得持续追加到 Target。
 
@@ -109,6 +111,7 @@ description: 任务进行中或任务结束都可使用，用于实时更新项�
 - **Target**：例："研究问题与总体目标、阶段目标与里程碑、验收标准"等。
 - **Design**：例："模块架构、模块设计、关键策略、方案设计、设计决策"等独立主题。针对已有代码的当前设计，而非未来需求。
 - **Boundary**：例："数据与标注边界、模型与接口约束、实验与评价边界、禁止事项与非目标"等独立子主题。
+- **Tools**：按工具/脚本类别分文件，例如"可视化工具、统计工具、数据转换工具、辅助脚本"；记录用途、入口命令、依赖、典型用法和适用场景。
 
 Commands 按用户任务和完整工作流分类，**不按 Python/Git/Docker/Shell 等工具名称机械分类**。
 
@@ -175,7 +178,7 @@ MEMORY 由你直接维护，不引入自动生成脚本。区分"结构变化"�
 
 ## 方案更新需确认
 
-设计类文档（Boundary/Target/Design）的方案变更先与用户确认后再写入；工作方式、命令约定等纯事实偏好可直接记录。
+设计类文档（Boundary/Target/Design）的方案变更先与用户确认后再写入；工作方式、命令约定、工具/脚本事实等纯事实偏好可直接记录。
 
 # 与 collect-update-memory 的分工
 

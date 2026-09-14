@@ -27,6 +27,7 @@ def find_memory_roots(root: Path) -> list[Path]:
         "Environment",
         "Commands",
         "Design",
+        "Tools",
         "TODO",
     ]
     listed: set[Path] = set()

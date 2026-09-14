@@ -13,6 +13,7 @@
 - [Environment/MEMORY.md](.project-memory/Environment/MEMORY.md)：依赖工具、运行环境、环境变量、外部服务、路径布局和已知环境坑。环境排查、依赖安装、服务启动失败或迁移运行环境前读取。
 - [Commands/MEMORY.md](.project-memory/Commands/MEMORY.md)：安装、启动、训练、测试、构建、评估等可执行命令及其前置条件与常见失败恢复。运行命令前优先读取，避免臆造命令。
 - [Design/MEMORY.md](.project-memory/Design/MEMORY.md)：项目架构设计、模块划分、设计理由、损失与训练策略和实验设计（针对已有代码的当前设计，而非未来需求）。架构推进、更新 Design 正文或实现与既有设计出现差异时按需读取。
+- [Tools/MEMORY.md](.project-memory/Tools/MEMORY.md)：项目中可复用的非主架构工具/特殊脚本（如可视化工具、统计工具、格式化脚本等）。需要复用某类工具或脚本时按索引读取对应正文。
 - [TODO/STEP.md](.project-memory/TODO/STEP.md)：项目长期方向和阶段步骤事实源，默认不随每次提交更新，只做大方向参考。开始记录和开发时读取；空模板时只有用户明确要求才设计完整历程表；非空时历程有变更（方向/阶段调整）可由你直接修改。
 - [TODO/TODO.md](.project-memory/TODO/TODO.md)：用户自行维护的待办列表。模型可以读取；用户要求写入 TODO.md 时才写入；完成相关待办时在该列表中直接标记状态（未完成/进行中/已完成），不再单独维护 DONE.md。
 
