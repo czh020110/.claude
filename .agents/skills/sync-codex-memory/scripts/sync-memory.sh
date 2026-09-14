@@ -1,18 +1,17 @@
 #!/usr/bin/env bash
-# sync-memory.sh — 通过 git 分支管理 .project-memory/ 与 .project-script/ 的一组同步
+# sync-memory.sh — 通过 git 分支管理 .project-memory/ 项目记忆
 #
 # 原理：远程仓库中每个项目拥有独立分支，分支名由主代码仓库 origin remote URL 唯一映射
-#       两个目录作为同一组项目资产，落在远程记忆仓库的同一分支内
 #       pull/push 使用标准 git 语义，支持真正的合并与冲突处理
 #
 # 用法:
-#   sync-memory.sh pull   — 拉取/合并记忆与验证脚本组到本地
-#   sync-memory.sh push   — 推送本地记忆与验证脚本组到远程
-#   sync-memory.sh status — 查看记忆与验证脚本仓库状态
+#   sync-memory.sh pull   — 拉取/合并项目记忆到本地
+#   sync-memory.sh push   — 推送本地项目记忆到远程
+#   sync-memory.sh status — 查看项目记忆仓库状态
 
 set -euo pipefail
 
-SYNC_DIRS=(".project-memory" ".project-script")
+SYNC_DIRS=(".project-memory")
 
 info()  { printf "\033[36m[信息]\033[0m %s\n" "$*"; }
 ok()    { printf "\033[32m[  ✓]\033[0m %s\n" "$*"; }
@@ -80,8 +79,16 @@ detect_remote_repo() {
 write_remote_repo() {
   local project_dir="$1" url="$2"
   local cache_dir="$project_dir/.codex/.cache"
-  mkdir -p "$cache_dir"
-  printf '%s\n' "$url" > "$cache_dir/docs-sync.conf"
+  if ! mkdir -p "$cache_dir" 2>/dev/null; then
+    err "创建失败: $cache_dir"
+    err "请确认 .codex 目录存在且当前用户可写"
+    return 1
+  fi
+  if ! printf '%s\n' "$url" > "$cache_dir/docs-sync.conf" 2>/dev/null; then
+    err "写入失败: $cache_dir/docs-sync.conf"
+    err "请确认 .codex/.cache 目录存在且当前用户可写"
+    return 1
+  fi
   echo "$cache_dir/docs-sync.conf"
 }
 
@@ -605,7 +612,9 @@ main() {
       exit 1
     fi
     local conf_path
-    conf_path=$(write_remote_repo "$project_dir" "$url")
+    if ! conf_path=$(write_remote_repo "$project_dir" "$url"); then
+      exit 1
+    fi
     ok "已写入项目记忆仓库 URL: $url"
     info "配置文件: $conf_path"
     info "现在可以运行 pull / push 同步项目记忆了"
