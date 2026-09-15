@@ -7,11 +7,17 @@ description: 从 GitHub 仓库同步 `AGENTS.md`、`.codex/`、`.agents/skills/`
 
 当用户要求同步 Codex 项目配置，或你发现项目缺少 `AGENTS.md`、`.codex/`、`.agents/skills/` 等基础配置时，执行同步。
 
+## 全局自同步（MUST）
+
+运行本 skill 时，脚本会先把本 skill 自身同步/覆盖到全局 skill 目录 `~/.agents/skills/sync-codex-project-config/`（可用 `CODEX_GLOBAL_SKILL_DIR` 覆盖该目录），**只覆盖这一个同名 skill，不触碰其他全局 skill**。这样在未配置模板的目录里，也能直接调用全局 `sync-codex-project-config` 来同步项目。
+
 ## 执行
 直接执行脚本，非必须不要查看脚本代码。
 ```bash
 bash .agents/skills/sync-codex-project-config/scripts/sync.sh
 ```
+
+脚本会先执行上述全局自同步，再继续项目配置同步；向用户汇报时包含全局 skill 的更新情况。
 
 ## 执行后向用户汇报
 

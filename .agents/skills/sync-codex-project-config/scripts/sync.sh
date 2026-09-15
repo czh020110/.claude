@@ -6,6 +6,10 @@ PROJECT_DIR="$(pwd)"
 TMP_DIR=$(mktemp -d)
 trap 'rm -rf "$TMP_DIR"' EXIT
 
+# 全局 skill 目录：默认 ~/.agents/skills，可用 CODEX_GLOBAL_SKILL_DIR 覆盖
+GLOBAL_SKILL_DIR="${CODEX_GLOBAL_SKILL_DIR:-$HOME/.agents/skills}"
+SKILL_NAME="sync-codex-project-config"
+
 # 同步 agent toml 时保留本地用户自定义 model 字段：远程默认模型不覆盖项目本地设置。
 merge_agent_model() {
   local remote_file="$1"
@@ -46,6 +50,23 @@ if ! git clone --depth 1 "$REPO_URL" "$TMP_DIR" 2>&1; then
   exit 1
 fi
 echo "  克隆完成"
+echo ""
+
+# 1.5 全局自同步：只把本 skill 同步/覆盖到全局目录，不触碰其他全局 skill
+echo "[1.5/8] 同步本 skill 到全局目录..."
+if [ -d "$TMP_DIR/.agents/skills/$SKILL_NAME" ]; then
+  mkdir -p "$GLOBAL_SKILL_DIR/$SKILL_NAME"
+  if [ -d "$PROJECT_DIR/.agents/skills/$SKILL_NAME" ]; then
+    # 优先使用当前项目里的版本（可能包含本地未提交修改）
+    cp -Rf "$PROJECT_DIR/.agents/skills/$SKILL_NAME/." "$GLOBAL_SKILL_DIR/$SKILL_NAME/"
+    echo "  ✓ 覆盖全局 skill: $GLOBAL_SKILL_DIR/$SKILL_NAME（来自当前项目）"
+  else
+    cp -Rf "$TMP_DIR/.agents/skills/$SKILL_NAME/." "$GLOBAL_SKILL_DIR/$SKILL_NAME/"
+    echo "  ✓ 覆盖全局 skill: $GLOBAL_SKILL_DIR/$SKILL_NAME（来自模板仓库）"
+  fi
+else
+  echo "  = 模板仓库无此 skill，跳过全局同步"
+fi
 echo ""
 
 # 2. 同步 AGENTS.md —— 只更新规则区，保留本地「自定义提示词」区
@@ -100,32 +121,79 @@ if [ -d "$TMP_DIR/.codex" ]; then
       case "$rel_path" in
         config.toml)
           if [ -f "$local_path" ]; then
-            # 只复制远程 config.toml 中本地不存在的内容，不覆盖本地已有字段。
+            # 只把远程 config.toml 中本地缺失的 table 整块与顶级键追加，不拆散字段。
             python3 - "$rel_path" "$local_path" <<'PY'
 import sys
 from pathlib import Path
 
 remote_text = Path(sys.argv[1]).read_text(encoding="utf-8")
 local_text = Path(sys.argv[2]).read_text(encoding="utf-8")
-local_keys = set()
-for line in local_text.splitlines():
-    line = line.strip()
-    if line and not line.startswith(("#", "[")) and "=" in line:
-        local_keys.add(line.split("=", 1)[0].strip())
 
-for line in remote_text.splitlines():
-    line = line.strip()
-    if not line or line.startswith("#") or line.startswith("["):
-        continue
-    if "=" not in line:
-        continue
-    key = line.split("=", 1)[0].strip()
-    if key not in local_keys:
-        # append under a newline if missing
-        Path(sys.argv[2]).parent.mkdir(parents=True, exist_ok=True)
-        with Path(sys.argv[2]).open("a", encoding="utf-8") as f:
-            f.write("\n# synced from template\n" + line + "\n")
-        local_keys.add(key)
+# 本项目 config.toml 不需要完整 TOML 解析：按 table 头切块即可。
+# TOML 语义：table 头之后的所有键都属于该 table（无论是否缩进），
+# 直到下一个 table 头为止；只有第一个 table 头之前的键是顶级键。
+def is_table_header(line):
+    s = line.strip()
+    return s.startswith("[") and s.endswith("]")
+
+def split_blocks(text):
+    blocks = []
+    current_header = None
+    current_lines = []
+    for line in text.splitlines():
+        if is_table_header(line):
+            if current_header is not None:
+                blocks.append(("table", current_header, current_lines))
+            elif current_lines:
+                blocks.append(("top", None, current_lines))
+            current_header = line.strip()
+            current_lines = [line.rstrip()]
+        elif current_header is not None:
+            # table 块只保留 `key = value` 行，跳过注释，避免把后续注释当字段带进来
+            if line.strip() and not line.lstrip().startswith("#"):
+                current_lines.append(line.rstrip())
+        else:
+            current_lines.append(line.rstrip())
+    if current_header is not None:
+        blocks.append(("table", current_header, current_lines))
+    elif current_lines:
+        blocks.append(("top", None, current_lines))
+    return blocks
+
+# 解析本地已有的顶级键和 table 名
+local_lines = local_text.splitlines()
+existing_top_keys = set()
+existing_tables = set()
+current = None
+for line in local_lines:
+    s = line.strip()
+    if is_table_header(line):
+        current = s
+    elif s and not s.startswith("#") and "=" in s:
+        key = s.split("=", 1)[0].strip()
+        if current is None:
+            existing_top_keys.add(key)
+        else:
+            existing_tables.add(current)
+
+missing_blocks = []
+for kind, header, lines in split_blocks(remote_text):
+    if kind == "table":
+        if header not in existing_tables:
+            missing_blocks.append("\n".join(lines))
+    else:
+        # 顶级块：只补缺失的键行，不复制注释
+        for line in lines:
+            s = line.strip()
+            if s and not s.startswith("#") and "=" in s:
+                key = s.split("=", 1)[0].strip()
+                if key not in existing_top_keys:
+                    missing_blocks.append(line)
+
+if missing_blocks:
+    with Path(sys.argv[2]).open("a", encoding="utf-8") as f:
+        for block in missing_blocks:
+            f.write("\n# synced from template\n" + block + "\n")
 PY
             echo "  ✓ 合并 config.toml（只追加新增字段）"
           else
