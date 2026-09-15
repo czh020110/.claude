@@ -58,6 +58,35 @@ PY
   fi
 }
 
+# zcode 平台工具名适配：模板 AGENTS.md 使用 Codex 工具名，zcode 下替换为对应工具名。
+# 只替换「自定义提示词说明」标题之前的规则区；无该标题时替换整个文件。
+adapt_agent_tools() {
+  python3 - "$1" "$2" <<'PY'
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+heading = sys.argv[2]
+text = path.read_text(encoding="utf-8")
+lines = text.splitlines(keepends=True)
+rule_end = len(lines)
+for i, line in enumerate(lines):
+    if line.rstrip("\n") == heading:
+        rule_end = i
+        break
+rule = "".join(lines[:rule_end]).replace("update_plan", "TodoWrite").replace("request_user_input", "AskUserQuestion")
+path.write_text(rule + "".join(lines[rule_end:]), encoding="utf-8")
+PY
+}
+
+# 仅当平台为 zcode 时对文件执行工具名适配
+adapt_agent_tools_if_zcode() {
+  if [ "$PLATFORM" = "zcode" ]; then
+    adapt_agent_tools "$1" "$CUSTOM_HEADING"
+    echo "  ✓ ZCode 工具名适配: update_plan→TodoWrite, request_user_input→AskUserQuestion"
+  fi
+}
+
 echo "=== sync-codex-project-config ($PLATFORM) ==="
 echo "项目目录: $PROJECT_DIR"
 echo "远程仓库: $REPO_URL"
@@ -101,14 +130,24 @@ if [ -f "$REMOTE_AGENTS" ]; then
     mkdir -p "$(dirname "$LOCAL_AGENTS")"
     cp "$REMOTE_AGENTS" "$LOCAL_AGENTS"
     echo "  + 新增: AGENTS.md"
+    adapt_agent_tools_if_zcode "$LOCAL_AGENTS"
   elif grep -qxF "$CUSTOM_HEADING" "$LOCAL_AGENTS" && grep -qxF "$CUSTOM_HEADING" "$REMOTE_AGENTS"; then
     remote_end=$(grep -n -xF "$CUSTOM_HEADING" "$REMOTE_AGENTS" | head -1 | cut -d: -f1)
     local_start=$(grep -n -xF "$CUSTOM_HEADING" "$LOCAL_AGENTS" | head -1 | cut -d: -f1)
 
-    if cmp -s <(head -n "$((remote_end - 1))" "$REMOTE_AGENTS") <(head -n "$((local_start - 1))" "$LOCAL_AGENTS"); then
+    already_adapted=0
+    if [ "$PLATFORM" = "zcode" ]; then
+      # zcode 下规则区与远程一致但仍是 Codex 工具名时，需要做工具名适配
+      if cmp -s <(head -n "$((remote_end - 1))" "$REMOTE_AGENTS" | sed -e 's/update_plan/TodoWrite/g' -e 's/request_user_input/AskUserQuestion/g') <(head -n "$((local_start - 1))" "$LOCAL_AGENTS"); then
+        already_adapted=1
+      fi
+    fi
+
+    if [ "$already_adapted" -eq 1 ]; then
       echo "  = 跳过(规则区相同): AGENTS.md"
     else
       head -n "$((remote_end - 1))" "$REMOTE_AGENTS" > "$LOCAL_AGENTS.tmp"
+      adapt_agent_tools_if_zcode "$LOCAL_AGENTS.tmp"
       tail -n +"$local_start" "$LOCAL_AGENTS" >> "$LOCAL_AGENTS.tmp"
       mv "$LOCAL_AGENTS.tmp" "$LOCAL_AGENTS"
       echo "  ✓ 更新 AGENTS.md 规则区（保留自定义提示词区）"
@@ -116,6 +155,7 @@ if [ -f "$REMOTE_AGENTS" ]; then
   else
     cp "$REMOTE_AGENTS" "$LOCAL_AGENTS"
     echo "  ✓ 覆盖 AGENTS.md（本地缺少自定义提示词标题，无法增量合并）"
+    adapt_agent_tools_if_zcode "$LOCAL_AGENTS"
   fi
 fi
 echo ""
