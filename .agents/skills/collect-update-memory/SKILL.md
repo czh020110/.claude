@@ -1,6 +1,6 @@
 ---
 name: collect-update-memory
-description: 当用户要求阶段性汇总并更新项目记忆时使用；委托 `collect_update_memory` agent 全量同步 `.project-memory/` 项目记忆。git commit 由本 skill 在调用 agent 前通过 `git-commit` skill 完成。
+description: 当用户要求阶段性汇总并更新项目记忆时使用（只允许用户主动要求时调用）；委托 `collect_update_memory` agent 全量更新 `.project-memory/` 项目记忆。git commit 由本 skill 在调用 agent 前通过 `git-commit` skill 完成。
 ---
 
 # 定位
