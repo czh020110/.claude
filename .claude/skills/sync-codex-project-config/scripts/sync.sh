@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# 平台参数：sync.sh codex | sync.sh zcode
+# macOS 自带 bash 3.2 在 UTF-8 locale 下解析脚本中的多字节字符存在缺陷（变量名会吞入
+# 相邻中文字节，报 unbound variable）。统一切到 C locale 按字节处理：脚本内 grep/cmp
+# 均为字节精确比较，中文仅作输出文本，语义不受影响。
+export LC_ALL=C
+
+# 平台参数：sync.sh codex | sync.sh zcode | sync.sh claude
 PLATFORM_ARG="${1:-codex}"
 case "$PLATFORM_ARG" in
   codex|Codex|--codex)
@@ -10,15 +15,20 @@ case "$PLATFORM_ARG" in
   zcode|ZCode|--zcode)
     PLATFORM="zcode"
     ;;
+  claude|Claude|--claude)
+    PLATFORM="claude"
+    ;;
   *)
-    echo "错误: 未知平台 '$PLATFORM_ARG'。可用值: codex / zcode" >&2
+    echo "错误: 未知平台 '$PLATFORM_ARG'。可用值: codex / zcode / claude" >&2
     exit 2
     ;;
 esac
 if [ "$PLATFORM" = "codex" ]; then
   PLATFORM_DIR=".codex"
-else
+elif [ "$PLATFORM" = "zcode" ]; then
   PLATFORM_DIR=".zcode"
+else
+  PLATFORM_DIR=".claude"
 fi
 
 REPO_URL="${CODEX_CONFIG_REPO_URL:-https://github.com/czh020110/.claude.git}"
@@ -29,6 +39,10 @@ trap 'rm -rf "$TMP_DIR"' EXIT
 # 全局 skill 目录：默认 ~/.agents/skills，可用 CODEX_GLOBAL_SKILL_DIR 覆盖
 GLOBAL_SKILL_DIR="${CODEX_GLOBAL_SKILL_DIR:-$HOME/.agents/skills}"
 SKILL_NAME="sync-codex-project-config"
+
+# 规则区 = `# 自定义提示词说明` 之前的内容；自定义提示词区 = 该标题之后的内容（含该标题）。
+# 说明：规则正文里本身含 `---` 分隔线，不能用 `---` 作为切分依据。
+CUSTOM_HEADING='# 自定义提示词说明'
 
 # 同步 agent toml 时保留本地用户自定义 model 字段：远程默认模型不覆盖项目本地设置。
 merge_agent_model() {
@@ -58,6 +72,34 @@ PY
   fi
 }
 
+# 平台工具名适配：模板 AGENTS.md 使用 Codex 工具名，按平台映射替换。
+# 只替换「自定义提示词说明」标题之前的规则区；无该标题时替换整个文件。
+adapt_agent_tools() {
+  python3 - "$1" "$2" "$3" "$4" "$5" "$6" <<'PY'
+import sys
+from pathlib import Path
+
+path, heading, from1, to1, from2, to2 = sys.argv[1:7]
+text = Path(path).read_text(encoding="utf-8")
+lines = text.splitlines(keepends=True)
+rule_end = len(lines)
+for i, line in enumerate(lines):
+    if line.rstrip("\n") == heading:
+        rule_end = i
+        break
+rule = "".join(lines[:rule_end]).replace(from1, to1).replace(from2, to2)
+Path(path).write_text(rule + "".join(lines[rule_end:]), encoding="utf-8")
+PY
+}
+
+# 仅当平台为 zcode 时对 AGENTS.md 执行工具名适配（claude 平台的适配作用于派生的 CLAUDE.md）
+adapt_agent_tools_if_zcode() {
+  if [ "$PLATFORM" = "zcode" ]; then
+    adapt_agent_tools "$1" "$CUSTOM_HEADING" update_plan TodoWrite request_user_input AskUserQuestion
+    echo "  ✓ ZCode 工具名适配: update_plan→TodoWrite, request_user_input→AskUserQuestion"
+  fi
+}
+
 echo "=== sync-codex-project-config ($PLATFORM) ==="
 echo "项目目录: $PROJECT_DIR"
 echo "远程仓库: $REPO_URL"
@@ -72,43 +114,83 @@ fi
 echo "  克隆完成"
 echo ""
 
-# 1.5 全局自同步：只把本 skill 同步/覆盖到全局目录，不触碰其他全局 skill
+# 1.5 全局自同步：把本 skill 覆盖到当前平台 agent 的全局 skill 目录（不跨 agent 平台）
 echo "[1.5/8] 同步本 skill 到全局目录..."
-if [ -d "$TMP_DIR/.agents/skills/$SKILL_NAME" ]; then
-  mkdir -p "$GLOBAL_SKILL_DIR/$SKILL_NAME"
-  if [ -d "$PROJECT_DIR/.agents/skills/$SKILL_NAME" ]; then
-    # 优先使用当前项目里的版本（可能包含本地未提交修改）
-    cp -Rf "$PROJECT_DIR/.agents/skills/$SKILL_NAME/." "$GLOBAL_SKILL_DIR/$SKILL_NAME/"
-    echo "  ✓ 覆盖全局 skill: $GLOBAL_SKILL_DIR/$SKILL_NAME（来自当前项目）"
+SELF_SOURCE=""
+SELF_SOURCE_DESC=""
+if [ "$PLATFORM" = "claude" ]; then
+  # claude 平台：优先项目内 .claude 副本，其次 .agents 副本，最后模板仓库
+  for cand in "${PROJECT_DIR}/.claude/skills/${SKILL_NAME}" "${PROJECT_DIR}/.agents/skills/${SKILL_NAME}" "${TMP_DIR}/.claude/skills/${SKILL_NAME}" "${TMP_DIR}/.agents/skills/${SKILL_NAME}"; do
+    if [ -d "$cand" ]; then
+      SELF_SOURCE="$cand"
+      case "$cand" in
+        "${PROJECT_DIR}"/*) SELF_SOURCE_DESC="当前项目" ;;
+        *) SELF_SOURCE_DESC="模板仓库" ;;
+      esac
+      break
+    fi
+  done
+elif [ -d "${PROJECT_DIR}/.agents/skills/${SKILL_NAME}" ]; then
+  # 优先使用当前项目里的版本（可能包含本地未提交修改）
+  SELF_SOURCE="${PROJECT_DIR}/.agents/skills/${SKILL_NAME}"
+  SELF_SOURCE_DESC="当前项目"
+elif [ -d "${TMP_DIR}/.agents/skills/${SKILL_NAME}" ]; then
+  SELF_SOURCE="${TMP_DIR}/.agents/skills/${SKILL_NAME}"
+  SELF_SOURCE_DESC="模板仓库"
+fi
+install_self_to_global() {
+  # 整目录先删后拷：清掉旧版本残留文件；rm 生成新 inode，从全局副本运行本脚本时
+  # 不会截断正在执行的脚本文件（原地覆盖有执行中途损坏风险）。
+  local dest_root="$1"
+  mkdir -p "${dest_root}"
+  rm -rf "${dest_root:?}/${SKILL_NAME}"
+  cp -R "${SELF_SOURCE}" "${dest_root}/${SKILL_NAME}"
+  echo "  ✓ 覆盖全局 skill: ${dest_root}/${SKILL_NAME}（来自${SELF_SOURCE_DESC}）"
+}
+if [ -n "${SELF_SOURCE}" ]; then
+  if [ "$PLATFORM" = "claude" ]; then
+    # Claude Code 只读 ~/.claude/skills（注意是 skills，带 s）
+    install_self_to_global "${HOME}/.claude/skills"
   else
-    cp -Rf "$TMP_DIR/.agents/skills/$SKILL_NAME/." "$GLOBAL_SKILL_DIR/$SKILL_NAME/"
-    echo "  ✓ 覆盖全局 skill: $GLOBAL_SKILL_DIR/$SKILL_NAME（来自模板仓库）"
+    # Codex 与 Zcode 按 .agents 约定读取 ~/.agents/skills
+    install_self_to_global "${GLOBAL_SKILL_DIR}"
+    # ZCode 中 ~/.zcode/skills 优先级更高，已存在同名副本时必须一并刷新，否则旧副本遮蔽更新
+    if [ "$PLATFORM" = "zcode" ] && [ -d "${HOME}/.zcode/skills/${SKILL_NAME}" ]; then
+      install_self_to_global "${HOME}/.zcode/skills"
+    fi
   fi
 else
-  echo "  = 模板仓库无此 skill，跳过全局同步"
+  echo "  = 模板仓库与当前项目均无此 skill，跳过全局同步"
 fi
 echo ""
 
-# 2. 同步 AGENTS.md —— 只更新规则区，保留本地「自定义提示词」区
+# 2. 同步 AGENTS.md —— 只更新规则区，保留本地「自定义提示词」区；claude 平台额外派生根目录 CLAUDE.md
 echo "[2/8] 同步 AGENTS.md..."
 REMOTE_AGENTS="$TMP_DIR/AGENTS.md"
 LOCAL_AGENTS="$PROJECT_DIR/AGENTS.md"
-# 规则区 = `# 自定义提示词说明` 之前的内容；自定义提示词区 = 该标题之后的内容（含该标题）。
-# 说明：规则正文里本身含 `---` 分隔线，不能用 `---` 作为切分依据。
-CUSTOM_HEADING='# 自定义提示词说明'
 if [ -f "$REMOTE_AGENTS" ]; then
   if [ ! -f "$LOCAL_AGENTS" ]; then
     mkdir -p "$(dirname "$LOCAL_AGENTS")"
     cp "$REMOTE_AGENTS" "$LOCAL_AGENTS"
     echo "  + 新增: AGENTS.md"
+    adapt_agent_tools_if_zcode "$LOCAL_AGENTS"
   elif grep -qxF "$CUSTOM_HEADING" "$LOCAL_AGENTS" && grep -qxF "$CUSTOM_HEADING" "$REMOTE_AGENTS"; then
     remote_end=$(grep -n -xF "$CUSTOM_HEADING" "$REMOTE_AGENTS" | head -1 | cut -d: -f1)
     local_start=$(grep -n -xF "$CUSTOM_HEADING" "$LOCAL_AGENTS" | head -1 | cut -d: -f1)
 
-    if cmp -s <(head -n "$((remote_end - 1))" "$REMOTE_AGENTS") <(head -n "$((local_start - 1))" "$LOCAL_AGENTS"); then
+    already_adapted=0
+    if [ "$PLATFORM" = "zcode" ]; then
+      # zcode 下规则区与远程一致但仍是 Codex 工具名时，需要做工具名适配
+      if cmp -s <(head -n "$((remote_end - 1))" "$REMOTE_AGENTS" | sed -e 's/update_plan/TodoWrite/g' -e 's/request_user_input/AskUserQuestion/g') <(head -n "$((local_start - 1))" "$LOCAL_AGENTS"); then
+        already_adapted=1
+      fi
+    fi
+
+    if [ "$already_adapted" -eq 1 ]; then
       echo "  = 跳过(规则区相同): AGENTS.md"
     else
       head -n "$((remote_end - 1))" "$REMOTE_AGENTS" > "$LOCAL_AGENTS.tmp"
+      adapt_agent_tools_if_zcode "$LOCAL_AGENTS.tmp"
       tail -n +"$local_start" "$LOCAL_AGENTS" >> "$LOCAL_AGENTS.tmp"
       mv "$LOCAL_AGENTS.tmp" "$LOCAL_AGENTS"
       echo "  ✓ 更新 AGENTS.md 规则区（保留自定义提示词区）"
@@ -116,6 +198,36 @@ if [ -f "$REMOTE_AGENTS" ]; then
   else
     cp "$REMOTE_AGENTS" "$LOCAL_AGENTS"
     echo "  ✓ 覆盖 AGENTS.md（本地缺少自定义提示词标题，无法增量合并）"
+    adapt_agent_tools_if_zcode "$LOCAL_AGENTS"
+  fi
+fi
+
+# claude 平台：AGENTS.md 为源，派生项目根目录 CLAUDE.md（Claude Code 专用）。
+# 不读取也不删除项目内旧版 .claude/CLAUDE.md，避免误删用户文件；如存在需用户自行处理。
+if [ "$PLATFORM" = "claude" ] && [ -f "$REMOTE_AGENTS" ]; then
+  LOCAL_CLAUDE="$PROJECT_DIR/CLAUDE.md"
+  CLAUDE_TMP="$PROJECT_DIR/CLAUDE.md.tmp"
+  if grep -qxF "$CUSTOM_HEADING" "$REMOTE_AGENTS"; then
+    remote_end=$(grep -n -xF "$CUSTOM_HEADING" "$REMOTE_AGENTS" | head -1 | cut -d: -f1)
+    head -n "$((remote_end - 1))" "$REMOTE_AGENTS" > "$CLAUDE_TMP"
+    adapt_agent_tools "$CLAUDE_TMP" "$CUSTOM_HEADING" update_plan TaskCreate request_user_input AskUserQuestion
+    # 自定义提示词区来源：本地根 CLAUDE.md 优先，否则用远程模板
+    if [ -f "$LOCAL_CLAUDE" ] && grep -qxF "$CUSTOM_HEADING" "$LOCAL_CLAUDE"; then
+      custom_start=$(grep -n -xF "$CUSTOM_HEADING" "$LOCAL_CLAUDE" | head -1 | cut -d: -f1)
+      tail -n +"$custom_start" "$LOCAL_CLAUDE" >> "$CLAUDE_TMP"
+    else
+      tail -n +"$remote_end" "$REMOTE_AGENTS" >> "$CLAUDE_TMP"
+    fi
+    if [ -f "$LOCAL_CLAUDE" ] && cmp -s "$LOCAL_CLAUDE" "$CLAUDE_TMP"; then
+      echo "  = 跳过(内容相同): CLAUDE.md"
+      rm -f "$CLAUDE_TMP"
+    else
+      mv "$CLAUDE_TMP" "$LOCAL_CLAUDE"
+      echo "  ✓ 由 AGENTS.md 派生根目录 CLAUDE.md（Claude Code 工具名: update_plan→TaskCreate, request_user_input→AskUserQuestion）"
+    fi
+  else
+    cp "$REMOTE_AGENTS" "$LOCAL_CLAUDE"
+    echo "  ✓ 覆盖 CLAUDE.md（远程 AGENTS.md 无自定义提示词标题，整体复制）"
   fi
 fi
 echo ""
@@ -123,18 +235,18 @@ echo ""
 # 3. 同步平台目录（codex: .codex，zcode: .zcode；缓存/本地敏感跳过）
 echo "[3/8] 同步 $PLATFORM_DIR/ 目录..."
 synced_count=0
-if [ -d "$TMP_DIR/.codex" ]; then
-  # zcode 模式下优先使用远程 .zcode/；远程只有 .codex/ 时把它当作平台目录内容
-  if [ "$PLATFORM" = "zcode" ] && [ -d "$TMP_DIR/.zcode" ]; then
-    PLATFORM_DIR=".zcode"
-  elif [ "$PLATFORM" = "zcode" ] && [ ! -d "$TMP_DIR/.zcode" ]; then
-    PLATFORM_DIR=".codex"
-  fi
+# zcode 模式下优先使用远程 .zcode/；远程只有 .codex/ 时把它当作平台目录内容
+if [ "$PLATFORM" = "zcode" ] && [ -d "$TMP_DIR/.zcode" ]; then
+  PLATFORM_DIR=".zcode"
+elif [ "$PLATFORM" = "zcode" ]; then
+  PLATFORM_DIR=".codex"
+fi
+if [ -d "$TMP_DIR/$PLATFORM_DIR" ]; then
   cd "$TMP_DIR/$PLATFORM_DIR"
   while IFS= read -r -d '' rel_path; do
     rel_path="${rel_path#./}"
     case "$rel_path" in
-      .cache/*|settings.local.json|*.local.json|*.secret*|*.key)
+      .cache/*|settings.local.json|*.local.json|*.secret*|*.key|.DS_Store)
         echo "  = 跳过(本地/敏感): $PLATFORM_DIR/$rel_path"
         continue
         ;;
@@ -222,6 +334,47 @@ if missing_blocks:
             f.write("\n# synced from template\n" + block + "\n")
 PY
             echo "  ✓ 合并 config.toml（只追加新增字段）"
+          else
+            cp -f "$rel_path" "$local_path"
+            echo "  ✓ 新增: $PLATFORM_DIR/$rel_path"
+          fi
+          ;;
+        config.json)
+          if [ -f "$local_path" ]; then
+            # 只把远程 config.json 中本地缺失的 mcp server 追加进本地文件，不覆盖本地已有配置。
+            if ! python3 - "$rel_path" "$local_path" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+remote_path, local_path = Path(sys.argv[1]), Path(sys.argv[2])
+try:
+    remote = json.loads(remote_path.read_text(encoding="utf-8"))
+    local = json.loads(local_path.read_text(encoding="utf-8"))
+except (json.JSONDecodeError, OSError) as exc:
+    print(f"  警告: config.json 合并跳过（解析失败: {exc}）", file=sys.stderr)
+    sys.exit(1)
+
+remote_servers = remote.get("mcp", {}).get("servers", {})
+if not isinstance(remote_servers, dict):
+    remote_servers = {}
+local_servers = local.setdefault("mcp", {}).setdefault("servers", {})
+if not isinstance(local_servers, dict):
+    local_servers = {}
+    local["mcp"]["servers"] = local_servers
+
+missing = {name: cfg for name, cfg in remote_servers.items() if name not in local_servers}
+if not missing:
+    print("  = config.json 无新增 mcp server")
+    sys.exit(1)
+
+local_servers.update(missing)
+local_path.write_text(json.dumps(local, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+print("  ✓ 合并 config.json（追加 mcp server: " + ", ".join(sorted(missing)) + "）")
+PY
+            then
+              : # python 已输出跳过原因或无新增说明
+            fi
           else
             cp -f "$rel_path" "$local_path"
             echo "  ✓ 新增: $PLATFORM_DIR/$rel_path"
@@ -341,11 +494,11 @@ gitignore_has_entry() {
 }
 
 if [ ! -f "$GITIGNORE" ]; then
-  printf '.codex/\n.zcode/\n.agents/\n.project-memory/\n.project-script/\nAGENTS.md\n' > "$GITIGNORE"
+  printf '.codex/\n.zcode/\n.claude/\n.agents/\n.project-memory/\n.project-script/\nAGENTS.md\nCLAUDE.md\n' > "$GITIGNORE"
   echo "  + 创建 .gitignore"
 else
   missing_list=""
-  for entry in '.codex/' '.zcode/' '.agents/' '.project-memory/' '.project-script/' 'AGENTS.md'; do
+  for entry in '.codex/' '.zcode/' '.claude/' '.agents/' '.project-memory/' '.project-script/' 'AGENTS.md' 'CLAUDE.md'; do
     if ! gitignore_has_entry "$entry"; then
       missing_list="${missing_list}${entry}"$'\n'
     fi
