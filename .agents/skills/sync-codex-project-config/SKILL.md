@@ -23,10 +23,15 @@ description: 从 GitHub 仓库同步项目基础配置到当前项目。先判�
 ## 执行
 直接执行脚本，非必须不要查看脚本代码。
 ```bash
-bash .agents/skills/sync-codex-project-config/scripts/sync.sh
+bash .agents/skills/sync-codex-project-config/scripts/sync.sh codex
 ```
 
-脚本会先执行上述全局自同步，再继续项目配置同步；向用户汇报时包含全局 skill 的更新情况。
+ZCode 平台传 `zcode`：
+```bash
+bash .agents/skills/sync-codex-project-config/scripts/sync.sh zcode
+```
+
+脚本会先执行上述全局自同步，再按所选平台继续项目配置同步；向用户汇报时包含全局 skill 的更新情况。
 
 ## 执行后向用户汇报
 

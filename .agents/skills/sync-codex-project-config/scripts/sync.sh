@@ -1,6 +1,26 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# 平台参数：sync.sh codex | sync.sh zcode
+PLATFORM_ARG="${1:-codex}"
+case "$PLATFORM_ARG" in
+  codex|Codex|--codex)
+    PLATFORM="codex"
+    ;;
+  zcode|ZCode|--zcode)
+    PLATFORM="zcode"
+    ;;
+  *)
+    echo "错误: 未知平台 '$PLATFORM_ARG'。可用值: codex / zcode" >&2
+    exit 2
+    ;;
+esac
+if [ "$PLATFORM" = "codex" ]; then
+  PLATFORM_DIR=".codex"
+else
+  PLATFORM_DIR=".zcode"
+fi
+
 REPO_URL="${CODEX_CONFIG_REPO_URL:-https://github.com/czh020110/.claude.git}"
 PROJECT_DIR="$(pwd)"
 TMP_DIR=$(mktemp -d)
@@ -38,7 +58,7 @@ PY
   fi
 }
 
-echo "=== sync-codex-project-config ==="
+echo "=== sync-codex-project-config ($PLATFORM) ==="
 echo "项目目录: $PROJECT_DIR"
 echo "远程仓库: $REPO_URL"
 echo ""
@@ -100,22 +120,28 @@ if [ -f "$REMOTE_AGENTS" ]; then
 fi
 echo ""
 
-# 3. 同步 .codex/（config.toml、agents/*.toml、rules 默认文件覆盖；缓存/本地敏感跳过）
-echo "[3/8] 同步 .codex/ 目录..."
+# 3. 同步平台目录（codex: .codex，zcode: .zcode；缓存/本地敏感跳过）
+echo "[3/8] 同步 $PLATFORM_DIR/ 目录..."
 synced_count=0
 if [ -d "$TMP_DIR/.codex" ]; then
-  cd "$TMP_DIR/.codex"
+  # zcode 模式下优先使用远程 .zcode/；远程只有 .codex/ 时把它当作平台目录内容
+  if [ "$PLATFORM" = "zcode" ] && [ -d "$TMP_DIR/.zcode" ]; then
+    PLATFORM_DIR=".zcode"
+  elif [ "$PLATFORM" = "zcode" ] && [ ! -d "$TMP_DIR/.zcode" ]; then
+    PLATFORM_DIR=".codex"
+  fi
+  cd "$TMP_DIR/$PLATFORM_DIR"
   while IFS= read -r -d '' rel_path; do
     rel_path="${rel_path#./}"
     case "$rel_path" in
       .cache/*|settings.local.json|*.local.json|*.secret*|*.key)
-        echo "  = 跳过(本地/敏感): .codex/$rel_path"
+        echo "  = 跳过(本地/敏感): $PLATFORM_DIR/$rel_path"
         continue
         ;;
     esac
-    local_path="$PROJECT_DIR/.codex/$rel_path"
+    local_path="$PROJECT_DIR/$PLATFORM_DIR/$rel_path"
     if cmp -s "$rel_path" "$local_path" 2>/dev/null; then
-      echo "  = 跳过(内容相同): .codex/$rel_path"
+      echo "  = 跳过(内容相同): $PLATFORM_DIR/$rel_path"
     else
       mkdir -p "$(dirname "$local_path")"
       case "$rel_path" in
@@ -198,7 +224,7 @@ PY
             echo "  ✓ 合并 config.toml（只追加新增字段）"
           else
             cp -f "$rel_path" "$local_path"
-            echo "  ✓ 新增: .codex/$rel_path"
+            echo "  ✓ 新增: $PLATFORM_DIR/$rel_path"
           fi
           ;;
         agents/*.toml)
@@ -206,12 +232,12 @@ PY
             merge_agent_model "$rel_path" "$local_path"
           else
             cp -f "$rel_path" "$local_path"
-            echo "  ✓ 覆盖: .codex/$rel_path"
+            echo "  ✓ 覆盖: $PLATFORM_DIR/$rel_path"
           fi
           ;;
         *)
           cp -f "$rel_path" "$local_path"
-          echo "  ✓ 覆盖: .codex/$rel_path"
+          echo "  ✓ 覆盖: $PLATFORM_DIR/$rel_path"
           ;;
       esac
       synced_count=$((synced_count + 1))
@@ -220,7 +246,7 @@ PY
   cd "$PROJECT_DIR"
   if [ "$synced_count" -eq 0 ]; then echo "  (无需要覆盖的文件)"; fi
 else
-  echo "  远程仓库无 .codex/ 目录"
+echo "  远程仓库无 $PLATFORM_DIR/ 目录"
 fi
 echo ""
 
@@ -315,11 +341,11 @@ gitignore_has_entry() {
 }
 
 if [ ! -f "$GITIGNORE" ]; then
-  printf '.codex/\n.agents/\n.project-memory/\n.project-script/\nAGENTS.md\n' > "$GITIGNORE"
+  printf '.codex/\n.zcode/\n.agents/\n.project-memory/\n.project-script/\nAGENTS.md\n' > "$GITIGNORE"
   echo "  + 创建 .gitignore"
 else
   missing_list=""
-  for entry in '.codex/' '.agents/' '.project-memory/' '.project-script/' 'AGENTS.md'; do
+  for entry in '.codex/' '.zcode/' '.agents/' '.project-memory/' '.project-script/' 'AGENTS.md'; do
     if ! gitignore_has_entry "$entry"; then
       missing_list="${missing_list}${entry}"$'\n'
     fi
