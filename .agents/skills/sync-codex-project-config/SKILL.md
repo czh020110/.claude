@@ -1,11 +1,20 @@
 ---
 name: sync-codex-project-config
-description: 从 GitHub 仓库同步 `AGENTS.md`、`.codex/`、`.agents/skills/`、`.project-memory/` 和 `.project-script/` 全套基础配置到当前项目，并自动把这些路径写入 `.gitignore`。当用户要求同步配置，或你发现项目缺少基础 Codex 配置时使用。
+description: 从 GitHub 仓库同步项目基础配置到当前项目。先判断当前平台是 Codex 还是 ZCode：Codex 同步 `AGENTS.md`、`.agents/`、`.codex/`、`.project-memory/`、`.project-script/`；ZCode 同步 `AGENTS.md`、`.agents/`、`.zcode/`、`.project-memory/`、`.project-script/`。自动把这些路径写入 `.gitignore`。当用户要求同步配置，或你发现项目缺少基础配置时使用。
 ---
 
 # sync-codex-project-config
 
-当用户要求同步 Codex 项目配置，或你发现项目缺少 `AGENTS.md`、`.codex/`、`.agents/skills/` 等基础配置时，执行同步。
+当用户要求同步项目配置，或你发现项目缺少基础配置时，执行同步。
+
+## 平台判断（MUST）
+
+执行前先判断当前运行平台：
+
+- **Codex**：同步 `AGENTS.md`、`.agents/`、`.codex/`、`.project-memory/`、`.project-script/`。
+- **ZCode**：同步 `AGENTS.md`、`.agents/`、`.zcode/`、`.project-memory/`、`.project-script/`，即把 `.codex/` 替换为 `.zcode/`。
+
+`.project-memory/` 和 `.project-script/` 是平台无关共享目录，两种平台都同步，不做区分。
 
 ## 全局自同步（MUST）
 

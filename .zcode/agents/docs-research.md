@@ -1,6 +1,8 @@
 ---
+
 name: docs-research
 description: 专门查询最新技术文档、官方用法、教程、迁移说明、issue 与 release note。接收外部技术问题，优先使用 context7，必要时再用网络搜索工具补充，并返回整理后的结果。
+mcp__context7__resolve-library-id, mcp__context7__query-docs, WebSearch, WebFetch, mcp__Web_search__web_search
 model: haiku
 ---
 

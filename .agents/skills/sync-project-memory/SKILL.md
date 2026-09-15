@@ -1,29 +1,29 @@
 ---
-name: sync-codex-memory
+name: sync-project-memory
 description: 将 `.project-memory/` 项目记忆与独立远程 git 仓库同步（push / pull / info）。每个项目使用 docs 下的独立分支，支持标准 git 合并与冲突处理。用户要求同步记忆时使用。
 ---
 
-# sync-codex-memory
+# sync-project-memory
 
 把 `.project-memory/` 作为独立 git 仓库同步到远程项目记忆仓库。分支由主代码仓库的 `origin` 远程 URL 唯一确定：同一个代码仓库在远程记忆仓库里对应同一个 `docs/<origin-url-slug>` 分支。
 
 ## 项目标识
 
 - 唯一标识是主代码仓库 `git remote get-url origin` 返回的 URL。
-- 脚本会把这个 URL 转换成稳定的 `docs/<slug>` 分支名；不要再使用目录名或 `.codex/project-id`。
+- 脚本会把这个 URL 转换成稳定的 `docs/<slug>` 分支名；不要再使用目录名或 `.agents/project-id`。
 - 主代码仓库未配置 origin 时，脚本会直接报错，而不是回退到本地名称。
 
 ## 用法
 
 ```bash
 # 从远程拉取项目记忆到本地
-bash .agents/skills/sync-codex-memory/scripts/sync-memory.sh pull
+bash .agents/skills/sync-project-memory/scripts/sync-memory.sh pull
 
 # 推送本地项目记忆到远程
-bash .agents/skills/sync-codex-memory/scripts/sync-memory.sh push
+bash .agents/skills/sync-project-memory/scripts/sync-memory.sh push
 
 # 查看同步状态
-bash .agents/skills/sync-codex-memory/scripts/sync-memory.sh info
+bash .agents/skills/sync-project-memory/scripts/sync-memory.sh info
 ```
 
 ## 按输出处理
@@ -50,7 +50,7 @@ bash .agents/skills/sync-codex-memory/scripts/sync-memory.sh info
 当报"未配置项目记忆仓库 URL"时，让用户提供一个 GitHub/GitLab 空仓库 URL（专门存放项目记忆，不是主项目仓库）：
 
 ```bash
-bash .agents/skills/sync-codex-memory/scripts/sync-memory.sh config <URL>
+bash .agents/skills/sync-project-memory/scripts/sync-memory.sh config <URL>
 ```
 
 配置后重新执行 pull 或 push。
@@ -65,7 +65,7 @@ cd .project-memory
 git add -A
 git commit -m "merge: 解决 docs 冲突"
 cd ..
-bash .agents/skills/sync-codex-memory/scripts/sync-memory.sh push
+bash .agents/skills/sync-project-memory/scripts/sync-memory.sh push
 ```
 
 放弃合并：`cd .project-memory && git merge --abort`
@@ -73,10 +73,10 @@ bash .agents/skills/sync-codex-memory/scripts/sync-memory.sh push
 ## 其他命令
 
 ```bash
-# 配置 URL（写入 .codex/.cache/docs-sync.conf，不进 git）
-bash .agents/skills/sync-codex-memory/scripts/sync-memory.sh config <URL>
+# 配置 URL（写入 .agents/.cache/docs-sync.conf，不进 git）
+bash .agents/skills/sync-project-memory/scripts/sync-memory.sh config <URL>
 # 查看详细 git 状态
-bash .agents/skills/sync-codex-memory/scripts/sync-memory.sh status
+bash .agents/skills/sync-project-memory/scripts/sync-memory.sh status
 ```
 
 跨设备：skill 随 `.agents/skills/` 同步过来；项目标识来自主仓库 origin remote，换设备无需额外配置。远程项目记忆仓库 URL 需跨设备重新配置。

@@ -59,12 +59,12 @@ detect_project_branch() {
 
 # ============================ 远程项目记忆仓库 URL 检测 ============================ #
 #
-# 唯一配置位置：.codex/.cache/docs-sync.conf（一行纯文本 URL）
+# 唯一配置位置： .agents/.cache/docs-sync.conf（一行纯文本 URL）
 # 通过 config 子命令写入，不进 git，跨设备需各自配置一次。
 
 detect_remote_repo() {
   local project_dir="$1"
-  local cache_conf="$project_dir/.codex/.cache/docs-sync.conf"
+  local cache_conf="$project_dir/ .agents/.cache/docs-sync.conf"
 
   if [ -f "$cache_conf" ]; then
     local url
@@ -75,18 +75,18 @@ detect_remote_repo() {
   echo ""
 }
 
-# 将 URL 写入 .codex/.cache/docs-sync.conf
+# 将 URL 写入  .agents/.cache/docs-sync.conf
 write_remote_repo() {
   local project_dir="$1" url="$2"
-  local cache_dir="$project_dir/.codex/.cache"
+  local cache_dir="$project_dir/.agents/.cache"
   if ! mkdir -p "$cache_dir" 2>/dev/null; then
     err "创建失败: $cache_dir"
-    err "请确认 .codex 目录存在且当前用户可写"
+    err "请确认 .agents/.cache 目录存在且当前用户可写"
     return 1
   fi
   if ! printf '%s\n' "$url" > "$cache_dir/docs-sync.conf" 2>/dev/null; then
     err "写入失败: $cache_dir/docs-sync.conf"
-    err "请确认 .codex/.cache 目录存在且当前用户可写"
+    err "请确认  .agents/.cache 目录存在且当前用户可写"
     return 1
   fi
   echo "$cache_dir/docs-sync.conf"
@@ -390,9 +390,9 @@ do_push() {
 do_diagnose() {
   local project_dir="$1" project_branch="$2"
   local branch="docs/$project_branch"
-  local cache_conf="$project_dir/.codex/.cache/docs-sync.conf"
+  local cache_conf="$project_dir/ .agents/.cache/docs-sync.conf"
 
-  echo "--- sync-codex-memory 诊断 ---"
+  echo "--- sync-project-memory 诊断 ---"
   echo "项目目录: $project_dir"
   echo "分支 slug: ${project_branch:-（未确定）}"
 
@@ -459,7 +459,7 @@ do_info() {
   local project_dir="$1" project_branch="$2" repo_url="$3"
   local branch="docs/$project_branch"
 
-  echo "--- sync-codex-memory 状态 ---"
+  echo "--- sync-project-memory 状态 ---"
   echo "分支 slug: ${project_branch:-（未确定）}"
 
   if [ -n "$repo_url" ]; then
@@ -590,14 +590,14 @@ main() {
       echo "原因: 方向必须是 pull / push / info，收到: $op"
     fi
     echo "解决: 用法如下"
-    echo "  /sync-codex-memory pull     从远程拉取项目记忆到本地"
-    echo "  /sync-codex-memory push     把本地项目记忆推送到远程"
-    echo "  /sync-codex-memory info     查看项目记忆同步状态"
+    echo "  /sync-project-memory pull     从远程拉取项目记忆到本地"
+    echo "  /sync-project-memory push     把本地项目记忆推送到远程"
+    echo "  /sync-project-memory info     查看项目记忆同步状态"
     echo "  bash $(basename "$0") config <url> 配置项目记忆仓库 URL"
     exit 2
   fi
 
-  echo "=== sync-codex-memory ($op) ==="
+  echo "=== sync-project-memory ($op) ==="
 
   local project_dir
   project_dir="$(cd "$(dirname "$0")/../../../../" && pwd)"
@@ -653,7 +653,7 @@ main() {
     err "请先在 GitHub 创建一个空仓库（用于存放各项目的项目记忆），然后配置 URL："
     echo ""
     info "运行（把 URL 换成你创建的项目记忆仓库地址）："
-    echo "  bash .agents/skills/sync-codex-memory/scripts/sync-memory.sh config https://github.com/youruser/codex-project-docs.git"
+    echo "  bash .agents/skills/sync-project-memory/scripts/sync-memory.sh config https://github.com/youruser/codex-project-docs.git"
     echo ""
     err "配置后再次运行 pull / push / status"
     exit 1
