@@ -1,6 +1,6 @@
 ---
 name: read-index-memory
-description: 当需要读取项目记忆索引时使用。读取 `.project-memory/` 下所有主题的 `MEMORY.md` 索引内容，供主模型根据索引按需读取正文。任务开始、`任务执行流程（MUST）` 或需要判断从哪个记忆主题深入时调用。
+description: 当需要读取项目记忆索引时只能使用本技能。会读取 `.project-memory/` 下所有主题的 `MEMORY.md` 索引内容（项目的：背景、边界、环境、命令、目标、工具、文档），执行任务前需要了解项目时调用。
 ---
 
 # 用途
@@ -14,11 +14,11 @@ description: 当需要读取项目记忆索引时使用。读取 `.project-memor
 使用 Python 脚本读取索引，保证跨平台（Windows/macOS/Linux）可运行：
 
 ```bash
-python3 .claude/skills/read-index-memory/scripts/read_index_memory.py
+python3 .agents/skills/read-index-memory/scripts/read_index_memory.py
 ```
 
-脚本不会修改、创建、删除任何文件，只输出索引内容。
+脚本不会修改、创建、删除任何文件，只输出索引内容。不要此脚本的源代码。只需要获取脚本的执行结果。
 
 # 输出与后续动作
 
-脚本输出每个主题 `MEMORY.md` 的完整内容（路径 + 内容），并标注哪些正文文件按索引判断需要读取。你需要根据索引中的覆盖范围、关键对象和读取条件，决定下一步要读取哪些正文文件。
+脚本输出每个主题 `MEMORY.md` 的完整内容（路径 + 内容），并标注哪些正文文件按索引判断需要读取。你需要根据索引中的覆盖范围、关键对象和读取条件，以及当前任务所需。决定下一步要读取哪些正文文件。

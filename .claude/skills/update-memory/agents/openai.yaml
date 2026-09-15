@@ -1,0 +1,4 @@
+interface:
+  display_name: "Update Memory"
+  short_description: "Update project memory in real time"
+  default_prompt: "Use $update-memory to save important project facts to project memory."

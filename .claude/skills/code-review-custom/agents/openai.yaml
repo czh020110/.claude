@@ -1,0 +1,6 @@
+interface:
+  display_name: "Code Review"
+  short_description: "Review code changes for correctness and risk"
+  default_prompt: "Use $code-review-custom to review code changes before merging."
+policy:
+  allow_implicit_invocation: false

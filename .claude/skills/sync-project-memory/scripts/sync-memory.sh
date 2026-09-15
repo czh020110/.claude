@@ -1,18 +1,17 @@
 #!/usr/bin/env bash
-# sync-memory.sh — 通过 git 分支管理 .project-memory/ 与 .project-script/ 的一组同步
+# sync-memory.sh — 通过 git 分支管理 .project-memory/ 项目记忆
 #
 # 原理：远程仓库中每个项目拥有独立分支，分支名由主代码仓库 origin remote URL 唯一映射
-#       两个目录作为同一组项目资产，落在远程记忆仓库的同一分支内
 #       pull/push 使用标准 git 语义，支持真正的合并与冲突处理
 #
 # 用法:
-#   sync-memory.sh pull   — 拉取/合并记忆与验证脚本组到本地
-#   sync-memory.sh push   — 推送本地记忆与验证脚本组到远程
-#   sync-memory.sh status — 查看记忆与验证脚本仓库状态
+#   sync-memory.sh pull   — 拉取/合并项目记忆到本地
+#   sync-memory.sh push   — 推送本地项目记忆到远程
+#   sync-memory.sh status — 查看项目记忆仓库状态
 
 set -euo pipefail
 
-SYNC_DIRS=(".project-memory" ".project-script")
+SYNC_DIRS=(".project-memory")
 
 info()  { printf "\033[36m[信息]\033[0m %s\n" "$*"; }
 ok()    { printf "\033[32m[  ✓]\033[0m %s\n" "$*"; }
@@ -60,12 +59,12 @@ detect_project_branch() {
 
 # ============================ 远程项目记忆仓库 URL 检测 ============================ #
 #
-# 唯一配置位置：.claude/.cache/docs-sync.conf（一行纯文本 URL）
+# 唯一配置位置： .agents/.cache/docs-sync.conf（一行纯文本 URL）
 # 通过 config 子命令写入，不进 git，跨设备需各自配置一次。
 
 detect_remote_repo() {
   local project_dir="$1"
-  local cache_conf="$project_dir/.claude/.cache/docs-sync.conf"
+  local cache_conf="$project_dir/ .agents/.cache/docs-sync.conf"
 
   if [ -f "$cache_conf" ]; then
     local url
@@ -76,12 +75,20 @@ detect_remote_repo() {
   echo ""
 }
 
-# 将 URL 写入 .claude/.cache/docs-sync.conf
+# 将 URL 写入  .agents/.cache/docs-sync.conf
 write_remote_repo() {
   local project_dir="$1" url="$2"
-  local cache_dir="$project_dir/.claude/.cache"
-  mkdir -p "$cache_dir"
-  printf '%s\n' "$url" > "$cache_dir/docs-sync.conf"
+  local cache_dir="$project_dir/.agents/.cache"
+  if ! mkdir -p "$cache_dir" 2>/dev/null; then
+    err "创建失败: $cache_dir"
+    err "请确认 .agents/.cache 目录存在且当前用户可写"
+    return 1
+  fi
+  if ! printf '%s\n' "$url" > "$cache_dir/docs-sync.conf" 2>/dev/null; then
+    err "写入失败: $cache_dir/docs-sync.conf"
+    err "请确认  .agents/.cache 目录存在且当前用户可写"
+    return 1
+  fi
   echo "$cache_dir/docs-sync.conf"
 }
 
@@ -383,9 +390,9 @@ do_push() {
 do_diagnose() {
   local project_dir="$1" project_branch="$2"
   local branch="docs/$project_branch"
-  local cache_conf="$project_dir/.claude/.cache/docs-sync.conf"
+  local cache_conf="$project_dir/ .agents/.cache/docs-sync.conf"
 
-  echo "--- sync-cc-memory 诊断 ---"
+  echo "--- sync-project-memory 诊断 ---"
   echo "项目目录: $project_dir"
   echo "分支 slug: ${project_branch:-（未确定）}"
 
@@ -452,7 +459,7 @@ do_info() {
   local project_dir="$1" project_branch="$2" repo_url="$3"
   local branch="docs/$project_branch"
 
-  echo "--- sync-cc-memory 状态 ---"
+  echo "--- sync-project-memory 状态 ---"
   echo "分支 slug: ${project_branch:-（未确定）}"
 
   if [ -n "$repo_url" ]; then
@@ -583,14 +590,14 @@ main() {
       echo "原因: 方向必须是 pull / push / info，收到: $op"
     fi
     echo "解决: 用法如下"
-    echo "  /sync-cc-memory pull     从远程拉取项目记忆到本地"
-    echo "  /sync-cc-memory push     把本地项目记忆推送到远程"
-    echo "  /sync-cc-memory info     查看项目记忆同步状态"
+    echo "  /sync-project-memory pull     从远程拉取项目记忆到本地"
+    echo "  /sync-project-memory push     把本地项目记忆推送到远程"
+    echo "  /sync-project-memory info     查看项目记忆同步状态"
     echo "  bash $(basename "$0") config <url> 配置项目记忆仓库 URL"
     exit 2
   fi
 
-  echo "=== sync-cc-memory ($op) ==="
+  echo "=== sync-project-memory ($op) ==="
 
   local project_dir
   project_dir="$(cd "$(dirname "$0")/../../../../" && pwd)"
@@ -605,7 +612,9 @@ main() {
       exit 1
     fi
     local conf_path
-    conf_path=$(write_remote_repo "$project_dir" "$url")
+    if ! conf_path=$(write_remote_repo "$project_dir" "$url"); then
+      exit 1
+    fi
     ok "已写入项目记忆仓库 URL: $url"
     info "配置文件: $conf_path"
     info "现在可以运行 pull / push 同步项目记忆了"
@@ -644,7 +653,7 @@ main() {
     err "请先在 GitHub 创建一个空仓库（用于存放各项目的项目记忆），然后配置 URL："
     echo ""
     info "运行（把 URL 换成你创建的项目记忆仓库地址）："
-    echo "  bash .claude/skills/sync-cc-memory/scripts/sync-memory.sh config https://github.com/youruser/codex-project-docs.git"
+    echo "  bash .agents/skills/sync-project-memory/scripts/sync-memory.sh config https://github.com/youruser/codex-project-docs.git"
     echo ""
     err "配置后再次运行 pull / push / status"
     exit 1
