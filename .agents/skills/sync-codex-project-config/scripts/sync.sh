@@ -163,13 +163,13 @@ echo ""
 # 3. 同步平台目录（codex: .codex，zcode: .zcode；缓存/本地敏感跳过）
 echo "[3/8] 同步 $PLATFORM_DIR/ 目录..."
 synced_count=0
-if [ -d "$TMP_DIR/.codex" ]; then
-  # zcode 模式下优先使用远程 .zcode/；远程只有 .codex/ 时把它当作平台目录内容
-  if [ "$PLATFORM" = "zcode" ] && [ -d "$TMP_DIR/.zcode" ]; then
-    PLATFORM_DIR=".zcode"
-  elif [ "$PLATFORM" = "zcode" ] && [ ! -d "$TMP_DIR/.zcode" ]; then
-    PLATFORM_DIR=".codex"
-  fi
+# zcode 模式下优先使用远程 .zcode/；远程只有 .codex/ 时把它当作平台目录内容
+if [ "$PLATFORM" = "zcode" ] && [ -d "$TMP_DIR/.zcode" ]; then
+  PLATFORM_DIR=".zcode"
+elif [ "$PLATFORM" = "zcode" ]; then
+  PLATFORM_DIR=".codex"
+fi
+if [ -d "$TMP_DIR/$PLATFORM_DIR" ]; then
   cd "$TMP_DIR/$PLATFORM_DIR"
   while IFS= read -r -d '' rel_path; do
     rel_path="${rel_path#./}"
@@ -262,6 +262,47 @@ if missing_blocks:
             f.write("\n# synced from template\n" + block + "\n")
 PY
             echo "  ✓ 合并 config.toml（只追加新增字段）"
+          else
+            cp -f "$rel_path" "$local_path"
+            echo "  ✓ 新增: $PLATFORM_DIR/$rel_path"
+          fi
+          ;;
+        config.json)
+          if [ -f "$local_path" ]; then
+            # 只把远程 config.json 中本地缺失的 mcp server 追加进本地文件，不覆盖本地已有配置。
+            if ! python3 - "$rel_path" "$local_path" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+remote_path, local_path = Path(sys.argv[1]), Path(sys.argv[2])
+try:
+    remote = json.loads(remote_path.read_text(encoding="utf-8"))
+    local = json.loads(local_path.read_text(encoding="utf-8"))
+except (json.JSONDecodeError, OSError) as exc:
+    print(f"  警告: config.json 合并跳过（解析失败: {exc}）", file=sys.stderr)
+    sys.exit(1)
+
+remote_servers = remote.get("mcp", {}).get("servers", {})
+if not isinstance(remote_servers, dict):
+    remote_servers = {}
+local_servers = local.setdefault("mcp", {}).setdefault("servers", {})
+if not isinstance(local_servers, dict):
+    local_servers = {}
+    local["mcp"]["servers"] = local_servers
+
+missing = {name: cfg for name, cfg in remote_servers.items() if name not in local_servers}
+if not missing:
+    print("  = config.json 无新增 mcp server")
+    sys.exit(1)
+
+local_servers.update(missing)
+local_path.write_text(json.dumps(local, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+print("  ✓ 合并 config.json（追加 mcp server: " + ", ".join(sorted(missing)) + "）")
+PY
+            then
+              : # python 已输出跳过原因或无新增说明
+            fi
           else
             cp -f "$rel_path" "$local_path"
             echo "  ✓ 新增: $PLATFORM_DIR/$rel_path"

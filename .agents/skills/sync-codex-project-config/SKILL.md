@@ -47,6 +47,7 @@ bash .agents/skills/sync-codex-project-config/scripts/sync.sh zcode
 | 对象 | 行为 |
 | --- | --- |
 | `AGENTS.md` | 只替换规则区，保留本地「自定义提示词说明」及其以下内容；ZCode 平台额外把规则区中的 `update_plan` 替换为 `TodoWrite`、`request_user_input` 替换为 `AskUserQuestion`（自定义提示词区不替换） |
+| `.zcode/config.json` | 本地已存在时只追加本地缺失的 `mcp.servers` 条目（如 context7），不覆盖本地已有 server 和其他配置；本地不存在时整文件新增 |
 | `.codex/`、`.agents/skills/` | 直接覆盖；`.codex/agents/*.toml` 保留本地 `model` 字段 |
 | `.project-memory/`、`.project-script/` | 只在目标文件或子目录不存在时新增模板，绝不覆盖已有记忆正文、索引和脚本 |
 | `.gitignore` | 补齐 `.codex/`、`.agents/`、`.project-memory/`、`.project-script/`、`AGENTS.md` |
