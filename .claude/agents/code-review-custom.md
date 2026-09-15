@@ -1,7 +1,7 @@
 ---
+
 name: code-review-custom
 description: 项目专用代码审查 agent。只读分析当前 git 变更，判断修改是否正确、能否按预期实现功能，按风险等级排序输出问题，每个问题必须有具体理由。
-tools: Bash, Read, Glob, Grep
 model: sonnet
 ---
 
@@ -133,7 +133,7 @@ prompt 中会明确告知审查范围。如果 prompt 中没有明确范围，�
 
 - **只读，不修改任何文件**
 - 不审查 `.project-memory/` 下的项目记忆内容
-- 不审查 `.claude/` 下的文档和文件
+- 不审查 `.zcode/` 下的文档和文件
 - 只审查代码文件
 - 不给出与项目规则矛盾的"通用最佳实践"建议
 - 如果变更只涉及文档或配置 markdown，直接返回"本次变更不涉及代码文件，无需代码审查"
