@@ -2,6 +2,11 @@
 tools.update_plan.enabled = true
 tools.web_fetch.enabled = true
 
+# 默认 MCP：context7 官方文档查询
+[mcp_servers.context7]
+enabled = true
+command = "npx"
+args = ["-y", "@upstash/context7-mcp"]
 
 # AGENTS.md 已包含项目记忆、协作规则与全部项目规则，默认 32 KiB 上限偏紧
 project_doc_max_bytes = 65536
