@@ -18,7 +18,13 @@ description: 从 GitHub 仓库同步项目基础配置到当前项目。先判�
 
 ## 全局自同步（MUST）
 
-运行本 skill 时，脚本会先把本 skill 自身同步/覆盖到全局 skill 目录 `~/.agents/skills/sync-codex-project-config/`（可用 `CODEX_GLOBAL_SKILL_DIR` 覆盖该目录），**只覆盖这一个同名 skill，不触碰其他全局 skill**。这样在未配置模板的目录里，也能直接调用全局 `sync-codex-project-config` 来同步项目。
+运行本 skill 时，脚本会把本 skill 自身同步/覆盖到各 agent 的全局 skill 目录，保证 Codex、ZCode、Claude Code 三个 agent 在任何未配置模板的目录里都能直接调用全局 `sync-codex-project-config` 来同步项目：
+
+- **首选目录 `~/.agents/skills/sync-codex-project-config/`**（可用 `CODEX_GLOBAL_SKILL_DIR` 覆盖）：Codex 与 ZCode 都按 `.agents` 约定读取该目录，作为跨 agent 的全局 skill 主位置，总是写入。
+- **`~/.zcode/skills/`**：在 ZCode 中优先级高于 `~/.agents/skills`，已存在同名副本时会一并刷新，避免旧副本遮蔽更新结果；不存在时不创建。
+- **`~/.claude/skills/`**：Claude Code 不读 `~/.agents/skills`，只认该目录；检测到 `~/.claude`（用户装有 Claude Code）时确保最新副本；未安装时不创建。
+
+只覆盖这一个同名 skill，不触碰其他全局 skill。版本来源优先级：当前项目有本 skill 时用项目版本（可能含本地未提交修改），否则用模板仓库版本。覆盖方式为整目录先删后拷，旧版本残留文件会被清理，从全局副本运行脚本时自身也不会被原地截断。
 
 ## 执行
 直接执行脚本，非必须不要查看脚本代码。

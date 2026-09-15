@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# macOS 自带 bash 3.2 在 UTF-8 locale 下解析脚本中的多字节字符存在缺陷（变量名会吞入
+# 相邻中文字节，报 unbound variable）。统一切到 C locale 按字节处理：脚本内 grep/cmp
+# 均为字节精确比较，中文仅作输出文本，语义不受影响。
+export LC_ALL=C
+
 # 平台参数：sync.sh codex | sync.sh zcode
 PLATFORM_ARG="${1:-codex}"
 case "$PLATFORM_ARG" in
@@ -101,20 +106,42 @@ fi
 echo "  克隆完成"
 echo ""
 
-# 1.5 全局自同步：只把本 skill 同步/覆盖到全局目录，不触碰其他全局 skill
+# 1.5 全局自同步：把本 skill 覆盖到各 agent 的全局 skill 目录（codex / zcode / claude code 均可用）
 echo "[1.5/8] 同步本 skill 到全局目录..."
-if [ -d "$TMP_DIR/.agents/skills/$SKILL_NAME" ]; then
-  mkdir -p "$GLOBAL_SKILL_DIR/$SKILL_NAME"
-  if [ -d "$PROJECT_DIR/.agents/skills/$SKILL_NAME" ]; then
-    # 优先使用当前项目里的版本（可能包含本地未提交修改）
-    cp -Rf "$PROJECT_DIR/.agents/skills/$SKILL_NAME/." "$GLOBAL_SKILL_DIR/$SKILL_NAME/"
-    echo "  ✓ 覆盖全局 skill: $GLOBAL_SKILL_DIR/$SKILL_NAME（来自当前项目）"
-  else
-    cp -Rf "$TMP_DIR/.agents/skills/$SKILL_NAME/." "$GLOBAL_SKILL_DIR/$SKILL_NAME/"
-    echo "  ✓ 覆盖全局 skill: $GLOBAL_SKILL_DIR/$SKILL_NAME（来自模板仓库）"
+SELF_SOURCE=""
+SELF_SOURCE_DESC=""
+if [ -d "${PROJECT_DIR}/.agents/skills/${SKILL_NAME}" ]; then
+  # 优先使用当前项目里的版本（可能包含本地未提交修改）
+  SELF_SOURCE="${PROJECT_DIR}/.agents/skills/${SKILL_NAME}"
+  SELF_SOURCE_DESC="当前项目"
+elif [ -d "${TMP_DIR}/.agents/skills/${SKILL_NAME}" ]; then
+  SELF_SOURCE="${TMP_DIR}/.agents/skills/${SKILL_NAME}"
+  SELF_SOURCE_DESC="模板仓库"
+fi
+install_self_to_global() {
+  # 整目录先删后拷：清掉旧版本残留文件；rm 生成新 inode，从全局副本运行本脚本时
+  # 不会截断正在执行的脚本文件（原地覆盖有执行中途损坏风险）。
+  local dest_root="$1"
+  mkdir -p "${dest_root}"
+  rm -rf "${dest_root:?}/${SKILL_NAME}"
+  cp -R "${SELF_SOURCE}" "${dest_root}/${SKILL_NAME}"
+  echo "  ✓ 覆盖全局 skill: ${dest_root}/${SKILL_NAME}（来自${SELF_SOURCE_DESC}）"
+}
+if [ -n "${SELF_SOURCE}" ]; then
+  # 全局 skill 首选 ~/.agents/skills：Codex 与 Zcode 都按 .agents 约定读取该目录
+  install_self_to_global "${GLOBAL_SKILL_DIR}"
+  # ZCode 中 ~/.zcode/skills 优先级高于 ~/.agents/skills，已存在同名副本时必须一并刷新，
+  # 否则旧副本会遮蔽更新结果；不存在时不创建（ZCode 已读取 ~/.agents/skills）。
+  if [ -d "${HOME}/.zcode/skills/${SKILL_NAME}" ]; then
+    install_self_to_global "${HOME}/.zcode/skills"
+  fi
+  # Claude Code 不读 ~/.agents/skills，只认 ~/.claude/skills：检测到 ~/.claude（用户装有
+  # Claude Code）时确保最新副本，保证三个 agent 都能用；未安装时不创建。
+  if [ -d "${HOME}/.claude" ]; then
+    install_self_to_global "${HOME}/.claude/skills"
   fi
 else
-  echo "  = 模板仓库无此 skill，跳过全局同步"
+  echo "  = 模板仓库与当前项目均无此 skill，跳过全局同步"
 fi
 echo ""
 
