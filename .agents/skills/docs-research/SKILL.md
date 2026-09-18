@@ -1,6 +1,6 @@
 ---
 name: docs-research
-description: 当任务需要查询 3 个及以上外部接口/库/框架/SDK 的官方文档，或单个接口查询过于复杂时，使用本 skill 委托 docs_research agent 批量查询，并读取其返回结果。
+description: 需要同时核实三个以上外部库/接口，或单个技术问题涉及复杂版本/迁移细节时，委托 docs_research agent 查官方资料。
 ---
 
 # docs-research

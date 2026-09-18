@@ -1,6 +1,6 @@
 ---
 name: sync-codex-project-config
-description: 从 GitHub 仓库同步项目基础配置到当前项目。先判断当前平台是 Codex 还是 ZCode：Codex 同步 `AGENTS.md`、`.agents/`、`.codex/`、`.project-memory/`、`.project-script/`；ZCode 同步 `AGENTS.md`、`.agents/`、`.zcode/`、`.project-memory/`、`.project-script/`。自动把这些路径写入 `.gitignore`。当用户要求同步配置，或你发现项目缺少基础配置时使用。
+description: 用户要求同步项目基础配置，或明确发现配置缺失时使用；按当前 Codex/ZCode/Claude 平台同步对应模板并保留本地记忆边界。
 ---
 
 # sync-codex-project-config

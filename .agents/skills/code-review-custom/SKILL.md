@@ -1,6 +1,6 @@
 ---
 name: code-review-custom
-description: 对指定范围的代码进行审查，判断修改是否正确、能否按预期实现功能。必须委托 code_review_custom agent 执行，不使用其他 agent。
+description: 用户明确给出审查范围时，审查代码变更的正确性与风险；只读并委托 code_review_custom agent。
 ---
 
 对指定范围的代码进行审查，判断修改是否正确、能否按预期实现功能。

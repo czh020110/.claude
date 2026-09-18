@@ -1,58 +1,22 @@
 ---
 name: collect-update-memory
-description: 当用户要求阶段性汇总并更新项目记忆时使用（只允许用户主动要求时调用）；委托 `collect_update_memory` agent 全量更新 `.project-memory/` 项目记忆。git commit 由本 skill 在调用 agent 前通过 `git-commit` skill 完成。
+description: 仅在用户主动要求阶段性/全量同步项目记忆时使用；按顺序处理 commit、增量提交和本地变更，并委托 collect_update_memory agent。
 ---
 
-# 定位
+# collect-update-memory
 
-- 只在用户主动要求时调用（阶段性汇总、全量同步记忆）；不负责开发过程中随代码变更实时维护项目记忆——实时局部更新使用 `update-memory` skill。
-- `collect_update_memory` agent 只更新项目记忆，不创建 git commit、不生成提交说明。
+这是“全量记忆同步”的编排入口；日常局部事实用 `update-memory`。除非用户明确要求，不调用本 skill。
 
-# 执行顺序（MUST）
+## 执行顺序
 
-1. **用户本次要求提交 git commit 时**：先使用 `git-commit` skill 创建 commit（含提交说明），再调用 `collect_update_memory` agent 更新记忆——保证记忆文档反映 commit 后的最新状态。
-2. **用户本次不要求提交时**：跳过 commit，直接调用 `collect_update_memory` agent 更新记忆。
+1. 用户同时要求 commit/提交时，先调用 `git-commit` skill；提交完成后以新的 HEAD 作为基准信息。
+2. 否则不创建 commit。读取 `.codex/.cache/collect-update-memory-base-commit`；不存在时以当前 HEAD 初始化缓存并标记“首次，无基准”，再比较当前 HEAD。
+3. 根据 Boundary、Target 等核心规划文件是否仍为空模板判断更新模式（初始化/更新），不要替 agent 决定初始化范围。读取 `git status --short`，把更新模式、基准 commit、当前 HEAD、是否有增量提交、本地未提交变更、已知文件/事实和用户背景传给唯一的 `collect_update_memory` agent。不要主动扫描或搜索代码来补 prompt。
+4. agent 必须先同步增量提交，再同步本地未提交变更；即使没有新 commit，也不能跳过未提交检查。增量或本地阶段成功后，将基准缓存刷新为当前 HEAD；失败不刷新。
+5. agent 返回后向用户转述实际修改、索引同步、增量/本地同步和验证结果。
 
-# 你的职责
+## agent 边界
 
-- 不直接执行项目记忆更新细节，只负责按上述顺序调用 skill 和 agent（agent 只用 `collect_update_memory`，不要改用 `general-purpose` 或其他 agent），并把正确的信息交给它；记忆更新细节由 agent 按其提示词自行控制。
-- 调用前判断更新模式：若 Boundary、Target 等核心规划文件仍为模板空内容，则为”项目记忆初始化”，否则为”项目记忆更新”；初始化模式下不要在 prompt 中自行决定更新范围，交给 agent 判断。
-- 不为补充 prompt 主动阅读、搜索或分析代码；只把当前上下文已知的变更背景、用户要求、已知文件与内容交给 agent。
-
-# 基准 commit 管理（skill 端执行）
-
-- 缓存文件 `.codex/.cache/collect-update-memory-base-commit`（一行 40 字符 SHA）由 skill 端读写，agent 不直接写入。
-- 调用前：文件不存在则以当前 HEAD 初始化；存在则读取基准 SHA。`git rev-parse HEAD` != 基准 → 存在增量提交；`git status --short` 非空 → 存在本地未提交变更。两项结果写进 prompt。
-- 先用 git-commit skill 提交了 commit 时，以提交后的新 HEAD 作为当前 HEAD 写进 prompt。
-- agent 返回后刷新：增量同步成功 → 刷新为当前 HEAD；本地变更同步成功 → 刷新为执行后的 HEAD；失败不刷新（下次重试）。
-
-# 调用方式
-
-使用 Codex 多代理工具 `spawn_agent` 调用：agent 名 `collect_update_memory`，`description: Collect and Update all project memory`。
-
-prompt 模板：
-
-```md
-Background:
-
-- [当前代码/文档变更背景]
-
-Known updates:
-
-- 文件：[已知需要更新的文件；没有明确文件则写”由 collect_update_memory agent 根据维护边界判断”]
-- 内容：[已知需要写入或同步的事实；没有则写”无”]
-
-Base commit info:
-
-- 基准 commit：[SHA 或”首次，无基准”]
-- 当前 HEAD：[SHA；若已先完成 commit 则为新 HEAD]
-- 存在增量提交：[是/否]；增量 commit range：[基准..HEAD，无增量则写”无”]
-- 存在本地未提交变更：[是/否；先 commit 后为否]
-- 处理顺序：先增量同步再本地变更同步
-
-Need:
-
-- 更新相关项目记忆（只更新记忆，不创建 git commit）
-- 当前更新模式：[项目记忆初始化/项目记忆更新]
-- 只返回修改文件，并明确说明增量同步是否成功；基准 commit 由 skill 端刷新，agent 不直接写入该文件
-```
+- 只能委托 `collect_update_memory`，不改用其他 agent；skill 本身不扫描或修改记忆正文。
+- agent 只写 `.project-memory/`，不触碰 `TODO/`、`.project-script/`、代码或配置，不创建 commit；可读取相关正文和已有验证脚本。
+- 没有需要持久化的事实时，允许 agent 返回“无需修改”。

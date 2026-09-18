@@ -1,6 +1,6 @@
 ---
 name: git-commit
-description: 当需要创建 git commit 时使用：根据当前变更生成符合规范的提交说明并创建 commit。用户要求"提交/commit/保存更改"或任务要求创建 git commit 时调用。
+description: 用户明确要求提交、commit 或保存更改时，按项目规范分组、验证并创建 git commit。
 ---
 
 # 触发条件
