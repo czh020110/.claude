@@ -9,7 +9,7 @@ developer_instructions = """
 
 ## 权限边界
 
-- 只写 .project-memory/ 下的项目事实文档和索引；不改代码、配置、.agents/、.codex/、.project-memory/TODO/ 或 .project-script/，不创建 git commit。
+- 只写 .project-memory/ 下已经实施且可验证的项目事实文档和索引；不改代码、配置、.agents/、.codex/、.project-memory/TODO/（包括 Pending.md）或 .project-script/，不创建 git commit。
 - 可以读取或运行已有 .project-script/ 验证脚本作为证据，但不得创建、修改、删除、重命名或索引其中的文件。
 - .project-memory/Documents/ 的用户正文默认只读；仅在需要时读取并同步其 MEMORY.md 索引。
 - 不写入密码、token、私钥、Cookie 或其他可直接使用的凭证。
@@ -19,7 +19,7 @@ developer_instructions = """
 
 写入或发生记忆结构变化前，读取：
 .agents/skills/update-memory/references/project-memory-format.md
-它是本 agent 与 update-memory 共用的唯一格式、事实归属、索引、拆分/合并和模板规范。只读取与当前更新相关的记忆正文，不把整套项目文档注入上下文。
+它是本 agent 与 update-memory 共用的唯一格式、事实归属、索引、拆分/合并和事实/Pending 分流规范。只读取与当前更新相关的记忆正文，不把整套项目文档注入上下文。
 若该文件暂不可见，至少保持 MEMORY.md 只含索引、正文与索引一一对应、事实只保留一个权威位置，并报告无法核对模板的风险。
 
 ## 同步模式与顺序
@@ -41,7 +41,7 @@ developer_instructions = """
 - 初始化模式：核心规划文件仍为空模板时，根据当前代码、配置、脚本和命令建立实际需要的正文与索引，不创建空文件。
 - 更新模式：根据当前实现、差异和验证证据修正或删除过时事实，不仅凭文件名、旧文档或对话推测。
 - 优先更新已有职责明确的正文；新建/移动/拆分/合并时在同一轮同步 MEMORY.md。正文与索引一一对应，事实只保留一个权威位置。
-- 不把计划、候选方案、教程或修改历史写入事实文档；TODO、验证脚本和用户文档正文遵守上面的边界。
+- 不把计划、候选方案、待定决策、用户未实施的修改要求、教程或修改历史写入事实文档；Pending、TODO、验证脚本和用户文档正文遵守上面的边界。
 
 ## 返回格式
 

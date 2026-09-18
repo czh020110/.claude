@@ -1,40 +1,47 @@
 ---
 name: update-memory
-description: 仅在本轮确认了需长期保存的项目事实、偏好、设计、环境或命令时使用；由主模型局部更新 .project-memory/，不处理 TODO、验证脚本或用户文档。
+description: 仅在本轮确认了已实施且可验证的项目事实、有效约束、偏好、环境或命令时使用；未实施方案先写 Pending，不写入记忆。
 ---
 
 # update-memory
 
-只把本轮已确认、对后续任务有复用价值的事实写入项目记忆。没有新事实时不调用本 skill。
+只把当前已经采用、实施并可验证的事实写入项目记忆。没有这类事实时不调用本 skill。
+
+## 事实与 Pending 分流
+
+- 已实施并有验证证据的行为、配置、约束、环境、命令和长期偏好，才属于项目事实，可以写入 `.project-memory/`。
+- 用户提出、讨论或确认但尚未实施的方案、架构调整、边界变更、实现决策或修改要求，必须先由主模型立即写入 `.project-memory/TODO/Pending.md`；不得调用本 skill 写入事实。
+- Pending 项目完成实现并验证后，先删除对应 Pending 条目，再在同一任务中写入最终真实事实。方案被否决或取消时只删除 Pending，不写入记忆。
 
 ## 边界
 
 - 由主模型亲自执行；不调用 subagent，不创建 git commit。
 - 只做局部更新，不扫描全部项目或读取无关主题。
-- 不维护 `.project-memory/TODO/`、`.project-script/` 或 `.project-memory/Documents/`；TODO 状态由主模型直接处理，验证脚本由 `post-verify` 管理，用户文档由 `collect-update-memory` 同步索引。
+- 不维护 `.project-memory/TODO/`（包括 `TODO.md` 和 `Pending.md`）、`.project-script/` 或 `.project-memory/Documents/`；TODO/Pending 状态由主模型直接处理，验证脚本由 `post-verify` 管理，用户文档由 `collect-update-memory` 同步索引。
 - 只写当前可验证事实，不写密码、token、私钥、Cookie、候选方案或修改日志。
 
 ## 触发条件
 
-在对话或执行中确认了以下任一内容时使用：用户偏好、已确认的设计/边界决定、长期阶段变化、环境事实、可复用命令/工具，或发现记忆与现状冲突。临时推测、单次结果和未确认方案不写入。
+在对话或执行中确认了以下任一内容时使用：已经生效的用户偏好/约束、已实施的设计或边界、长期阶段的实际变化、环境事实、可复用命令/工具，或发现记忆与现状冲突。临时推测、单次结果和未实施方案不写入。
 
 ## 更新流程
 
-1. 判断事实所属的 `Commands`、`Environment`、`Target`、`Design`、`Boundary` 或 `Tools` 主题。
-2. 读取该主题的 `MEMORY.md` 索引，只按索引读取相关正文；不要读取无关主题。
-3. **在首次写入或结构变化前**读取 [project-memory-format.md](references/project-memory-format.md)，按其中的事实归属、索引和正文模板执行。
+1. 先确认内容是当前事实，而不是 Pending 中的未实施方案；若不是事实，停止本 skill 并更新 Pending。
+2. 判断事实所属的 `Commands`、`Environment`、`Target`、`Design`、`Boundary` 或 `Tools` 主题。
+3. 读取该主题的 `MEMORY.md` 索引，只按索引读取相关正文；不要读取无关主题。
+4. **在首次写入或结构变化前**读取 [project-memory-format.md](references/project-memory-format.md)，按其中的事实归属、索引和分流规则执行。
    若参考文件暂不可见，至少保持：`MEMORY.md` 只含索引、正文与索引一一对应、事实只保留一个权威位置；按当前已有格式继续并在结果中说明风险。
-4. 以当前代码、配置、脚本、diff 和验证结果为准：优先更新已有语义明确的正文；只有形成独立读取单元才新建正文，并在同一轮更新索引。
-5. 如果移动、拆分、合并或删除正文，原子更新对应 `MEMORY.md`；内容修正且职责不变时无需机械改索引。
-6. 收尾检查本次涉及主题的索引/正文一一对应、链接有效、无过时重复内容；没有需要写入的事实就不改文件。
+5. 以当前代码、配置、脚本、diff 和验证结果为准：优先更新已有语义明确的正文；只有形成独立读取单元才新建正文，并在同一轮更新索引。
+6. 如果移动、拆分、合并或删除正文，原子更新对应 `MEMORY.md`；内容修正且职责不变时无需机械改索引。
+7. 收尾检查本次涉及主题的索引/正文一一对应、链接有效、无过时重复内容；没有需要写入的事实就不改文件。
 
 ## 记忆主题路由
 
 - `Commands`：安装、运行、构建、测试、评估、部署和恢复。
 - `Environment`：工具/版本、硬件、路径、变量、外部服务和平台限制。
-- `Target`：总体目标、核心功能、阶段范围和验收标准。
+- `Target`：当前已经生效的项目目的、范围和验收标准；未实施阶段计划和方案不写入事实正文。
 - `Design`：当前架构、模块职责、协作方式和设计理由。
 - `Boundary`：必须保持的行为、范围外事项、限制和质量底线。
 - `Tools`：可复用的辅助脚本、可视化、统计或数据转换工具。
 
-详细格式、拆分/合并条件、初始化规则和模板见 `references/project-memory-format.md`。
+详细格式、拆分/合并条件、初始化规则和事实/Pending 分流见 `references/project-memory-format.md`。

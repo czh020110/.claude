@@ -18,5 +18,6 @@ description: 仅在用户主动要求阶段性/全量同步项目记忆时使用
 ## agent 边界
 
 - 只能委托 `collect_update_memory`，不改用其他 agent；skill 本身不扫描或修改记忆正文。
-- agent 只写 `.project-memory/`，不触碰 `TODO/`、`.project-script/`、代码或配置，不创建 commit；可读取相关正文和已有验证脚本。
+- agent 只同步 `.project-memory/` 中当前已实施事实，不触碰 `TODO/`（包括 `Pending.md`）、`.project-script/`、代码或配置，不创建 commit；可读取相关正文和已有验证脚本。
+- Pending 中的未实施方案、设计决策和修改要求不是事实来源；不得将其转写到任何记忆正文。Pending 的新增、完成移除或取消由主模型处理。
 - 没有需要持久化的事实时，允许 agent 返回“无需修改”。
