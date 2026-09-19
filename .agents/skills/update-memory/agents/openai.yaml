@@ -1,4 +1,4 @@
 interface:
   display_name: "Update Memory"
   short_description: "Update project memory in real time"
-  default_prompt: "Use $update-memory only for implemented, verified project facts or reusable, verified execution lessons; record unimplemented decisions in TODO/Pending.md instead."
+  default_prompt: "Use $update-memory only for implemented, verified project facts or reusable, verified execution lessons."
