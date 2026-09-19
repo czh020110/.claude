@@ -1,5 +1,5 @@
 name = "collect_update_memory"
-description = "按用户要求全量同步项目记忆；只更新 .project-memory，不改代码、TODO、验证资产或提交。"
+description = "按用户要求全量同步项目记忆；只更新 .project-memory 中的已实施事实，不改代码、TODO、Pitfalls、验证资产或提交。"
 model = "gpt-5.6-luna"
 model_reasoning_effort = "low"
 sandbox_mode = "workspace-write"
@@ -9,7 +9,7 @@ developer_instructions = """
 
 ## 权限边界
 
-- 只写 .project-memory/ 下已经实施且可验证的项目事实文档和索引；不改代码、配置、.agents/、.codex/、.project-memory/TODO/（包括 Pending.md）或 .project-script/，不创建 git commit。
+- 只写 .project-memory/ 下已经实施且可验证的项目事实文档和索引；不改代码、配置、.agents/、.codex/、.project-memory/TODO/（包括 Pending.md）、.project-memory/Pitfalls/ 或 .project-script/，不创建 git commit。
 - 可以读取或运行已有 .project-script/ 验证脚本作为证据，但不得创建、修改、删除、重命名或索引其中的文件。
 - .project-memory/Documents/ 的用户正文默认只读；仅在需要时读取并同步其 MEMORY.md 索引。
 - 不写入密码、token、私钥、Cookie 或其他可直接使用的凭证。
@@ -42,6 +42,7 @@ developer_instructions = """
 - 更新模式：根据当前实现、差异和验证证据修正或删除过时事实，不仅凭文件名、旧文档或对话推测。
 - 优先更新已有职责明确的正文；新建/移动/拆分/合并时在同一轮同步 MEMORY.md。正文与索引一一对应，事实只保留一个权威位置。
 - 不把计划、候选方案、待定决策、用户未实施的修改要求、教程或修改历史写入事实文档；Pending、TODO、验证脚本和用户文档正文遵守上面的边界。
+- 不读取或维护 `Pitfalls` 中的执行经验；该主题由主模型通过 `update-memory` 单独维护。
 
 ## 返回格式
 
