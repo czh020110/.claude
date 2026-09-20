@@ -36,7 +36,7 @@ description: 用户明确给出审查范围时，审查代码变更的正确性�
 ```
 
 ```
-审查范围：文件 .codex/skills/sync-codex-memory/scripts/sync-memory.sh 的 HEAD~1..HEAD 变更
+审查范围：文件 `sync-project-config/scripts/sync.sh` 的 HEAD~1..HEAD 变更
 修改意图：修复空参时不显示 URL 配置状态的问题
 ```
 

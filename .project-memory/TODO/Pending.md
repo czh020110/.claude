@@ -1,2 +1,2 @@
 - [ ] [待定方案/设计]（背景：[为什么讨论]；待确认决策：[需要决定什么]；完成条件：[何时算落地]；关联范围：[模块/文件/任务]）
-- [-] [WorkBuddy 最小适配方案]（背景：当前模板已覆盖 Codex、ZCode 和 Claude Code，现增加 WorkBuddy/CodeBuddy 项目级配置接入；待确认决策：是否将当前 `.codebuddy/` 适配层作为正式支持并完成真实会话验证；完成条件：在 WorkBuddy 新会话中验证 AGENTS、Skills、子代理和 `sync.sh codebuddy` 均能加载，且不改变现有平台流程；当前状态：仓库侧适配与同步参数已完成并通过结构检查，待真实 WorkBuddy 新会话验证；关联范围：`AGENTS.md`、`.agents/skills/`、`.codex/agents/`、`sync-codex-project-config`、`.codebuddy/`）
+- [-] [多平台 Agent 配置统一迁移]（背景：此前各平台目录分别维护了相同的 Agent/Skill 提示词；待确认决策：是否将 Codex 配置作为唯一源，并由 `sync-project-config` 生成其他平台头部适配配置；完成条件：删除仓库内重复平台提示词，完成四个平台生成试运行，并在真实客户端验证加载；当前状态：统一源和生成脚本已实施，待真实客户端验证；关联范围：`.codex/agents/`、`.agents/skills/`、`sync-project-config`、`.claude/`、`.zcode/`、`.codebuddy/`）

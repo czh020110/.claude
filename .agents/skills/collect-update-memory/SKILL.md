@@ -10,7 +10,7 @@ description: 仅在用户主动要求阶段性/全量同步项目记忆时使用
 ## 执行顺序
 
 1. 用户同时要求 commit/提交时，先调用 `git-commit` skill；提交完成后以新的 HEAD 作为基准信息。
-2. 否则不创建 commit。读取 `.codex/.cache/collect-update-memory-base-commit`；不存在时以当前 HEAD 初始化缓存并标记“首次，无基准”，再比较当前 HEAD。
+2. 否则不创建 commit。读取当前平台 Skill 目录下的 `.cache/collect-update-memory-base-commit`；不存在时以当前 HEAD 初始化缓存并标记“首次，无基准”，再比较当前 HEAD。
 3. 根据 Boundary、Target 等核心规划文件是否仍为空模板判断更新模式（初始化/更新），不要替 agent 决定初始化范围。读取 `git status --short`，把更新模式、基准 commit、当前 HEAD、是否有增量提交、本地未提交变更、已知文件/事实和用户背景传给唯一的 `collect_update_memory` agent。不要主动扫描或搜索代码来补 prompt。
 4. agent 必须先同步增量提交，再同步本地未提交变更；即使没有新 commit，也不能跳过未提交检查。增量或本地阶段成功后，将基准缓存刷新为当前 HEAD；失败不刷新。
 5. agent 返回后向用户转述实际修改、索引同步、增量/本地同步和验证结果。

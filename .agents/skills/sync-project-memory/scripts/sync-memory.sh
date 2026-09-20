@@ -64,7 +64,7 @@ detect_project_branch() {
 
 detect_remote_repo() {
   local project_dir="$1"
-  local cache_conf="$project_dir/ .agents/.cache/docs-sync.conf"
+  local cache_conf="$project_dir/.agents/.cache/docs-sync.conf"
 
   if [ -f "$cache_conf" ]; then
     local url
@@ -390,7 +390,7 @@ do_push() {
 do_diagnose() {
   local project_dir="$1" project_branch="$2"
   local branch="docs/$project_branch"
-  local cache_conf="$project_dir/ .agents/.cache/docs-sync.conf"
+  local cache_conf="$project_dir/.agents/.cache/docs-sync.conf"
 
   echo "--- sync-project-memory 诊断 ---"
   echo "项目目录: $project_dir"

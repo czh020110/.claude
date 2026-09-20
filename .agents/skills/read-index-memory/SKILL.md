@@ -13,9 +13,7 @@ description: 每个新任务开始时读取 `.project-memory/` 各主题的 `MEM
 
 使用 Python 脚本读取索引，保证跨平台（Windows/macOS/Linux）可运行：
 
-```bash
-python3 .agents/skills/read-index-memory/scripts/read_index_memory.py
-```
+运行当前 `read-index-memory` Skill 目录下的 `scripts/read_index_memory.py`。
 
 脚本不会修改、创建、删除任何文件，只输出索引内容。不要此脚本的源代码。只需要获取脚本的执行结果。
 

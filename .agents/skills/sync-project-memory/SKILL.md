@@ -15,16 +15,7 @@ description: 用户要求 push、pull 或查看项目记忆同步状态时，使
 
 ## 用法
 
-```bash
-# 从远程拉取项目记忆到本地
-bash .agents/skills/sync-project-memory/scripts/sync-memory.sh pull
-
-# 推送本地项目记忆到远程
-bash .agents/skills/sync-project-memory/scripts/sync-memory.sh push
-
-# 查看同步状态
-bash .agents/skills/sync-project-memory/scripts/sync-memory.sh info
-```
+入口脚本是当前 `sync-project-memory` Skill 目录下的 `scripts/sync-memory.sh`，参数为 `pull`、`push` 或 `info`。
 
 ## 按输出处理
 
@@ -43,15 +34,13 @@ bash .agents/skills/sync-project-memory/scripts/sync-memory.sh info
 | 合并时出现内容冲突 | 引导手动解决（见「冲突处理」） |
 | 无法访问远程项目记忆仓库 | 检查 URL、GitHub 仓库是否存在、SSH key / token |
 
-> 若 `.project-memory/` 已有文件但还不是 git 仓库（例如刚被 sync-codex-project-config 填充模板），脚本会自动纳入版本管理并合并，无需手动处理。
+> 若 `.project-memory/` 已有文件但还不是 git 仓库（例如刚被 `sync-project-config` 填充模板），脚本会自动纳入版本管理并合并，无需手动处理。
 
 ## 配置 URL
 
 当报"未配置项目记忆仓库 URL"时，让用户提供一个 GitHub/GitLab 空仓库 URL（专门存放项目记忆，不是主项目仓库）：
 
-```bash
-bash .agents/skills/sync-project-memory/scripts/sync-memory.sh config <URL>
-```
+配置入口是当前 `sync-project-memory` Skill 目录下的 `scripts/sync-memory.sh config <URL>`。
 
 配置后重新执行 pull 或 push。
 
@@ -59,24 +48,12 @@ bash .agents/skills/sync-project-memory/scripts/sync-memory.sh config <URL>
 
 有冲突时脚本会中止，文件中留下 `<<<<<<<` / `=======` / `>>>>>>>` 标记。引导用户：
 
-```bash
-cd .project-memory
-# 编辑冲突文件，删除标记，保留正确内容
-git add -A
-git commit -m "merge: 解决 docs 冲突"
-cd ..
-bash .agents/skills/sync-project-memory/scripts/sync-memory.sh push
-```
+进入 `.project-memory/` 解决冲突后提交，再运行当前 `sync-project-memory` Skill 目录下的 `scripts/sync-memory.sh push`。
 
 放弃合并：`cd .project-memory && git merge --abort`
 
 ## 其他命令
 
-```bash
-# 配置 URL（写入 .agents/.cache/docs-sync.conf，不进 git）
-bash .agents/skills/sync-project-memory/scripts/sync-memory.sh config <URL>
-# 查看详细 git 状态
-bash .agents/skills/sync-project-memory/scripts/sync-memory.sh status
-```
+配置 URL 使用当前 `sync-project-memory` Skill 目录下的 `scripts/sync-memory.sh config <URL>`；查看详细状态使用同一脚本的 `status` 参数。
 
-跨设备：skill 随 `.agents/skills/` 同步过来；项目标识来自主仓库 origin remote，换设备无需额外配置。远程项目记忆仓库 URL 需跨设备重新配置。
+跨设备：Skill 随当前平台配置同步；项目标识来自主仓库 origin remote，换设备无需额外配置。远程项目记忆仓库 URL 需跨设备重新配置。
