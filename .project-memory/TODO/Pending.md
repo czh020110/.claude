@@ -1,1 +1,2 @@
 - [ ] [待定方案/设计]（背景：[为什么讨论]；待确认决策：[需要决定什么]；完成条件：[何时算落地]；关联范围：[模块/文件/任务]）
+- [-] [WorkBuddy 最小适配方案]（背景：当前模板已覆盖 Codex、ZCode 和 Claude Code，现增加 WorkBuddy/CodeBuddy 项目级配置接入；待确认决策：是否将当前 `.codebuddy/` 适配层作为正式支持并完成真实会话验证；完成条件：在 WorkBuddy 新会话中验证 AGENTS、Skills、子代理和 `sync.sh codebuddy` 均能加载，且不改变现有平台流程；当前状态：仓库侧适配与同步参数已完成并通过结构检查，待真实 WorkBuddy 新会话验证；关联范围：`AGENTS.md`、`.agents/skills/`、`.codex/agents/`、`sync-codex-project-config`、`.codebuddy/`）

@@ -1,6 +1,6 @@
 interface:
-  display_name: "Sync Codex Project Config"
-  short_description: "Sync the full Codex project config template from the template repo"
-  default_prompt: "Use $sync-codex-project-config to sync Codex AGENTS.md, .codex/, skills, and project template files into this project."
+  display_name: "Sync Project Agent Config"
+  short_description: "Sync platform-compatible agent config and project templates"
+  default_prompt: "Use $sync-codex-project-config and pass codebuddy for CodeBuddy/WorkBuddy, or the matching platform parameter for other clients."
 policy:
   allow_implicit_invocation: false

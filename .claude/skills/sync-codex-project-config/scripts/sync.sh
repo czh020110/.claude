@@ -6,7 +6,7 @@ set -euo pipefail
 # 均为字节精确比较，中文仅作输出文本，语义不受影响。
 export LC_ALL=C
 
-# 平台参数：sync.sh codex | sync.sh zcode | sync.sh claude
+# 平台参数：sync.sh codex | sync.sh zcode | sync.sh claude | sync.sh codebuddy
 PLATFORM_ARG="${1:-codex}"
 case "$PLATFORM_ARG" in
   codex|Codex|--codex)
@@ -18,8 +18,11 @@ case "$PLATFORM_ARG" in
   claude|Claude|--claude)
     PLATFORM="claude"
     ;;
+  codebuddy|CodeBuddy|workbuddy|WorkBuddy|--codebuddy|--workbuddy)
+    PLATFORM="codebuddy"
+    ;;
   *)
-    echo "错误: 未知平台 '$PLATFORM_ARG'。可用值: codex / zcode / claude" >&2
+    echo "错误: 未知平台 '$PLATFORM_ARG'。可用值: codex / zcode / claude / codebuddy" >&2
     exit 2
     ;;
 esac
@@ -27,17 +30,27 @@ if [ "$PLATFORM" = "codex" ]; then
   PLATFORM_DIR=".codex"
 elif [ "$PLATFORM" = "zcode" ]; then
   PLATFORM_DIR=".zcode"
-else
+elif [ "$PLATFORM" = "claude" ]; then
   PLATFORM_DIR=".claude"
+else
+  PLATFORM_DIR=".codebuddy"
 fi
 
-REPO_URL="${CODEX_CONFIG_REPO_URL:-https://github.com/czh020110/.claude.git}"
+if [ "$PLATFORM" = "codebuddy" ]; then
+  REPO_URL="${CODEBUDDY_CONFIG_REPO_URL:-${CODEX_CONFIG_REPO_URL:-https://github.com/czh020110/.claude.git}}"
+else
+  REPO_URL="${CODEX_CONFIG_REPO_URL:-https://github.com/czh020110/.claude.git}"
+fi
 PROJECT_DIR="$(pwd)"
 TMP_DIR=$(mktemp -d)
 trap 'rm -rf "$TMP_DIR"' EXIT
 
-# 全局 skill 目录：默认 ~/.agents/skills，可用 CODEX_GLOBAL_SKILL_DIR 覆盖
-GLOBAL_SKILL_DIR="${CODEX_GLOBAL_SKILL_DIR:-$HOME/.agents/skills}"
+# 全局 skill 目录：CodeBuddy/WorkBuddy 使用 ~/.codebuddy/skills，其他平台使用 ~/.agents/skills。
+if [ "$PLATFORM" = "codebuddy" ]; then
+  GLOBAL_SKILL_DIR="${CODEBUDDY_GLOBAL_SKILL_DIR:-$HOME/.codebuddy/skills}"
+else
+  GLOBAL_SKILL_DIR="${CODEX_GLOBAL_SKILL_DIR:-$HOME/.agents/skills}"
+fi
 SKILL_NAME="sync-codex-project-config"
 
 # 规则区 = `# 自定义提示词说明` 之前的内容；自定义提示词区 = 该标题之后的内容（含该标题）。
@@ -130,6 +143,18 @@ if [ "$PLATFORM" = "claude" ]; then
       break
     fi
   done
+elif [ "$PLATFORM" = "codebuddy" ]; then
+  # CodeBuddy 优先使用项目级适配副本；旧模板没有副本时回退到 .agents 源文件。
+  for cand in "${PROJECT_DIR}/.codebuddy/skills/${SKILL_NAME}" "${TMP_DIR}/.codebuddy/skills/${SKILL_NAME}" "${PROJECT_DIR}/.agents/skills/${SKILL_NAME}" "${TMP_DIR}/.agents/skills/${SKILL_NAME}"; do
+    if [ -d "$cand" ]; then
+      SELF_SOURCE="$cand"
+      case "$cand" in
+        "${PROJECT_DIR}"/*) SELF_SOURCE_DESC="当前项目" ;;
+        *) SELF_SOURCE_DESC="模板仓库" ;;
+      esac
+      break
+    fi
+  done
 elif [ -d "${PROJECT_DIR}/.agents/skills/${SKILL_NAME}" ]; then
   # 优先使用当前项目里的版本（可能包含本地未提交修改）
   SELF_SOURCE="${PROJECT_DIR}/.agents/skills/${SKILL_NAME}"
@@ -151,6 +176,8 @@ if [ -n "${SELF_SOURCE}" ]; then
   if [ "$PLATFORM" = "claude" ]; then
     # Claude Code 只读 ~/.claude/skills（注意是 skills，带 s）
     install_self_to_global "${HOME}/.claude/skills"
+  elif [ "$PLATFORM" = "codebuddy" ]; then
+    install_self_to_global "${GLOBAL_SKILL_DIR}"
   else
     # Codex 与 Zcode 按 .agents 约定读取 ~/.agents/skills
     install_self_to_global "${GLOBAL_SKILL_DIR}"
@@ -232,7 +259,7 @@ if [ "$PLATFORM" = "claude" ] && [ -f "$REMOTE_AGENTS" ]; then
 fi
 echo ""
 
-# 3. 同步平台目录（codex: .codex，zcode: .zcode；缓存/本地敏感跳过）
+# 3. 同步平台目录（codex: .codex，zcode: .zcode，claude: .claude，codebuddy: .codebuddy；缓存/本地敏感跳过）
 echo "[3/8] 同步 $PLATFORM_DIR/ 目录..."
 synced_count=0
 # zcode 模式下优先使用远程 .zcode/；远程只有 .codex/ 时把它当作平台目录内容
@@ -246,7 +273,7 @@ if [ -d "$TMP_DIR/$PLATFORM_DIR" ]; then
   while IFS= read -r -d '' rel_path; do
     rel_path="${rel_path#./}"
     case "$rel_path" in
-      .cache/*|settings.local.json|*.local.json|*.secret*|*.key|.DS_Store)
+      .cache/*|settings.local.json|*.local.json|*.secret*|*.key|.DS_Store|CODEBUDDY.local.md)
         echo "  = 跳过(本地/敏感): $PLATFORM_DIR/$rel_path"
         continue
         ;;
@@ -403,10 +430,26 @@ echo "  远程仓库无 $PLATFORM_DIR/ 目录"
 fi
 echo ""
 
-# 4. 同步 .agents/skills/（SKILL.md 与 agents/openai.yaml 等直接覆盖）
+# CodeBuddy 项目级 MCP 配置是根目录文件，不属于 .codebuddy/ 子目录；仅在目标缺失时新增，避免覆盖本地认证配置。
+if [ "$PLATFORM" = "codebuddy" ]; then
+  echo "[3.5/8] 同步 CodeBuddy 项目 MCP 配置..."
+  if [ -f "$TMP_DIR/.mcp.json" ] && [ ! -f "$PROJECT_DIR/.mcp.json" ]; then
+    cp -f "$TMP_DIR/.mcp.json" "$PROJECT_DIR/.mcp.json"
+    echo "  + 新增: .mcp.json"
+  elif [ -f "$TMP_DIR/.mcp.json" ]; then
+    echo "  = 跳过(本地已存在): .mcp.json"
+  else
+    echo "  = 模板仓库无 .mcp.json"
+  fi
+  echo ""
+fi
+
+# 4. 同步 .agents/skills/（SKILL.md 与 agents/openai.yaml 等直接覆盖；CodeBuddy 不复制该平台目录）
 synced_skills=0
 echo "[4/8] 同步 .agents/skills/ 目录..."
-if [ -d "$TMP_DIR/.agents/skills" ]; then
+if [ "$PLATFORM" = "codebuddy" ]; then
+  echo "  = CodeBuddy 跳过 .agents/skills（只保留 .codebuddy/ 适配层）"
+elif [ -d "$TMP_DIR/.agents/skills" ]; then
   cd "$TMP_DIR/.agents/skills"
   while IFS= read -r -d '' rel_path; do
     rel_path="${rel_path#./}"
@@ -487,6 +530,14 @@ echo ""
 echo "[7/8] 检查下游项目 .gitignore..."
 GITIGNORE="$PROJECT_DIR/.gitignore"
 
+if [ "$PLATFORM" = "codebuddy" ]; then
+  GITIGNORE_ENTRIES=( '.project-memory/' '.project-script/' '.codebuddy/settings.local.json' '.codebuddy/CODEBUDDY.local.md' '.codebuddy/.cache/' )
+  GITIGNORE_HEADER='# CodeBuddy / 项目本地配置'
+else
+  GITIGNORE_ENTRIES=( '.codex/' '.zcode/' '.claude/' '.agents/' '.project-memory/' '.project-script/' 'AGENTS.md' 'CLAUDE.md' )
+  GITIGNORE_HEADER='# Codex / 项目本地配置'
+fi
+
 # 条目是否已存在（同时兼容带/不带尾斜杠的写法）
 gitignore_has_entry() {
   local entry="$1"
@@ -494,11 +545,13 @@ gitignore_has_entry() {
 }
 
 if [ ! -f "$GITIGNORE" ]; then
-  printf '.codex/\n.zcode/\n.claude/\n.agents/\n.project-memory/\n.project-script/\nAGENTS.md\nCLAUDE.md\n' > "$GITIGNORE"
+  for entry in "${GITIGNORE_ENTRIES[@]}"; do
+    printf '%s\n' "$entry"
+  done > "$GITIGNORE"
   echo "  + 创建 .gitignore"
 else
   missing_list=""
-  for entry in '.codex/' '.zcode/' '.claude/' '.agents/' '.project-memory/' '.project-script/' 'AGENTS.md' 'CLAUDE.md'; do
+  for entry in "${GITIGNORE_ENTRIES[@]}"; do
     if ! gitignore_has_entry "$entry"; then
       missing_list="${missing_list}${entry}"$'\n'
     fi
@@ -510,9 +563,9 @@ else
       if [ -n "$(tail -c1 "$GITIGNORE")" ]; then
         printf '\n' >> "$GITIGNORE"
       fi
-      printf '\n# Codex / 项目本地配置\n' >> "$GITIGNORE"
+      printf '\n%s\n' "$GITIGNORE_HEADER" >> "$GITIGNORE"
     else
-      printf '# Codex / 项目本地配置\n' >> "$GITIGNORE"
+      printf '%s\n' "$GITIGNORE_HEADER" >> "$GITIGNORE"
     fi
     printf '%s' "$missing_list" >> "$GITIGNORE"
     while IFS= read -r entry; do
