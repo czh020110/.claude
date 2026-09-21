@@ -89,6 +89,21 @@ fi
 # intentionally left in its source language instead of being translated.
 CUSTOM_HEADING='# 自定义提示词说明'
 
+# AGENTS.md is authored against Codex's tool names. Select the equivalent names
+# before generating a platform-specific copy.
+PLAN_TOOL="update_plan"
+QUESTION_TOOL="request_user_input"
+case "$PLATFORM" in
+  claude|zcode|codebuddy|workbuddy)
+    PLAN_TOOL="TodoWrite"
+    QUESTION_TOOL="AskUserQuestion"
+    ;;
+  opencode)
+    PLAN_TOOL="todowrite"
+    QUESTION_TOOL="question"
+    ;;
+esac
+
 echo "=== sync-project-config ($PLATFORM) ==="
 echo "Project directory: $PROJECT_DIR"
 echo "Remote repository: $REPO_URL"
@@ -308,8 +323,8 @@ sync_agents_md() {
     cp "$remote" "$local_file"
   fi
 
-  if [ "$PLATFORM" = "zcode" ]; then
-    adapt_agent_tools "$local_file" "$CUSTOM_HEADING" update_plan TodoWrite request_user_input AskUserQuestion
+  if [ "$PLAN_TOOL" != "update_plan" ] || [ "$QUESTION_TOOL" != "request_user_input" ]; then
+    adapt_agent_tools "$local_file" "$CUSTOM_HEADING" update_plan "$PLAN_TOOL" request_user_input "$QUESTION_TOOL"
   fi
 }
 
@@ -323,7 +338,7 @@ sync_claude_md() {
     local remote_end
     remote_end=$(grep -n -xF "$CUSTOM_HEADING" "$remote" | head -1 | cut -d: -f1)
     head -n "$((remote_end - 1))" "$remote" > "$tmp"
-    adapt_agent_tools "$tmp" "$CUSTOM_HEADING" update_plan TaskCreate request_user_input AskUserQuestion
+    adapt_agent_tools "$tmp" "$CUSTOM_HEADING" update_plan "$PLAN_TOOL" request_user_input "$QUESTION_TOOL"
     if [ -f "$target" ] && grep -qxF "$CUSTOM_HEADING" "$target"; then
       local custom_start
       custom_start=$(grep -n -xF "$CUSTOM_HEADING" "$target" | head -1 | cut -d: -f1)

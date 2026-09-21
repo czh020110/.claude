@@ -140,7 +140,7 @@ persistent-coding-memory/
 | `claude` | → `.claude/agents/*.md` | → `.claude/skills/` | Derives a root `CLAUDE.md` from `AGENTS.md` |
 | `codebuddy` | → `.codebuddy/agents/*.md` | → `.codebuddy/skills/` | Adds `.mcp.json` only when missing |
 | `workbuddy` | none (global only) | none (global only) | Installs the global skill and links it into `~/.workbuddy-ai/skills` and `~/.workbuddy/skills`; adds `.mcp.json` only when missing |
-| `opencode` | → `.opencode/agents/*.md` | → `.opencode/skills/` | Uses the canonical global copy as-is (OpenCode reads `~/.agents/skills/` natively, so no symlink is created) |
+| `opencode` | → `.opencode/agents/*.md` | → `.opencode/skills/` | Adapts `AGENTS.md` tools to `todowrite` / `question`; uses the canonical global copy as-is (OpenCode reads `~/.agents/skills/` natively, so no symlink is created) |
 
 ### Adaptation rules during generation
 
@@ -165,12 +165,14 @@ persistent-coding-memory/
 **AGENTS.md / CLAUDE.md**
 
 - The upstream `AGENTS.md` wins, but **everything below the `# 自定义提示词说明` divider in the target project is preserved** (everything above the divider is replaced)
-- Tool names are rewritten per platform:
+- Tool names in the synchronized controlled section are rewritten per platform:
 
-  | Source name | Claude | ZCode |
-  | --- | --- | --- |
-  | `update_plan` | `TaskCreate` | `TodoWrite` |
-  | `request_user_input` | `AskUserQuestion` | `AskUserQuestion` |
+  | Source name | Claude Code | ZCode | CodeBuddy / WorkBuddy | OpenCode |
+  | --- | --- | --- | --- | --- |
+  | `update_plan` | `TodoWrite` | `TodoWrite` | `TodoWrite` | `todowrite` |
+  | `request_user_input` | `AskUserQuestion` | `AskUserQuestion` | `AskUserQuestion` | `question` |
+
+  Claude Code's `TaskCreate`/`TaskUpdate`/`TaskList`/`TaskGet` tools are a separate task system; this prompt uses `TodoWrite`. ZCode may additionally expose the read-only `TodoRead`, and WorkBuddy's implementation class is `TodoWriteTool`, while the prompt-facing name is `TodoWrite`. OpenCode uses the lowercase built-ins `todowrite` and `question` (with `todoread` available as its read-only todo counterpart).
 
 - If that divider is absent from `AGENTS.md`, the whole file is overwritten
 
@@ -417,7 +419,7 @@ CLAUDE.md
 
 What the script **will not** do:
 
-- It does not modify the body of the root `AGENTS.md` (Claude/ZCode tool-name adaptation happens only in generated target files)
+- It does not replace the target project's custom section below the divider; the controlled portion of the root `AGENTS.md` is refreshed from the upstream source and adapts the tool names for Claude Code, ZCode, CodeBuddy, WorkBuddy, and OpenCode. The derived `CLAUDE.md` receives the same Claude mapping.
 - It does not treat generated directories as sources, and never syncs back from `.claude/`, `.zcode/`, `.codebuddy/` or `.opencode/`
 - It does not overwrite existing `.project-memory/` or `.project-script/` content in the target project
 - It does not copy credentials, local caches, `settings.local.json`, `CODEBUDDY.local.md`, or the Codex-UI-only `agents/openai.yaml`

@@ -43,7 +43,7 @@ description: 用户要求同步项目基础配置，或发现配置缺失时使�
 
 ## 边界
 
-- 不修改根 `AGENTS.md` 的正文；Claude/ZCode 的工具名适配只发生在生成目标文件中。
+- 用源码替换根 `AGENTS.md` 分割线以上的受控区，保留分割线以下的项目自定义内容；Codex 保留 `update_plan` / `request_user_input`，Claude Code、ZCode、CodeBuddy、WorkBuddy 改写为 `TodoWrite` / `AskUserQuestion`，OpenCode 改写为 `todowrite` / `question`。
 - 不把生成目录当作源，不从 `.claude/`、`.zcode/` 或 `.codebuddy/` 反向同步。
 - 不复制凭证、本地缓存、`settings.local.json`、`CODEBUDDY.local.md` 或 Codex UI 专用 `agents/openai.yaml` 到其他平台。
 - 用户未明确要求同步时不调用；脚本成功后只汇报同步范围、文件变化和验证结果。

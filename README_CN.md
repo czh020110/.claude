@@ -141,7 +141,7 @@ persistent-coding-memory/
 | `claude` | → `.claude/agents/*.md` | → `.claude/skills/` | 由 `AGENTS.md` 派生根目录 `CLAUDE.md` |
 | `codebuddy` | → `.codebuddy/agents/*.md` | → `.codebuddy/skills/` | 仅在缺失时新增 `.mcp.json` |
 | `workbuddy` | 无（仅全局） | 无（仅全局） | 安装全局 Skill 并软链到 `~/.workbuddy-ai/skills` 与 `~/.workbuddy/skills`；仅在缺失时新增 `.mcp.json` |
-| `opencode` | → `.opencode/agents/*.md` | → `.opencode/skills/` | 直接复用规范全局副本（OpenCode 原生读 `~/.agents/skills/`，不建软链） |
+| `opencode` | → `.opencode/agents/*.md` | → `.opencode/skills/` | 将 `AGENTS.md` 工具名适配为 `todowrite` / `question`；直接复用规范全局副本（OpenCode 原生读 `~/.agents/skills/`，不建软链） |
 
 ### 生成时的适配规则
 
@@ -166,12 +166,14 @@ persistent-coding-memory/
 **AGENTS.md / CLAUDE.md**
 
 - 以源码仓库的 `AGENTS.md` 为准，**保留目标项目 `# 自定义提示词说明` 分割线以下的自定义内容**（分割线以上整体替换）
-- 工具名按平台改写：
+- 同步后的受控区工具名按平台改写：
 
-  | 源写法 | Claude | ZCode |
-  | --- | --- | --- |
-  | `update_plan` | `TaskCreate` | `TodoWrite` |
-  | `request_user_input` | `AskUserQuestion` | `AskUserQuestion` |
+  | 源写法 | Claude Code | ZCode | CodeBuddy / WorkBuddy | OpenCode |
+  | --- | --- | --- | --- | --- |
+  | `update_plan` | `TodoWrite` | `TodoWrite` | `TodoWrite` | `todowrite` |
+  | `request_user_input` | `AskUserQuestion` | `AskUserQuestion` | `AskUserQuestion` | `question` |
+
+  Claude Code 的 `TaskCreate`/`TaskUpdate`/`TaskList`/`TaskGet` 是另一套任务系统；这里的提示词统一使用 `TodoWrite`。ZCode 还可以使用只读的 `TodoRead`，WorkBuddy 的实现类名虽然是 `TodoWriteTool`，但提示词面向的工具名是 `TodoWrite`。OpenCode 使用小写内置工具 `todowrite` 和 `question`，并提供只读的 `todoread` 作为 todo 对应工具。
 
 - 若 `AGENTS.md` 中不存在该分割线，则整体覆盖
 
@@ -419,7 +421,7 @@ CLAUDE.md
 
 脚本**不会**做的事：
 
-- 不修改根 `AGENTS.md` 的正文（Claude/ZCode 的工具名适配只发生在生成的目标文件里）
+- 不覆盖目标项目分割线以下的自定义区；根 `AGENTS.md` 的受控区由源码刷新，并按平台为 Claude Code、ZCode、CodeBuddy、WorkBuddy、OpenCode 适配工具名；派生的 `CLAUDE.md` 使用同一套 Claude 映射。
 - 不把生成目录当源，不从 `.claude/`、`.zcode/`、`.codebuddy/`、`.opencode/` 反向同步
 - 不覆盖目标项目已有的 `.project-memory/` 与 `.project-script/` 内容
 - 不复制凭证、本地缓存、`settings.local.json`、`CODEBUDDY.local.md`、Codex UI 专用的 `agents/openai.yaml`
