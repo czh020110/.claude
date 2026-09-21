@@ -1,6 +1,5 @@
 # Codex 项目级配置
 tools.update_plan.enabled = true
-tools.web_fetch.enabled = true
 
 # AGENTS.md 已包含项目记忆、协作规则与全部项目规则，默认 32 KiB 上限偏紧
 project_doc_max_bytes = 65536

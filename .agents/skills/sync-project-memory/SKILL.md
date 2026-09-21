@@ -21,24 +21,26 @@ description: 用户要求 push、pull 或查看项目记忆同步状态时，使
 
 脚本输出后，根据结果向用户汇报：
 
-| 输出 | 要做 |
+脚本输出为英文，按下表的关键字匹配向用户汇报：
+
+| 输出关键字 | 要做 |
 |---|---|
-| 推送完成 / 拉取完成 / 已检出远程分支 / 已合并本地内容 | 告诉用户成功并简要说明变化 |
-| 项目记忆无变更，无需推送 | 告诉用户无变更 |
-| 参数校验失败 | 转告正确用法；若显示"URL 已配置: 否"，先配置 URL |
-| 本地未提交变更 / 领先远程: N | 提示用户可用 push |
-| 本地落后远程: N | 提示用户可用 pull |
-| 未配置项目记忆仓库 URL | 见下方「配置 URL」 |
-| 未配置 git 用户信息 | 让用户先 `git config --global user.name/email` |
-| 推送失败，远程有更新未合并 | 让用户先 pull 再 push |
-| 合并时出现内容冲突 | 引导手动解决（见「冲突处理」） |
-| 无法访问远程项目记忆仓库 | 检查 URL、GitHub 仓库是否存在、SSH key / token |
+| `push complete` / `pull complete` / `checked out remote branch` / `merged local content` | 告诉用户成功并简要说明变化 |
+| `has no changes, nothing to push` | 告诉用户无变更 |
+| `[SYNC_ERROR] Argument validation failed` | 转告正确用法；若显示 `URL configured: no`，先配置 URL |
+| `Uncommitted local changes` / `Ahead of remote: N` | 提示用户可用 push |
+| `Behind remote: N` | 提示用户可用 pull |
+| `Remote memory repository URL is not configured` | 见下方「配置 URL」 |
+| `git user identity is not configured` | 让用户先 `git config --global user.name/email` |
+| `push failed, the remote has newer commits` | 让用户先 pull 再 push |
+| `hit a merge conflict` / `hit a content conflict while merging` | 引导手动解决（见「冲突处理」） |
+| `Remote memory repository is not reachable` | 检查 URL、GitHub 仓库是否存在、SSH key / token |
 
 > 若 `.project-memory/` 已有文件但还不是 git 仓库（例如刚被 `sync-project-config` 填充模板），脚本会自动纳入版本管理并合并，无需手动处理。
 
 ## 配置 URL
 
-当报"未配置项目记忆仓库 URL"时，让用户提供一个 GitHub/GitLab 空仓库 URL（专门存放项目记忆，不是主项目仓库）：
+当输出 `Remote memory repository URL is not configured` 时，让用户提供一个 GitHub/GitLab 空仓库 URL（专门存放项目记忆，不是主项目仓库）：
 
 配置入口是当前 `sync-project-memory` Skill 目录下的 `scripts/sync-memory.sh config <URL>`。
 
