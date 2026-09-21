@@ -25,7 +25,8 @@
 | Codex / ZCode | `~/.agents/skills/sync-project-config/` |
 | Claude Code | `~/.claude/skills/sync-project-config/` |
 | CodeBuddy（国内版） | `~/.codebuddy/skills/sync-project-config/` |
-| WorkBuddy（国际版 / 国内版） | `~/.workbuddy-ai/skills/` 与 `~/.workbuddy/skills/` |
+| WorkBuddy 国际版（`workbuddy`） | `~/.workbuddy-ai/skills/` |
+| WorkBuddy 国内版（`workbuddy-cn`） | `~/.workbuddy/skills/` |
 | OpenCode | `~/.agents/skills/sync-project-config/`（原生读取，无需软链） |
 
 真实目录始终安装在规范位置 `~/.agents/skills/sync-project-config/`；不读 `~/.agents/skills` 的客户端，由脚本在它自己的 Skill 目录里建**软链**指回规范副本，磁盘上永远只有一份。
@@ -46,14 +47,15 @@ bash sync-project-config/scripts/sync.sh zcode
 bash sync-project-config/scripts/sync.sh claude
 bash sync-project-config/scripts/sync.sh codebuddy
 bash sync-project-config/scripts/sync.sh workbuddy
+bash sync-project-config/scripts/sync.sh workbuddy-cn
 bash sync-project-config/scripts/sync.sh opencode
 ```
 
 参数非法时会打印用法并以退出码 2 结束。
 
-> `codebuddy` 与 `workbuddy` 是两个独立平台，不是别名：CodeBuddy 用 `~/.codebuddy/skills`，WorkBuddy 用 `~/.workbuddy-ai/skills`（国际版）与 `~/.workbuddy/skills`（国内版）。装错目录不会报错，而是静默失效。
+> `codebuddy`、`workbuddy` 与 `workbuddy-cn` 是不同目标：CodeBuddy 用 `~/.codebuddy/skills`，`workbuddy` 用 `~/.workbuddy-ai/skills`（国际版），`workbuddy-cn` 用 `~/.workbuddy/skills`（国内版）。装错目录不会报错，而是静默失效。
 >
-> WorkBuddy 的 Code 模式**只从全局目录加载 Skill**，所以 `workbuddy` 平台只装全局 Skill 并建软链，**不生成**项目级 `agents/` 与 `skills/`。
+> WorkBuddy 的 Code 模式**只从全局目录加载 Skill**，所以两个 WorkBuddy 目标都只安装全局 Skill 并建立对应版本的软链，**不生成**项目级 `agents/` 与 `skills/`。
 
 ### 第三步：确认结果
 
@@ -99,7 +101,7 @@ AGENTS.md                      ─┴──→    CLAUDE.md（claude 平台派�
 三条铁律：
 
 1. **源只维护一份**：Agent 正文写在 `.codex/agents/*.toml` 的 `developer_instructions` 里；Skill 正文写在 `.agents/skills/<name>/SKILL.md`。
-2. **生成目录不是源**：`.claude/`、`.zcode/`、`.codebuddy/` 是同步产物，**绝不反向同步**。改了它们下次同步就会被覆盖。
+2. **生成目录不是源**：`.claude/`、`.zcode/`、`.codebuddy/`、`.opencode/` 是同步产物，**绝不反向同步**。改了它们下次同步就会被覆盖。
 3. **只适配元数据，不改正文**：生成时只调整 YAML frontmatter、文件名（`_` → `-`）、工具权限和平台目录，提示词正文原样保留。
 
 ---
@@ -113,7 +115,7 @@ persistent-coding-memory/
 │   ├── SKILL.md
 │   └── scripts/sync.sh            # 同步主脚本
 ├── .codex/                        # Codex 平台源
-│   ├── config.toml                # 项目级配置（MCP、并发、feature 开关）
+│   ├── config.toml                # Codex 项目级配置（并发、feature 开关）
 │   ├── rules/default.rules        # 命令前缀放行规则
 │   └── agents/*.toml              # ★ Agent 唯一源（3 个）
 ├── .agents/
@@ -122,7 +124,6 @@ persistent-coding-memory/
 │       ├── <skill>/scripts/
 │       ├── <skill>/references/
 │       └── <skill>/agents/openai.yaml   # Codex UI 展示元数据，不分发到其他平台
-├── .zcode/config.json             # ZCode 项目级 MCP 配置
 ├── .project-memory/               # 项目记忆模板（8 主题 + TODO）
 │   ├── {Commands,Environment,Documents,Target,Design,Boundary,Tools,Pitfalls}/MEMORY.md
 │   └── TODO/{STEP.md,TODO.md,Pending.md}
@@ -137,10 +138,11 @@ persistent-coding-memory/
 | 平台参数 | Agent 产物 | Skill 产物 | 额外行为 |
 | --- | --- | --- | --- |
 | `codex` | 直接同步 `.codex/` 源目录 | 直接同步 `.agents/skills/` 源目录 | 同步 `.codex/config.toml`、`.codex/rules/` |
-| `zcode` | `.codex/agents/*.toml` → `.zcode/agents/*.md` | 复用 `.agents/skills/` | 同步 `.zcode/config.json`；AGENTS.md 工具名适配；额外拷贝全局 Skill 到 `~/.zcode/skills/` |
+| `zcode` | `.codex/agents/*.toml` → `.zcode/agents/*.md` | 复用 `.agents/skills/` | AGENTS.md 工具名适配；额外拷贝全局 Skill 到 `~/.zcode/skills/` |
 | `claude` | → `.claude/agents/*.md` | → `.claude/skills/` | 由 `AGENTS.md` 派生根目录 `CLAUDE.md` |
-| `codebuddy` | → `.codebuddy/agents/*.md` | → `.codebuddy/skills/` | 仅在缺失时新增 `.mcp.json` |
-| `workbuddy` | 无（仅全局） | 无（仅全局） | 安装全局 Skill 并软链到 `~/.workbuddy-ai/skills` 与 `~/.workbuddy/skills`；仅在缺失时新增 `.mcp.json` |
+| `codebuddy` | → `.codebuddy/agents/*.md` | → `.codebuddy/skills/` | 使用全局 MCP 配置流程 |
+| `workbuddy` | 无（仅全局） | 无（仅全局） | 安装全局 Skill 并软链到 `~/.workbuddy-ai/skills`（国际版） |
+| `workbuddy-cn` | 无（仅全局） | 无（仅全局） | 安装全局 Skill 并软链到 `~/.workbuddy/skills`（国内版） |
 | `opencode` | → `.opencode/agents/*.md` | → `.opencode/skills/` | 将 `AGENTS.md` 工具名适配为 `todowrite` / `question`；直接复用规范全局副本（OpenCode 原生读 `~/.agents/skills/`，不建软链） |
 
 ### 生成时的适配规则
@@ -217,12 +219,17 @@ persistent-coding-memory/
 | `CODEX_GLOBAL_SKILL_DIR` | **规范目录**——唯一的真实副本在这里 | `~/.agents/skills` |
 | `CLAUDE_GLOBAL_SKILL_DIR` | Claude 软链目标 | `~/.claude/skills` |
 | `CODEBUDDY_GLOBAL_SKILL_DIR` | CodeBuddy 软链目标 | `~/.codebuddy/skills` |
-| `WORKBUDDY_SKILL_LINK_DIRS` | WorkBuddy 软链目标，冒号分隔 | `~/.workbuddy-ai/skills:~/.workbuddy/skills` |
+| `WORKBUDDY_GLOBAL_SKILL_DIR` | 覆盖当前 WorkBuddy 版本的全局 Skill 目录 | `workbuddy` 为 `~/.workbuddy-ai/skills`；`workbuddy-cn` 为 `~/.workbuddy/skills` |
+| `WORKBUDDY_SKILL_LINK_DIRS` | 可选的 WorkBuddy 软链目标，冒号分隔 | 只链接当前选择的版本目录 |
 | `OPENCODE_GLOBAL_SKILL_DIR` | OpenCode Skill 目录（默认就是规范目录） | `~/.agents/skills` |
 
 > 客户端配置目录不是默认路径时覆盖对应变量即可，无需改脚本。软链目标只会被建软链；若该位置已是真实目录，脚本会跳过并提示，不会删除。
 
 内部变量 `SYNC_PROJECT_CONFIG_BOOTSTRAPPED` / `SYNC_PROJECT_CONFIG_REMOTE_DIR` 用于自更新的二次执行，不需要手动设置。若自行设置 `SYNC_PROJECT_CONFIG_REMOTE_DIR`，**只能指向可丢弃的临时检出**——脚本退出时会删除该目录。
+
+### Context7 MCP
+
+仓库不再保存项目级 Context7 MCP 配置。`sync-project-config` Skill 会要求 Agent 先检查当前客户端的全局 MCP 配置，已有 `context7` 就直接复用，缺失时只配置到客户端全局，不回退到项目级 MCP 配置。
 
 ---
 
@@ -481,17 +488,17 @@ SYNC_PROJECT_CONFIG_REMOTE_DIR=/path/to/local/template-checkout \
 
 设置 `PROJECT_CONFIG_REPO_URL`（或对应平台的 `CODEX_CONFIG_REPO_URL` / `CODEBUDDY_CONFIG_REPO_URL`）指向你的仓库地址。
 
-**Q：该用 `codebuddy` 还是 `workbuddy`？**
+**Q：该用 `codebuddy`、`workbuddy` 还是 `workbuddy-cn`？**
 
-WorkBuddy 用 `workbuddy`，国内版 CodeBuddy 用 `codebuddy`。快速判断：客户端配置目录是 `~/.workbuddy-ai/` 或 `~/.workbuddy/` 就选 `workbuddy`，是 `~/.codebuddy/` 就选 `codebuddy`。两者写到不同目录，选错不会报错，而是静默失效。
+国内版 CodeBuddy 用 `codebuddy`，WorkBuddy 国际版用 `workbuddy`，WorkBuddy 国内版用 `workbuddy-cn`。快速判断：`~/.workbuddy-ai/` 对应 `workbuddy`，`~/.workbuddy/` 对应 `workbuddy-cn`，`~/.codebuddy/` 对应 `codebuddy`。三者写到不同目录，选错不会报错，而是静默失效。
 
 **Q：WorkBuddy 会加载放在项目里的 Skill 吗？**
 
-不会。WorkBuddy 的 Code 模式只从全局 Skill 目录加载，因此 `workbuddy` 平台不生成项目级 `agents/` 与 `skills/`。全局的 `sync-project-config` 以真实目录装在 `~/.agents/skills/` 下，再软链到 `~/.workbuddy-ai/skills` 与 `~/.workbuddy/skills`。所以那 9 个项目 Skill 在 WorkBuddy 下按设计不可用，只有分发入口可用。
+不会。WorkBuddy 的 Code 模式只从全局 Skill 目录加载，因此 `workbuddy` 和 `workbuddy-cn` 都不生成项目级 `agents/` 与 `skills/`。全局的 `sync-project-config` 以真实目录装在 `~/.agents/skills/` 下，再软链到当前选择的 WorkBuddy 目录。所以那 9 个项目 Skill 在 WorkBuddy 下按设计不可用，只有分发入口可用。
 
 **Q：我的客户端全局 Skill 目录不是默认值？**
 
-覆盖对应变量即可——`CODEBUDDY_GLOBAL_SKILL_DIR`，或 `WORKBUDDY_SKILL_LINK_DIRS`（冒号分隔，例如 `~/.workbuddy-ai/skills`）。这些是软链目标，真实副本始终留在 `CODEX_GLOBAL_SKILL_DIR`。
+覆盖对应变量即可——`CODEBUDDY_GLOBAL_SKILL_DIR`、`WORKBUDDY_GLOBAL_SKILL_DIR` 或 `WORKBUDDY_SKILL_LINK_DIRS`（冒号分隔）。这些是软链目标，真实副本始终留在 `CODEX_GLOBAL_SKILL_DIR`。
 
 **Q：`sync-memory.sh` 报 `Remote memory repository URL is not configured`？**
 
@@ -505,6 +512,6 @@ Agent/Skill 随平台配置同步，无需处理；项目标识来自主仓库 `
 
 OpenCode 除了 `~/.config/opencode/skills/` 和 Claude 兼容的 `~/.claude/skills/`，**原生就会搜索 `~/.agents/skills/<name>/SKILL.md`**。规范副本正好就在 `~/.agents/skills/`，所以直接被读到。刻意不往 `~/.config/opencode/skills/` 建软链：OpenCode 要求各位置 skill 名唯一，同一个名字出现两份会冲突。项目级副本放在 `.opencode/skills/`。
 
-**Q：为什么 `.mcp.json` 没有生成？**
+**Q：MCP 配置在哪里？**
 
-CodeBuddy / WorkBuddy 平台下，只有当模板仓库根目录存在 `.mcp.json` 且目标项目缺失时才会新增。当前模板仓库未内置该文件，所以不会生成——需要的话可自行在模板仓库根目录添加。
+同步脚本不会生成或复制项目级 MCP 配置文件。`sync-project-config` Skill 会要求 Agent 复用当前客户端已有的全局 `context7` 配置，缺失时只配置到客户端全局。

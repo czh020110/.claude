@@ -25,7 +25,8 @@ Copy the whole `sync-project-config/` directory into the global skill directory 
 | Codex / ZCode | `~/.agents/skills/sync-project-config/` |
 | Claude Code | `~/.claude/skills/sync-project-config/` |
 | CodeBuddy (domestic build) | `~/.codebuddy/skills/sync-project-config/` |
-| WorkBuddy (international / domestic) | `~/.workbuddy-ai/skills/` and `~/.workbuddy/skills/` |
+| WorkBuddy international (`workbuddy`) | `~/.workbuddy-ai/skills/` |
+| WorkBuddy domestic (`workbuddy-cn`) | `~/.workbuddy/skills/` |
 | OpenCode | `~/.agents/skills/sync-project-config/` — read natively, no symlink needed |
 
 The real directory is always installed into the canonical location `~/.agents/skills/sync-project-config/`. Clients that do not read `~/.agents/skills` get a **symlink** from their own skill directory back to that canonical copy, so there is only ever one copy on disk.
@@ -46,14 +47,15 @@ bash sync-project-config/scripts/sync.sh zcode
 bash sync-project-config/scripts/sync.sh claude
 bash sync-project-config/scripts/sync.sh codebuddy
 bash sync-project-config/scripts/sync.sh workbuddy
+bash sync-project-config/scripts/sync.sh workbuddy-cn
 bash sync-project-config/scripts/sync.sh opencode
 ```
 
 An invalid argument prints the usage and exits with code 2.
 
-> `codebuddy` and `workbuddy` are separate platforms, not aliases: CodeBuddy uses `~/.codebuddy/skills`, WorkBuddy uses `~/.workbuddy-ai/skills` (international build) and `~/.workbuddy/skills` (domestic build). Installing into the wrong one fails silently rather than erroring.
+> `codebuddy`, `workbuddy` and `workbuddy-cn` are separate targets: CodeBuddy uses `~/.codebuddy/skills`, `workbuddy` uses `~/.workbuddy-ai/skills` (international build), and `workbuddy-cn` uses `~/.workbuddy/skills` (domestic build). Installing into the wrong one fails silently rather than erroring.
 >
-> WorkBuddy's Code mode loads skills **only from the global directory**, so the `workbuddy` platform installs the global skill plus symlinks and generates **no** project-level `agents/` or `skills/`.
+> WorkBuddy's Code mode loads skills **only from the global directory**, so both WorkBuddy variants install the global skill plus one variant-specific symlink and generate **no** project-level `agents/` or `skills/`.
 
 ### Step 3: Confirm the result
 
@@ -98,7 +100,7 @@ AGENTS.md                                ─┴──→    CLAUDE.md (derived o
 Three hard rules:
 
 1. **Only one copy of the source.** Agent bodies live in `developer_instructions` inside `.codex/agents/*.toml`; skill bodies live in `.agents/skills/<name>/SKILL.md`.
-2. **Generated directories are not sources.** `.claude/`, `.zcode/` and `.codebuddy/` are sync artifacts and are **never synced back**. Edit them and the next sync overwrites your changes.
+2. **Generated directories are not sources.** `.claude/`, `.zcode/`, `.codebuddy/` and `.opencode/` are sync artifacts and are **never synced back**. Edit them and the next sync overwrites your changes.
 3. **Only metadata is adapted, never the body.** Generation only adjusts YAML frontmatter, file names (`_` → `-`), tool permissions and platform directories. The prompt body is preserved verbatim.
 
 ---
@@ -112,7 +114,7 @@ persistent-coding-memory/
 │   ├── SKILL.md
 │   └── scripts/sync.sh            # main sync script
 ├── .codex/                        # Codex platform source
-│   ├── config.toml                # project-level config (MCP, concurrency, feature flags)
+│   ├── config.toml                # project-level Codex config (concurrency, feature flags)
 │   ├── rules/default.rules        # command prefix allow rules
 │   └── agents/*.toml              # * single source of agents (3)
 ├── .agents/
@@ -121,7 +123,6 @@ persistent-coding-memory/
 │       ├── <skill>/scripts/
 │       ├── <skill>/references/
 │       └── <skill>/agents/openai.yaml   # Codex UI display metadata, not distributed elsewhere
-├── .zcode/config.json             # ZCode project-level MCP config
 ├── .project-memory/               # project memory templates (8 topics + TODO)
 │   ├── {Commands,Environment,Documents,Target,Design,Boundary,Tools,Pitfalls}/MEMORY.md
 │   └── TODO/{STEP.md,TODO.md,Pending.md}
@@ -136,10 +137,11 @@ persistent-coding-memory/
 | Platform arg | Agent output | Skill output | Extra behavior |
 | --- | --- | --- | --- |
 | `codex` | Syncs the `.codex/` source directory directly | Syncs the `.agents/skills/` source directory directly | Syncs `.codex/config.toml` and `.codex/rules/` |
-| `zcode` | `.codex/agents/*.toml` → `.zcode/agents/*.md` | Reuses `.agents/skills/` | Syncs `.zcode/config.json`; adapts tool names in AGENTS.md; also copies the global skill to `~/.zcode/skills/` |
+| `zcode` | `.codex/agents/*.toml` → `.zcode/agents/*.md` | Reuses `.agents/skills/` | Adapts tool names in AGENTS.md; also copies the global skill to `~/.zcode/skills/` |
 | `claude` | → `.claude/agents/*.md` | → `.claude/skills/` | Derives a root `CLAUDE.md` from `AGENTS.md` |
-| `codebuddy` | → `.codebuddy/agents/*.md` | → `.codebuddy/skills/` | Adds `.mcp.json` only when missing |
-| `workbuddy` | none (global only) | none (global only) | Installs the global skill and links it into `~/.workbuddy-ai/skills` and `~/.workbuddy/skills`; adds `.mcp.json` only when missing |
+| `codebuddy` | → `.codebuddy/agents/*.md` | → `.codebuddy/skills/` | Uses the global MCP configuration workflow |
+| `workbuddy` | none (global only) | none (global only) | Installs the global skill and links it into `~/.workbuddy-ai/skills` |
+| `workbuddy-cn` | none (global only) | none (global only) | Installs the global skill and links it into `~/.workbuddy/skills` |
 | `opencode` | → `.opencode/agents/*.md` | → `.opencode/skills/` | Adapts `AGENTS.md` tools to `todowrite` / `question`; uses the canonical global copy as-is (OpenCode reads `~/.agents/skills/` natively, so no symlink is created) |
 
 ### Adaptation rules during generation
@@ -216,12 +218,17 @@ Three copy semantics decide what gets overwritten and what does not:
 | `CODEX_GLOBAL_SKILL_DIR` | **Canonical** skill directory — the only real copy lives here | `~/.agents/skills` |
 | `CLAUDE_GLOBAL_SKILL_DIR` | Claude link target | `~/.claude/skills` |
 | `CODEBUDDY_GLOBAL_SKILL_DIR` | CodeBuddy link target | `~/.codebuddy/skills` |
-| `WORKBUDDY_SKILL_LINK_DIRS` | WorkBuddy link targets, colon-separated | `~/.workbuddy-ai/skills:~/.workbuddy/skills` |
+| `WORKBUDDY_GLOBAL_SKILL_DIR` | Override the selected WorkBuddy global skill directory | `~/.workbuddy-ai/skills` for `workbuddy`; `~/.workbuddy/skills` for `workbuddy-cn` |
+| `WORKBUDDY_SKILL_LINK_DIRS` | Optional explicit WorkBuddy link targets, colon-separated | Selected variant directory only |
 | `OPENCODE_GLOBAL_SKILL_DIR` | OpenCode skill directory (defaults to the canonical one) | `~/.agents/skills` |
 
 > If your client uses a non-default config directory, override the matching variable. No script change needed. Link targets only get a symlink; a target that already holds a real directory is left untouched.
 
 The internal variables `SYNC_PROJECT_CONFIG_BOOTSTRAPPED` and `SYNC_PROJECT_CONFIG_REMOTE_DIR` drive the second pass of the self-update and never need to be set by hand. If you set `SYNC_PROJECT_CONFIG_REMOTE_DIR` yourself, point it only at a disposable checkout: the script deletes that directory on exit.
+
+### Context7 MCP
+
+The repository does not store a project-level Context7 MCP configuration. The `sync-project-config` Skill instructs the agent to check the current client's global MCP configuration first, reuse an existing `context7` server, and add it globally only when it is missing. The project is never used as a fallback MCP configuration location.
 
 ---
 
@@ -479,17 +486,17 @@ SYNC_PROJECT_CONFIG_REMOTE_DIR=/path/to/local/template-checkout \
 
 Set `PROJECT_CONFIG_REPO_URL` (or the per-platform `CODEX_CONFIG_REPO_URL` / `CODEBUDDY_CONFIG_REPO_URL`) to your repo address.
 
-**Q: Should I use `codebuddy` or `workbuddy`?**
+**Q: Should I use `codebuddy`, `workbuddy` or `workbuddy-cn`?**
 
-Use `workbuddy` for WorkBuddy and `codebuddy` for the domestic CodeBuddy build. Quick check: if your client's config directory is `~/.workbuddy-ai/` or `~/.workbuddy/`, use `workbuddy`; if it is `~/.codebuddy/`, use `codebuddy`. They write to different directories, and the wrong choice fails silently rather than erroring.
+Use `codebuddy` for the domestic CodeBuddy build, `workbuddy` for the international WorkBuddy build, and `workbuddy-cn` for the domestic WorkBuddy build. Quick check: `~/.workbuddy-ai/` means `workbuddy`, `~/.workbuddy/` means `workbuddy-cn`, and `~/.codebuddy/` means `codebuddy`. They write to different directories, and the wrong choice fails silently rather than erroring.
 
 **Q: Will WorkBuddy pick up skills placed in the project?**
 
-No. WorkBuddy's Code mode loads skills only from its global skill directories, so `workbuddy` generates no project-level `agents/` or `skills/`. The global `sync-project-config` is installed once as a real directory under `~/.agents/skills/` and linked into `~/.workbuddy-ai/skills` and `~/.workbuddy/skills`. The nine project skills are therefore unavailable under WorkBuddy by design — only the distribution entry point is.
+No. WorkBuddy's Code mode loads skills only from its global skill directory, so both `workbuddy` and `workbuddy-cn` generate no project-level `agents/` or `skills/`. The global `sync-project-config` is installed once as a real directory under `~/.agents/skills/` and linked into the selected WorkBuddy directory. The nine project skills are therefore unavailable under WorkBuddy by design — only the distribution entry point is.
 
 **Q: My client's global skill directory is not the default. What now?**
 
-Override the matching variable — `CODEBUDDY_GLOBAL_SKILL_DIR`, or `WORKBUDDY_SKILL_LINK_DIRS` (colon-separated, for example `~/.workbuddy-ai/skills`). These are link targets; the real copy always stays in `CODEX_GLOBAL_SKILL_DIR`.
+Override the matching variable — `CODEBUDDY_GLOBAL_SKILL_DIR`, `WORKBUDDY_GLOBAL_SKILL_DIR`, or `WORKBUDDY_SKILL_LINK_DIRS` (colon-separated). These are link targets; the real copy always stays in `CODEX_GLOBAL_SKILL_DIR`.
 
 **Q: `sync-memory.sh` says `Remote memory repository URL is not configured`?**
 
@@ -503,6 +510,6 @@ Agents and skills come along with the platform config, so nothing to do there; t
 
 OpenCode searches `~/.agents/skills/<name>/SKILL.md` natively in addition to `~/.config/opencode/skills/` and the Claude-compatible `~/.claude/skills/`. The canonical copy already sits in `~/.agents/skills/`, so it is picked up as-is. Nothing is linked into `~/.config/opencode/skills/` on purpose: OpenCode requires skill names to be unique across all locations, and a second copy pointing at the same name can collide. The project-level copies go to `.opencode/skills/`.
 
-**Q: Why was no `.mcp.json` generated?**
+**Q: Where is the MCP configuration?**
 
-On the CodeBuddy and WorkBuddy platforms it is only added when the template repo root has a `.mcp.json` and the target project is missing one. This template repo does not ship that file, so nothing is generated — add it to the template repo root yourself if you need it.
+The sync script does not generate or copy project-level MCP configuration files. The `sync-project-config` Skill tells the agent to reuse the current client's global `context7` configuration or add it globally when missing.

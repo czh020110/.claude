@@ -4,6 +4,7 @@ set -euo pipefail
 export LC_ALL=C
 
 PLATFORM_ARG="${1:-}"
+WORKBUDDY_VARIANT="international"
 case "$PLATFORM_ARG" in
   codex|Codex|--codex)
     PLATFORM="codex"
@@ -17,21 +18,27 @@ case "$PLATFORM_ARG" in
   codebuddy|CodeBuddy|--codebuddy)
     PLATFORM="codebuddy"
     ;;
-  workbuddy|WorkBuddy|--workbuddy)
+  workbuddy|WorkBuddy|--workbuddy|workbuddy-ai|WorkBuddyAI|--workbuddy-ai)
     PLATFORM="workbuddy"
+    WORKBUDDY_VARIANT="international"
+    ;;
+  workbuddy-cn|WorkBuddyCN|--workbuddy-cn|workbuddy-domestic|WorkBuddyDomestic|--workbuddy-domestic)
+    PLATFORM="workbuddy"
+    WORKBUDDY_VARIANT="domestic"
     ;;
   opencode|OpenCode|--opencode)
     PLATFORM="opencode"
     ;;
   *)
-    echo "Usage: ${0##*/} codex|zcode|claude|codebuddy|workbuddy|opencode" >&2
+    echo "Usage: ${0##*/} codex|zcode|claude|codebuddy|workbuddy|workbuddy-cn|opencode" >&2
     exit 2
     ;;
 esac
 
 # codebuddy targets the domestic CodeBuddy client (~/.codebuddy/skills, project .codebuddy/).
-# workbuddy targets the international WorkBuddy client (~/.workbuddy-ai/skills, project .workbuddy/).
-# They are separate platforms because the two clients scan different directories.
+# workbuddy targets the international WorkBuddy client (~/.workbuddy-ai/skills).
+# workbuddy-cn targets the domestic WorkBuddy client (~/.workbuddy/skills).
+# They are separate platforms because the clients scan different directories.
 if [ "$PLATFORM" = "codebuddy" ] || [ "$PLATFORM" = "workbuddy" ]; then
   REPO_URL="${PROJECT_CONFIG_REPO_URL:-${CODEBUDDY_CONFIG_REPO_URL:-${CODEX_CONFIG_REPO_URL:-https://github.com/czh020110/.claude.git}}}"
 else
@@ -75,7 +82,12 @@ if [ "$PLATFORM" = "opencode" ]; then
   # OpenCode reads ~/.agents/skills/ natively, so the canonical copy needs no symlink.
   GLOBAL_SKILL_DIR="${OPENCODE_GLOBAL_SKILL_DIR:-$CANONICAL_SKILL_DIR}"
 elif [ "$PLATFORM" = "workbuddy" ]; then
-  GLOBAL_SKILL_DIR="${WORKBUDDY_GLOBAL_SKILL_DIR:-$HOME/.workbuddy-ai/skills}"
+  if [ "$WORKBUDDY_VARIANT" = "domestic" ]; then
+    WORKBUDDY_DEFAULT_SKILL_DIR="$HOME/.workbuddy/skills"
+  else
+    WORKBUDDY_DEFAULT_SKILL_DIR="$HOME/.workbuddy-ai/skills"
+  fi
+  GLOBAL_SKILL_DIR="${WORKBUDDY_GLOBAL_SKILL_DIR:-$WORKBUDDY_DEFAULT_SKILL_DIR}"
 elif [ "$PLATFORM" = "codebuddy" ]; then
   GLOBAL_SKILL_DIR="${CODEBUDDY_GLOBAL_SKILL_DIR:-$HOME/.codebuddy/skills}"
 elif [ "$PLATFORM" = "claude" ]; then
@@ -359,7 +371,6 @@ sync_platform() {
       copy_tree "$TMP_DIR/.agents" "$PROJECT_DIR/.agents"
       ;;
     zcode)
-      copy_tree "$TMP_DIR/.zcode" "$PROJECT_DIR/.zcode"
       copy_skill_tree "$TMP_DIR/.agents/skills" "$PROJECT_DIR/.agents/skills" zcode
       generate_agents "$TMP_DIR/.codex/agents" "$PROJECT_DIR/.zcode/agents" zcode
       ;;
@@ -370,16 +381,10 @@ sync_platform() {
     codebuddy)
       generate_agents "$TMP_DIR/.codex/agents" "$PROJECT_DIR/.codebuddy/agents" codebuddy
       copy_skill_tree "$TMP_DIR/.agents/skills" "$PROJECT_DIR/.codebuddy/skills" codebuddy
-      if [ -f "$TMP_DIR/.mcp.json" ] && [ ! -f "$PROJECT_DIR/.mcp.json" ]; then
-        cp "$TMP_DIR/.mcp.json" "$PROJECT_DIR/.mcp.json"
-      fi
       ;;
     workbuddy)
       # WorkBuddy loads skills only from the global directory, so no project-level
       # agents/ or skills/ are generated here.
-      if [ -f "$TMP_DIR/.mcp.json" ] && [ ! -f "$PROJECT_DIR/.mcp.json" ]; then
-        cp "$TMP_DIR/.mcp.json" "$PROJECT_DIR/.mcp.json"
-      fi
       ;;
     opencode)
       generate_agents "$TMP_DIR/.codex/agents" "$PROJECT_DIR/.opencode/agents" opencode
@@ -428,7 +433,7 @@ sync_global_skill() {
       [ "$GLOBAL_SKILL_DIR" = "$CANONICAL_SKILL_DIR" ] || link_skill_into "$canonical_target" "$GLOBAL_SKILL_DIR"
       ;;
     workbuddy)
-      local link_dirs="${WORKBUDDY_SKILL_LINK_DIRS:-$HOME/.workbuddy-ai/skills:$HOME/.workbuddy/skills}"
+      local link_dirs="${WORKBUDDY_SKILL_LINK_DIRS:-$GLOBAL_SKILL_DIR}"
       local dir
       local IFS=:
       for dir in $link_dirs; do
@@ -469,7 +474,11 @@ if [ "$PLATFORM" = "opencode" ]; then
   HEADER="# OpenCode / project-local config"
 elif [ "$PLATFORM" = "workbuddy" ]; then
   ENTRIES=( ".project-memory/" ".project-script/" )
-  HEADER="# WorkBuddy / project-local config"
+  if [ "$WORKBUDDY_VARIANT" = "domestic" ]; then
+    HEADER="# WorkBuddy domestic / project-local config"
+  else
+    HEADER="# WorkBuddy international / project-local config"
+  fi
 elif [ "$PLATFORM" = "codebuddy" ]; then
   ENTRIES=( ".project-memory/" ".project-script/" ".codebuddy/settings.local.json" ".codebuddy/CODEBUDDY.local.md" ".codebuddy/.cache/" )
   HEADER="# CodeBuddy / project-local config"
