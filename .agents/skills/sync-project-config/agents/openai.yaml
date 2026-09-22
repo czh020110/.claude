@@ -1,6 +1,0 @@
-interface:
-  display_name: "Sync Project Config"
-  short_description: "Generate platform agent and skill config from the Codex source"
-  default_prompt: "Use $sync-project-config and pass the current client platform: codex, zcode, claude, or codebuddy."
-policy:
-  allow_implicit_invocation: false

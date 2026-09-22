@@ -14,28 +14,28 @@ One source is maintained here, and the `sync-project-config` global skill genera
 
 ## Install it as a global skill and use it
 
-`sync-project-config/` at the repo root is the **global skill install source**. It is not a project-level skill that this project loads automatically.
+`sync-project-config/` at the repo root is the **global skill install source**, and the only copy of it in the repo. It is not a project-level skill that this project loads automatically, and it is not one of the skills under `.agents/skills/`.
 
 ### Step 1: Install `sync-project-config` into the global skill directory
 
-Copy the whole `sync-project-config/` directory into the global skill directory of your client:
+Either copy the repo-root `sync-project-config/` directory into your client's global skill directory:
 
 | Client | Global skill directory |
 | --- | --- |
-| Codex / ZCode | `~/.agents/skills/sync-project-config/` |
-| Claude Code | `~/.claude/skills/sync-project-config/` |
-| CodeBuddy (domestic build) | `~/.codebuddy/skills/sync-project-config/` |
+| Codex / ZCode | `~/.agents/skills/` |
+| Claude Code | `~/.claude/skills/` |
+| CodeBuddy (domestic build) | `~/.codebuddy/skills/` |
 | WorkBuddy international (`workbuddy`) | `~/.workbuddy-ai/skills/` |
 | WorkBuddy domestic (`workbuddy-cn`) | `~/.workbuddy/skills/` |
-| OpenCode | `~/.agents/skills/sync-project-config/` — read natively, no symlink needed |
+| OpenCode | `~/.agents/skills/` — read natively, no symlink needed |
 
-The real directory is always installed into the canonical location `~/.agents/skills/sync-project-config/`. Clients that do not read `~/.agents/skills` get a **symlink** from their own skill directory back to that canonical copy, so there is only ever one copy on disk.
-
-Or just copy the sentence below and send it to your agent, letting it install and initialize everything for you:
+Or copy the sentence below and send it to your agent, letting it install and initialize everything for you:
 
 ```text
 Install sync-project-config from the current project root into the global skill directory of the current client, then use it to initialize the current project.
 ```
+
+At sync time the script installs the real copy into the canonical location `~/.agents/skills/sync-project-config/`. Clients that do not read `~/.agents/skills` get a **symlink** from their own skill directory back to that canonical copy, so there is only ever one copy on disk.
 
 ### Step 2: Run the sync inside your development repo
 
@@ -118,7 +118,7 @@ persistent-coding-memory/
 │   ├── rules/default.rules        # command prefix allow rules
 │   └── agents/*.toml              # * single source of agents (3)
 ├── .agents/
-│   └── skills/                    # * single source of skills (9)
+│   └── skills/                    # * single source of skills (8)
 │       ├── <skill>/SKILL.md
 │       ├── <skill>/scripts/
 │       ├── <skill>/references/
@@ -176,7 +176,7 @@ persistent-coding-memory/
 
   Claude Code's `TaskCreate`/`TaskUpdate`/`TaskList`/`TaskGet` tools are a separate task system; this prompt uses `TodoWrite`. ZCode may additionally expose the read-only `TodoRead`, and WorkBuddy's implementation class is `TodoWriteTool`, while the prompt-facing name is `TodoWrite`. OpenCode uses the lowercase built-ins `todowrite` and `question` (with `todoread` available as its read-only todo counterpart).
 
-- If that marker is absent from `AGENTS.md`, the whole file is overwritten
+- If that marker is absent from `AGENTS.md`, the file is never split and the whole file would be overwritten. The `sync-project-config` Skill therefore instructs the agent to stop before running the script, compare the local `AGENTS.md` with the upstream one, locate the managed/custom boundary, confirm it with the user, insert the marker there, and only then run the sync. No legacy heading is recognised — a project synced with an older template must have the marker inserted once.
 
 ---
 
@@ -246,11 +246,10 @@ Sources live in `.codex/agents/`; each platform gets a hyphenated `.md` of the s
 
 ## Built-in skills
 
-Sources live in `.agents/skills/`.
+Project-level skill sources live in `.agents/skills/` (8 of them). The global distribution entry `sync-project-config` is **not** among them — it lives at the repo root and is installed separately (see [Install it as a global skill](#install-it-as-a-global-skill-and-use-it)).
 
 | Skill | Purpose | Trigger |
 | --- | --- | --- |
-| `sync-project-config` | **Global distribution entry**: initialize/update a project's agents, skills and templates | When the user asks to sync base project config, or config is found missing |
 | `read-index-memory` | Read the `.project-memory/` topic indexes and route to bodies as needed | **At the start of every new task** |
 | `update-memory` | Write verified, already-implemented local facts into the matching topic | When this round confirmed a valid fact/constraint/preference/lesson |
 | `collect-update-memory` | Orchestrates a full memory sync (delegates to `collect_update_memory`) | When the user explicitly asks for a staged or full sync |
@@ -492,7 +491,7 @@ Use `codebuddy` for the domestic CodeBuddy build, `workbuddy` for the internatio
 
 **Q: Will WorkBuddy pick up skills placed in the project?**
 
-No. WorkBuddy's Code mode loads skills only from its global skill directory, so both `workbuddy` and `workbuddy-cn` generate no project-level `agents/` or `skills/`. The global `sync-project-config` is installed once as a real directory under `~/.agents/skills/` and linked into the selected WorkBuddy directory. The nine project skills are therefore unavailable under WorkBuddy by design — only the distribution entry point is.
+No. WorkBuddy's Code mode loads skills only from its global skill directory, so both `workbuddy` and `workbuddy-cn` generate no project-level `agents/` or `skills/`. The global `sync-project-config` is installed once as a real directory under `~/.agents/skills/` and linked into the selected WorkBuddy directory. The eight project skills under `.agents/skills/` are therefore unavailable under WorkBuddy by design — only the distribution entry point is.
 
 **Q: My client's global skill directory is not the default. What now?**
 

@@ -14,28 +14,28 @@
 
 ## 安装到全局 Skill 并使用
 
-本仓库根目录的 `sync-project-config/` 是**全局 Skill 安装源**，不作为当前项目自动加载的项目级 Skill。
+本仓库根目录的 `sync-project-config/` 是**全局 Skill 安装源**，也是仓库里唯一的一份。它不作为当前项目自动加载的项目级 Skill，也不在 `.agents/skills/` 之下。
 
 ### 第一步：把 `sync-project-config` 安装到全局 Skill 目录
 
-将 `sync-project-config/` 整个目录复制到当前客户端的全局 Skill 目录：
+把仓库根目录的 `sync-project-config/` 整个目录复制到当前客户端的全局 Skill 目录：
 
 | 客户端 | 全局 Skill 目录 |
 | --- | --- |
-| Codex / ZCode | `~/.agents/skills/sync-project-config/` |
-| Claude Code | `~/.claude/skills/sync-project-config/` |
-| CodeBuddy（国内版） | `~/.codebuddy/skills/sync-project-config/` |
+| Codex / ZCode | `~/.agents/skills/` |
+| Claude Code | `~/.claude/skills/` |
+| CodeBuddy（国内版） | `~/.codebuddy/skills/` |
 | WorkBuddy 国际版（`workbuddy`） | `~/.workbuddy-ai/skills/` |
 | WorkBuddy 国内版（`workbuddy-cn`） | `~/.workbuddy/skills/` |
-| OpenCode | `~/.agents/skills/sync-project-config/`（原生读取，无需软链） |
-
-真实目录始终安装在规范位置 `~/.agents/skills/sync-project-config/`；不读 `~/.agents/skills` 的客户端，由脚本在它自己的 Skill 目录里建**软链**指回规范副本，磁盘上永远只有一份。
+| OpenCode | `~/.agents/skills/`（原生读取，无需软链） |
 
 也可以直接把下面这段话复制后发给 Agent，让它替你完成安装与初始化：
 
 ```text
 请把当前项目根目录的 `sync-project-config` 安装到当前客户端的全局 Skill 目录，然后用它初始化当前项目。
 ```
+
+同步时脚本会把真实副本装到规范位置 `~/.agents/skills/sync-project-config/`；不读 `~/.agents/skills` 的客户端，由脚本在它自己的 Skill 目录里建**软链**指回规范副本，磁盘上永远只有一份。
 
 ### 第二步：在开发仓库里执行同步
 
@@ -119,7 +119,7 @@ persistent-coding-memory/
 │   ├── rules/default.rules        # 命令前缀放行规则
 │   └── agents/*.toml              # ★ Agent 唯一源（3 个）
 ├── .agents/
-│   └── skills/                    # ★ Skill 唯一源（9 个）
+│   └── skills/                    # ★ Skill 唯一源（8 个）
 │       ├── <skill>/SKILL.md
 │       ├── <skill>/scripts/
 │       ├── <skill>/references/
@@ -177,7 +177,7 @@ persistent-coding-memory/
 
   Claude Code 的 `TaskCreate`/`TaskUpdate`/`TaskList`/`TaskGet` 是另一套任务系统；这里的提示词统一使用 `TodoWrite`。ZCode 还可以使用只读的 `TodoRead`，WorkBuddy 的实现类名虽然是 `TodoWriteTool`，但提示词面向的工具名是 `TodoWrite`。OpenCode 使用小写内置工具 `todowrite` 和 `question`，并提供只读的 `todoread` 作为 todo 对应工具。
 
-- 若 `AGENTS.md` 中不存在该标记，则整体覆盖
+- 若 `AGENTS.md` 中不存在该标记，脚本不会做任何切分，整个文件会被覆盖。因此 `sync-project-config` Skill 会要求 Agent 先停下、不执行脚本：先比对本地 `AGENTS.md` 与上游 `AGENTS.md`，定位受控区与自定义区的边界，向用户确认后在该处插入标记，然后再执行同步。脚本不再识别任何旧版标题——用旧模板同步过的项目需要手动补一次标记。
 
 ---
 
@@ -247,11 +247,10 @@ persistent-coding-memory/
 
 ## 内置 Skill 清单
 
-源文件在 `.agents/skills/`。
+项目级 Skill 源文件在 `.agents/skills/`（共 8 个）。全局分发入口 `sync-project-config` **不在其中**——它在仓库根目录，需要单独安装（见[安装到全局 Skill 并使用](#安装到全局-skill-并使用)）。
 
 | Skill | 作用 | 触发条件 |
 | --- | --- | --- |
-| `sync-project-config` | **全局分发入口**：初始化/更新项目的 Agent、Skill 与模板 | 用户要求同步项目基础配置，或发现配置缺失 |
 | `read-index-memory` | 读取 `.project-memory/` 各主题索引，按需路由到正文 | **每个新任务开始时** |
 | `update-memory` | 把已实施且可验证的局部事实写入对应主题 | 本轮确认了有效事实/约束/偏好/经验 |
 | `collect-update-memory` | 全量记忆同步编排（委托 `collect_update_memory`） | 用户主动要求阶段性/全量同步 |
@@ -494,7 +493,7 @@ SYNC_PROJECT_CONFIG_REMOTE_DIR=/path/to/local/template-checkout \
 
 **Q：WorkBuddy 会加载放在项目里的 Skill 吗？**
 
-不会。WorkBuddy 的 Code 模式只从全局 Skill 目录加载，因此 `workbuddy` 和 `workbuddy-cn` 都不生成项目级 `agents/` 与 `skills/`。全局的 `sync-project-config` 以真实目录装在 `~/.agents/skills/` 下，再软链到当前选择的 WorkBuddy 目录。所以那 9 个项目 Skill 在 WorkBuddy 下按设计不可用，只有分发入口可用。
+不会。WorkBuddy 的 Code 模式只从全局 Skill 目录加载，因此 `workbuddy` 和 `workbuddy-cn` 都不生成项目级 `agents/` 与 `skills/`。全局的 `sync-project-config` 以真实目录装在 `~/.agents/skills/` 下，再软链到当前选择的 WorkBuddy 目录。所以 `.agents/skills/` 下那 8 个项目 Skill 在 WorkBuddy 下按设计不可用，只有分发入口可用。
 
 **Q：我的客户端全局 Skill 目录不是默认值？**
 
