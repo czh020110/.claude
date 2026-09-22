@@ -9,7 +9,7 @@ Write only confirmed facts and reusable execution lessons into project memory.
 
 ## Write Scope
 
-- Count as project facts, and write into the matching topic: implemented behavior, configuration, environment, commands, tools and design, resting on code, configuration, diffs or verification results; and project purpose, scope, boundaries, constraints and long-term preferences, resting on the user's explicit statement or approval. `Design` describes code that exists; a design decision that is not implemented yet is not a fact and goes to `TODO/Pending.md`.
+- Count as project facts, and write into the matching topic: implemented behavior, configuration, environment, commands, tools and design, resting on code, configuration, diffs or verification results; and project purpose, scope, boundaries, constraints and project-scoped preferences, resting on the user's explicit statement or approval. A preference that would hold in every project is not a project fact — it belongs in the user-level memory. `Design` describes code that exists; a design decision that is not implemented yet is not a fact and goes to `TODO/Pending.md`.
 - Execution lessons confirmed during the task that may recur and can be generalized into applicable scenarios, detection signals and avoidance steps may be written into `Pitfalls`.
 
 ## Boundaries
@@ -27,7 +27,7 @@ Write only confirmed facts and reusable execution lessons into project memory.
 ## Update Process
 
 1. Execute once a trigger condition is met — inside a modification task, after that task's verification has passed; first confirm the content is a current fact or reusable execution lesson. If it is neither, stop this skill.
-2. Decide which topic the fact belongs to: `Commands`, `Environment`, `Target`, `Design`, `Boundary`, `Tools` or `Pitfalls`.
+2. Decide which topic the fact belongs to: `Commands`, `Environment`, `Target`, `Design`, `Boundary`, `Preferences`, `Tools` or `Pitfalls`.
 3. Read that topic's `MEMORY.md` index and read only the relevant bodies per the index; do not read unrelated topics.
 4. **Before the first write or any structural change**, read [project-memory-format.md](references/project-memory-format.md) and follow its fact ownership, indexing and split rules.
    If the reference file is temporarily not visible, at minimum keep this: `MEMORY.md` contains only indexes, bodies and indexes are one-to-one, and each fact keeps a single authoritative location; continue with the existing format and state the risk in the result.

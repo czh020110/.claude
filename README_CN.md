@@ -10,7 +10,7 @@
 
 **只做项目级记忆，不碰全局记忆。** 它沉淀的所有内容都留在被安装的那个仓库里——从不写入客户端的全局记忆——而且只服务于代码项目。
 
-记忆按主题划分，一共八大主题：
+记忆按主题划分，一共九大主题：
 
 | 主题 | 记什么 |
 | --- | --- |
@@ -20,6 +20,7 @@
 | `Target` | 已生效的项目目的、范围、验收标准 |
 | `Design` | **已实现代码**的设计：架构、模块职责、协作方式与设计理由 |
 | `Boundary` | 必须保持的行为、范围外事项、限制、质量底线 |
+| `Preferences` | 项目范围内的偏好——agent 在本项目里的写法、注释与回复风格、命名习惯；不记全局偏好 |
 | `Tools` | 可复用的辅助脚本、可视化、统计、数据转换工具 |
 | `Pitfalls` | 可复用的执行经验：适用场景、识别信号、根因、规避方式 |
 
@@ -91,7 +92,7 @@ bash ~/.agents/skills/sync-project-config/scripts/sync.sh codex   # 或你客户
 ├── Commands/MEMORY.md      ← 只有索引
 ├── Commands/<主题>.md      ← 事实正文
 ├── Environment/  Documents/  Target/  Design/
-├── Boundary/  Tools/  Pitfalls/
+├── Boundary/  Preferences/  Tools/  Pitfalls/
 └── TODO/{TODO.md, Pending.md, STEP.md}
 ```
 

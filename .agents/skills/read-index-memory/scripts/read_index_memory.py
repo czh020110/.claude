@@ -35,6 +35,7 @@ def find_memory_roots(root: Path) -> list[Path]:
     preferred = [
         "Documents",
         "Boundary",
+        "Preferences",
         "Target",
         "Environment",
         "Commands",

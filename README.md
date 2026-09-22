@@ -10,7 +10,7 @@ This is a template repository, not a runnable software project. It installs a se
 
 **Project-level memory, not global memory.** Everything it accumulates stays inside the repository it was installed into — it never writes to the client's global memory — and it is meant for code projects only.
 
-Memory is organized by topic, in eight of them:
+Memory is organized by topic, in nine of them:
 
 | Topic | What it records |
 | --- | --- |
@@ -20,6 +20,7 @@ Memory is organized by topic, in eight of them:
 | `Target` | Currently effective project purpose, scope and acceptance criteria |
 | `Design` | The design of the code as it exists now: architecture, module responsibilities, collaboration model, rationale |
 | `Boundary` | Behavior that must be preserved, out-of-scope items, limits and quality floor |
+| `Preferences` | Project-scoped preferences for how the agent works here: writing and reply style, comment and naming conventions — never global preferences |
 | `Tools` | Reusable helper scripts, visualizations, statistics or data conversion tools |
 | `Pitfalls` | Reusable lessons: applicable scenarios, detection signals, root cause, avoidance |
 
@@ -91,7 +92,7 @@ When it finishes, the target repo should contain the platform's `agents/` and `s
 ├── Commands/MEMORY.md      ← index only
 ├── Commands/<topic>.md     ← the facts
 ├── Environment/  Documents/  Target/  Design/
-├── Boundary/  Tools/  Pitfalls/
+├── Boundary/  Preferences/  Tools/  Pitfalls/
 └── TODO/{TODO.md, Pending.md, STEP.md}
 ```
 

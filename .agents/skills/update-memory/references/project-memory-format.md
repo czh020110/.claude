@@ -4,7 +4,7 @@ This file is on-demand reference shared by `update-memory` and `collect_update_m
 
 ## Directory and Fact Ownership
 
-Project memory consists of eight topics: `Commands`, `Environment`, `Documents`, `Target`, `Design`, `Boundary`, `Tools`, `Pitfalls`. Each topic directory contains an index-only `MEMORY.md` plus sub-topic body files, each scoped to one topic; do not create catch-all bodies like "other/misc/basic operations".
+Project memory consists of nine topics: `Commands`, `Environment`, `Documents`, `Target`, `Design`, `Boundary`, `Preferences`, `Tools`, `Pitfalls`. Each topic directory contains an index-only `MEMORY.md` plus sub-topic body files, each scoped to one topic; do not create catch-all bodies like "other/misc/basic operations".
 
 - `Commands`: install, run, build, test, evaluate, deploy and failure-recovery workflows.
 - `Environment`: tools/versions, hardware, paths, environment variables, external services and platform limits.
@@ -12,6 +12,7 @@ Project memory consists of eight topics: `Commands`, `Environment`, `Documents`,
 - `Target`: currently effective project purpose, scope and acceptance criteria — intent, not implementation (that is `Design`); stage plans and options that are not settled yet go into TODO/STEP/Pending.
 - `Design`: the architecture, module responsibilities, collaboration model and design rationale of the code as it exists now; design decisions that are not implemented yet go into TODO/Pending.
 - `Boundary`: behavior that must be preserved, explicitly excluded scope, limits and quality floor.
+- `Preferences`: project-scoped preferences for how the agent works in this repository — writing and reply style, comment and naming conventions, commit-message habits and similar. Only preferences specific to this project or its code belong here; a preference that would hold in every project is not a project fact and belongs in the user-level memory instead.
 - `Tools`: reusable helper scripts, visualizations, statistics or data conversion tools.
 - `Pitfalls`: reusable execution lessons confirmed during execution that may recur, with applicable scenarios, detection signals, root cause and avoidance steps; do not record one-off tool errors, transient failures, raw logs or details that cannot be transferred.
 
