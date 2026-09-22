@@ -19,12 +19,15 @@ Check `.project-script/MEMORY.md` first; if it does not exist, create it per the
 
 ### 2. Determine the verification scope
 
-Scope the verification to the files this task changed:
+Scope the verification to the files this task changed and what they affect — unchanged, unrelated code needs no verification:
 
 - Added/modified/deleted source code, scripts, configuration, templates and docs (must be checked when replacement rules or path references are involved).
 - Downstream objects affected by the change: callers, interfaces, data flows, pages, etc.
 
-Do not verify only "the last command"; verify the completeness of the task requirement itself: whether the functionality matches the user's need, whether project constraints are met, and whether anything is missing or wrong.
+Answer two questions, not just "did the last command pass":
+
+- **Does the change do what was asked?** Every requirement of this task is met, project constraints are respected, and nothing is missing.
+- **Is the change correct?** It has no errors, and nothing it touches is broken.
 
 ### 3. Execute or reuse verification
 
