@@ -66,7 +66,7 @@ If the global configuration is not writable or the current client does not suppo
 - `workbuddy-cn`: installs the global skill only (canonical copy + domestic symlink into `~/.workbuddy/skills`); **generates no project-level directories**.
 - `opencode`: generates `.opencode/agents/` and `.opencode/skills/` from the Codex source; the global skill uses the canonical directory directly (OpenCode reads `~/.agents/skills/` natively) and no symlink is created — OpenCode requires skill names to be unique across locations, and duplicates cause conflicts.
 
-All platforms only add missing `.project-memory/` and `.project-script/` templates and never overwrite existing content in the target project; the sync script does not generate or copy project-level MCP configuration files.
+All platforms add missing `.project-memory/` and `.project-script/` templates and never overwrite content a project has accumulated. For `.project-memory/`, the first-line title of each file is refreshed from the template on every sync while everything below that title is left untouched. The sync script does not generate or copy project-level MCP configuration files.
 
 ## Boundaries
 

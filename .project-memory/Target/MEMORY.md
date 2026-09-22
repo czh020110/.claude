@@ -1,1 +1,1 @@
-# Index Paths and Summaries Related to Project Targets
+# Project Target: purpose, scope and acceptance criteria — intent, not implementation

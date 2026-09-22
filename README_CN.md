@@ -18,7 +18,7 @@
 | `Environment` | 工具/版本、硬件、路径、环境变量、外部服务、平台限制 |
 | `Documents` | 用户维护的项目文档（正文默认只读） |
 | `Target` | 已生效的项目目的、范围、验收标准 |
-| `Design` | 当前架构、模块职责、协作方式与设计理由 |
+| `Design` | **已实现代码**的设计：架构、模块职责、协作方式与设计理由 |
 | `Boundary` | 必须保持的行为、范围外事项、限制、质量底线 |
 | `Tools` | 可复用的辅助脚本、可视化、统计、数据转换工具 |
 | `Pitfalls` | 可复用的执行经验：适用场景、识别信号、根因、规避方式 |
@@ -90,10 +90,10 @@ bash sync-project-config/scripts/sync.sh opencode
 | 文件 | 谁维护 | 记什么 |
 | --- | --- | --- |
 | `TODO.md` | **用户** | 你自己的待办；只有你明确要求时 Agent 才写 |
-| `Pending.md` | Agent | 尚未实施的方案与决策 |
+| `Pending.md` | Agent | 尚未定下或尚未实现的方案与决策 |
 | `STEP.md` | Agent | 长期阶段拆分，用于跨阶段的任务 |
 
-记忆不保存任何凭证；同步也不会覆盖你已经积累的记忆——只会补齐缺失的模板文件。
+记忆不保存任何凭证。同步会补齐缺失的模板文件，并刷新每个文件的**标题行**——标题以下的内容是你积累的，永远不会被覆盖。
 
 ## `.project-script/`：可复用的验证脚本
 
@@ -105,13 +105,13 @@ bash sync-project-config/scripts/sync.sh opencode
 
 `AGENTS.md` 让每个任务走同一条闭环：
 
-1. **读记忆索引** —— `read-index-memory` 读取每个主题的 `MEMORY.md`。
+1. **读记忆索引** —— `read-index-memory` 读取每个主题的 `MEMORY.md`，以及 `TODO/Pending.md`、`TODO/TODO.md`、`TODO/STEP.md`。
 2. **只读索引指向的正文** —— 由索引决定哪些相关，其余不扫描。
 3. **执行修改。**
-4. **记录本轮真实确认的事实** —— `update-memory` 把这一轮确立的事实写进对应主题。
-5. **交付前验证** —— `post-verify` 做最终针对性检查并留下证据。
+4. **交付前验证** —— `post-verify` 做最终针对性检查并留下证据。
+5. **记录本次任务确认的事实** —— 验证通过后，`update-memory` 把本次任务确立的事实写进对应主题。
 
-**记忆只记录当前项目的事实，不记录以后的方案设计。** 尚未实施的方案、架构和决策写进 `.project-memory/TODO/Pending.md`，你自己的待办写进 `.project-memory/TODO/TODO.md`。Agent 会按需读取这两个文件，所以停在这里的想法不会丢。
+**记忆只记录当前项目的事实，不记录以后的方案设计。** 尚未定下或尚未实现的方案与决策写进 `.project-memory/TODO/Pending.md`，你自己的待办写进 `.project-memory/TODO/TODO.md`。Agent 会在每个任务开始时读取这两个文件，所以停在这里的想法不会丢。
 
 ---
 
@@ -134,7 +134,7 @@ bash sync-project-config/scripts/sync.sh opencode
 | Agent | 作用 |
 | --- | --- |
 | `code_review_custom` | 审查指定范围的代码变更，判断正确性与风险，输出 P0–P3 分级结论 |
-| `collect_update_memory` | 全量记忆同步：按 commit / 增量 / 本地变更顺序收敛已实施事实 |
+| `collect_update_memory` | 全量记忆同步：按 commit / 增量 / 本地变更顺序收敛当前事实 |
 | `docs_research` | 纯外部文档查询，不读本地代码 |
 
 ---

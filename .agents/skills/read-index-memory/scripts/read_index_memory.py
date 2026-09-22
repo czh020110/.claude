@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """Read the MEMORY.md index of every topic under .project-memory/.
 
+Also reads the three planning files under .project-memory/TODO/ (Pending, TODO,
+STEP) so unsettled plans and the user's own backlog are visible at the start of
+a task instead of being lost.
+
 Cross-platform: uses only the Python standard library. Accepts an optional
 positional argument as the project root directory, defaults to the current
 working directory. Read-only, never modifies files.
@@ -11,6 +15,13 @@ from __future__ import annotations
 import os
 import sys
 from pathlib import Path
+
+# Planning files read after the topic indexes, in this order.
+PLANNING_FILES = (
+    "TODO/Pending.md",
+    "TODO/TODO.md",
+    "TODO/STEP.md",
+)
 
 
 def find_memory_roots(root: Path) -> list[Path]:
@@ -30,7 +41,6 @@ def find_memory_roots(root: Path) -> list[Path]:
         "Design",
         "Tools",
         "Pitfalls",
-        "TODO",
     ]
     listed: set[Path] = set()
     for name in preferred:
@@ -48,15 +58,26 @@ def find_memory_roots(root: Path) -> list[Path]:
     return roots
 
 
+def file_segments(root: Path, path: Path) -> list[str]:
+    """Render one existing file as a labelled segment; a missing file yields nothing."""
+    if not path.is_file():
+        return []
+    rel = path.relative_to(root).as_posix()
+    return [
+        f"===== {rel} =====",
+        "# Content",
+        path.read_text(encoding="utf-8").rstrip("\n"),
+        "",
+    ]
+
+
 def render(root: Path) -> str:
     segments: list[str] = []
     for topic_dir in find_memory_roots(root):
-        memory_file = topic_dir / "MEMORY.md"
-        rel = memory_file.relative_to(root).as_posix()
-        segments.append(f"===== {rel} =====")
-        segments.append("# Content")
-        segments.append(memory_file.read_text(encoding="utf-8").rstrip("\n"))
-        segments.append("")
+        segments.extend(file_segments(root, topic_dir / "MEMORY.md"))
+    memory_root = root / ".project-memory"
+    for rel in PLANNING_FILES:
+        segments.extend(file_segments(root, memory_root / rel))
     return "\n".join(segments)
 
 
@@ -78,7 +99,7 @@ def main() -> int:
     output = render(project_dir)
     if not output:
         print(
-            "read-index-memory: no MEMORY.md index file found under .project-memory/.",
+            "read-index-memory: no MEMORY.md index or planning file found under .project-memory/.",
             file=sys.stderr,
         )
         return 0

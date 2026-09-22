@@ -18,7 +18,7 @@ Memory is organized by topic, in eight of them:
 | `Environment` | Tools/versions, hardware, paths, env vars, external services, platform limits |
 | `Documents` | User-maintained project docs (bodies are read-only by default) |
 | `Target` | Currently effective project purpose, scope and acceptance criteria |
-| `Design` | Current architecture, module responsibilities, collaboration model and design rationale |
+| `Design` | The design of the code as it exists now: architecture, module responsibilities, collaboration model, rationale |
 | `Boundary` | Behavior that must be preserved, out-of-scope items, limits and quality floor |
 | `Tools` | Reusable helper scripts, visualizations, statistics or data conversion tools |
 | `Pitfalls` | Reusable lessons: applicable scenarios, detection signals, root cause, avoidance |
@@ -90,10 +90,10 @@ The three files under `TODO/` are kept by different people:
 | File | Maintained by | Contents |
 | --- | --- | --- |
 | `TODO.md` | **The user** | Your own backlog; the agent writes to it only when you ask |
-| `Pending.md` | The agent | Designs and decisions that are not implemented yet |
+| `Pending.md` | The agent | Designs and decisions that are not settled or not implemented yet |
 | `STEP.md` | The agent | Long-term stage breakdown, for work that spans stages |
 
-Memory never stores credentials, and a sync never overwrites memory you have already accumulated — missing template files are the only thing added.
+Memory never stores credentials. A sync adds missing template files and refreshes the **title line** of each one — everything below the title is what you have accumulated and is never overwritten.
 
 ## `.project-script/`: reusable verification scripts
 
@@ -105,13 +105,13 @@ Memory never stores credentials, and a sync never overwrites memory you have alr
 
 `AGENTS.md` drives every task through one loop:
 
-1. **Read the memory indexes** — `read-index-memory` reads every topic's `MEMORY.md`.
+1. **Read the memory indexes** — `read-index-memory` reads every topic's `MEMORY.md`, plus `TODO/Pending.md`, `TODO/TODO.md` and `TODO/STEP.md`.
 2. **Read only the bodies the index points to** — the index decides what is relevant; nothing else is scanned.
 3. **Make the change.**
-4. **Write down what was actually confirmed** — `update-memory` records the facts this round established.
-5. **Verify before delivery** — `post-verify` runs the final targeted checks and leaves evidence.
+4. **Verify before delivery** — `post-verify` runs the final targeted checks and leaves evidence.
+5. **Write down what the task confirmed** — once verification passes, `update-memory` records the facts the task established.
 
-**Memory records facts about the current project, never future plans.** Designs, architecture and decisions that are not implemented yet go into `.project-memory/TODO/Pending.md`, and your own backlog goes into `.project-memory/TODO/TODO.md`. The agent reads both on demand, so an idea parked there is not lost.
+**Memory records facts about the current project, never future plans.** Designs and decisions that are not settled or not implemented yet go into `.project-memory/TODO/Pending.md`, and your own backlog goes into `.project-memory/TODO/TODO.md`. The agent reads them at the start of every task, so an idea parked there is not lost.
 
 ---
 
@@ -134,7 +134,7 @@ Memory never stores credentials, and a sync never overwrites memory you have alr
 | Agent | What it does |
 | --- | --- |
 | `code_review_custom` | Reviews code changes in a given scope, judges correctness and risk, reports findings graded P0–P3 |
-| `collect_update_memory` | Full memory sync: consolidates implemented facts, in commit / incremental / local-change order |
+| `collect_update_memory` | Full memory sync: consolidates current facts, in commit / incremental / local-change order |
 | `docs_research` | Pure external documentation lookup; never reads local code |
 
 ---

@@ -1,22 +1,23 @@
 ---
 name: update-memory
-description: Write a confirmed, implemented and verifiable project fact into project memory.
+description: Write a confirmed project fact — implemented, or declared by the user — into project memory.
 ---
 
 # update-memory
 
-Write only facts that are implemented and verifiable, plus reusable execution lessons, into project memory.
+Write only confirmed facts and reusable execution lessons into project memory.
 
 ## Write Scope
 
-- Only behavior, configuration, constraints, environment, commands and long-term preferences that are implemented and have verification evidence count as project facts and may be written into the matching topic; execution lessons confirmed during execution that may recur and can be generalized into applicable scenarios, detection signals and avoidance steps may be written into `Pitfalls`.
+- Count as project facts, and write into the matching topic: implemented behavior, configuration, environment, commands, tools and design, resting on code, configuration, diffs or verification results; and project purpose, scope, boundaries, constraints and long-term preferences, resting on the user's explicit statement or approval. `Design` describes code that exists; a design decision that is not implemented yet is not a fact and goes to `TODO/Pending.md`.
+- Execution lessons confirmed during the task that may recur and can be generalized into applicable scenarios, detection signals and avoidance steps may be written into `Pitfalls`.
 
 ## Boundaries
 
 - Executed by the main model personally; do not call a subagent, and do not create a git commit.
 - Do local updates only; do not scan the whole project or read unrelated topics.
 - Do not maintain `.project-script/` or `.project-memory/Documents/`; verification scripts are managed by `post-verify`, and user document indexes are synced by `collect-update-memory`.
-- Write only currently verifiable facts and reusable execution lessons; do not write passwords, tokens, private keys, cookies, candidate options, one-off tool errors, transient failures or change logs.
+- Write only current facts and reusable execution lessons; do not write passwords, tokens, private keys, cookies, candidate options, one-off tool errors, transient failures or change logs.
 
 ## `.project-memory/` File Responsibilities
 
@@ -25,12 +26,12 @@ Write only facts that are implemented and verifiable, plus reusable execution le
 
 ## Update Process
 
-1. Execute immediately once a trigger condition is met; first confirm the content is a current fact or reusable execution lesson. If it is neither, stop this skill.
+1. Execute once a trigger condition is met — inside a modification task, after that task's verification has passed; first confirm the content is a current fact or reusable execution lesson. If it is neither, stop this skill.
 2. Decide which topic the fact belongs to: `Commands`, `Environment`, `Target`, `Design`, `Boundary`, `Tools` or `Pitfalls`.
 3. Read that topic's `MEMORY.md` index and read only the relevant bodies per the index; do not read unrelated topics.
 4. **Before the first write or any structural change**, read [project-memory-format.md](references/project-memory-format.md) and follow its fact ownership, indexing and split rules.
    If the reference file is temporarily not visible, at minimum keep this: `MEMORY.md` contains only indexes, bodies and indexes are one-to-one, and each fact keeps a single authoritative location; continue with the existing format and state the risk in the result.
-5. Base everything on the current code, configuration, scripts, diffs and verification results. Prefer updating an existing body; create a new one only when a reader would fetch it on its own rather than as part of an existing body, and update the index in the same change.
+5. Base implemented facts on the current code, configuration, scripts, diffs and verification results; base declared facts on the user's explicit statement. Prefer updating an existing body; create a new one only when a reader would fetch it on its own rather than as part of an existing body, and update the index in the same change.
 6. If a body is moved, split, merged or deleted, update its `MEMORY.md` in the same change. When only the content changed and responsibilities did not, the index does not need updating.
 7. At the end, check that the topics touched have index/body one-to-one correspondence, valid links, and no outdated duplicates; if there is no fact to write, do not modify files.
 

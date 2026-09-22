@@ -1,1 +1,1 @@
-# Index Paths and Summaries Related to Project Documents
+# Project Documents: index of the user-maintained project docs; the bodies are read-only

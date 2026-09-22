@@ -1,1 +1,1 @@
-# Index Paths and Summaries Related to Project Tools
+# Project Tools: reusable helper scripts, visualizations, statistics and data conversion tools

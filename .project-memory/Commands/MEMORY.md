@@ -1,1 +1,1 @@
-# Index Paths and Summaries Related to Common Commands
+# Project Commands: install, run, build, test, evaluate, deploy and failure-recovery workflows

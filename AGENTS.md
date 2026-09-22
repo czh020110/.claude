@@ -30,11 +30,12 @@ This repository's long-term project memory lives in `.project-memory/`. Memory u
 
 ### 4. Memory consolidation
 
-- Memory consolidation starts when information is confirmed during execution to have long-term reuse value, not at a staged sync, commit, or task end.
-- Once any of the following holds, the main model must immediately use the `update-memory` skill:
-  - Current behavior, configuration, design, boundary, environment, commands or user preferences have been implemented/taken effect, with code, configuration or verification evidence;
-  - A reusable execution lesson was confirmed during execution that may recur in later tasks and can be abstracted into applicable scenarios, detection signals and avoidance steps;
+- Memory consolidation is the last step of a task: once verification passes and before delivery, write the facts this task confirmed. Do not defer it to a later staged sync or commit.
+- Use the `update-memory` skill when any of the following holds:
+  - A current fact is confirmed with a basis you can point at: implemented behavior, configuration, environment, commands, tools and design rest on code, configuration, diffs or verification results; purpose, scope, boundaries, constraints and preferences rest on the user's explicit statement or approval. The body must say which basis it rests on;
+  - A reusable execution lesson confirmed during the task may recur in later tasks and can be abstracted into applicable scenarios, detection signals and avoidance steps;
   - Existing memory is found to conflict with the current implementation or effective constraints and the facts need correcting.
+- Memory writes are checked by `update-memory`'s own final index/body check, not by `post-verify`.
 - Do not call `update-memory` when the trigger conditions are not met: single results, temporary speculation, one-off tool errors, transient environment failures, raw debug details and unimplemented plans are not consolidated.
 
 ## Plan and Completion Boundaries
@@ -70,8 +71,8 @@ Commit only when the user explicitly asks to commit/save changes, and use the `g
 ## TODO and Pending
 
 - `.project-memory/TODO/TODO.md` is the user-maintained todo list; read and modify its entries only when the user explicitly asks to write or update TODO. Ordinary tasks must not add or update TODO.
-- When discussing not-yet-implemented plans, architecture, boundaries or implementation decisions, the main model writes them directly into `.project-memory/TODO/Pending.md` and does not call `update-memory`; such content must not be written into project fact memory until it is implemented and verified. Maintained by the main model only.
-- After a Pending item is implemented and verified, remove its entry, then use `update-memory` per the consolidation trigger conditions to write the final fact; if a plan is rejected or cancelled, only remove the entry.
+- Open items go straight into `.project-memory/TODO/Pending.md`: plans and decisions that are not settled yet, and design decisions that are settled but not implemented yet. The main model writes them there and does not call `update-memory`. Pending is not a source of facts: candidate options, unapproved requests and still-open decisions must never be written into fact memory. Maintained by the main model only.
+- Once a Pending item is settled — the user has decided it, or it is implemented and verified — remove its entry and write the final fact with `update-memory`; if a plan is rejected or cancelled, only remove the entry.
 - Both files use only checkboxes: `[ ]` not started, `[-]` in progress, `[x]` done.
 - If the user says "continue with the todos/plans" without specifying an item, ask which one to work on first based on the contents of both files and give a recommendation.
 

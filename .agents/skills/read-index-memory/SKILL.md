@@ -7,7 +7,7 @@ description: Read the `.project-memory/` topic indexes and route to the relevant
 
 `.project-memory/` uses an "index + chunked body" layout. This skill reads only each topic's `MEMORY.md`, so the model gets routing information first and then reads relevant bodies on demand; calling this skill must not turn into scanning every body.
 
-This script reads only the **index content** (the `MEMORY.md` in each topic directory), not the body files.
+This script reads the **index content** (each topic's `MEMORY.md`) plus the three planning files `TODO/Pending.md`, `TODO/TODO.md` and `TODO/STEP.md`; it never reads topic body files.
 
 # Execution
 
@@ -19,4 +19,4 @@ The script never modifies, creates or deletes any file; it only outputs index co
 
 # Output and Next Actions
 
-The script outputs the full content of each topic's `MEMORY.md` (path + content). Based on the index's coverage, key objects and read conditions, combined with the current task, decide which body files to read next; read no bodies when no topic matches.
+The script outputs the full content of each topic's `MEMORY.md` and of the three planning files under `TODO/` (path + content). Based on the index's coverage, key objects and read conditions, combined with the current task, decide which body files to read next; read no bodies when no topic matches.

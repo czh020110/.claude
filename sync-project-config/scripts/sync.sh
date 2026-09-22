@@ -177,6 +177,58 @@ copy_missing_tree() {
   done < <(cd "$src" && find . -type f -print0)
 }
 
+# Refresh only the first-line title of existing .project-memory files. The title is
+# managed and comes from the template; everything below it is what the project has
+# accumulated and is never touched. A file that has no title yet gets one inserted
+# above its current first line.
+sync_memory_titles() {
+  local src="$1"
+  local dest="$2"
+  [ -d "$src" ] || return 0
+
+  while IFS= read -r -d '' rel_path; do
+    rel_path="${rel_path#./}"
+    case "$rel_path" in
+      *.md) ;;
+      *) continue ;;
+    esac
+    local src_file="$src/$rel_path"
+    local dest_file="$dest/$rel_path"
+    if [ ! -f "$dest_file" ]; then
+      continue
+    fi
+
+    local src_title=""
+    IFS= read -r src_title < "$src_file" || src_title=""
+    case "$src_title" in
+      "# "*) ;;
+      *) continue ;;
+    esac
+
+    local dest_title=""
+    IFS= read -r dest_title < "$dest_file" || dest_title=""
+    if [ "$dest_title" = "$src_title" ]; then
+      continue
+    fi
+
+    local tmp="$dest_file.tmp"
+    case "$dest_title" in
+      "# "*)
+        # Replace the title line, keep every following line as it is.
+        printf '%s\n' "$src_title" > "$tmp"
+        tail -n +2 "$dest_file" >> "$tmp"
+        ;;
+      *)
+        # No title yet: insert one above the existing content.
+        printf '%s\n\n' "$src_title" > "$tmp"
+        cat "$dest_file" >> "$tmp"
+        ;;
+    esac
+    mv "$tmp" "$dest_file"
+    echo "  ~ title: ${dest_file#"$PROJECT_DIR/"}"
+  done < <(cd "$src" && find . -type f -print0)
+}
+
 copy_skill_tree() {
   local src="$1"
   local dest="$2"
@@ -472,6 +524,7 @@ echo ""
 
 echo "[4/7] Syncing project memory templates..."
 copy_missing_tree "$TMP_DIR/.project-memory" "$PROJECT_DIR/.project-memory"
+sync_memory_titles "$TMP_DIR/.project-memory" "$PROJECT_DIR/.project-memory"
 echo ""
 
 echo "[5/7] Syncing project verification templates..."

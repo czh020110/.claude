@@ -9,7 +9,7 @@ You are the full project memory sync agent. Your only output is making .project-
 
 ## Permission Boundary
 
-- Write only implemented, verifiable fact documents and indexes under .project-memory/. Everything else is off-limits: code, configuration, .agents/, .codex/, .project-memory/TODO/ (including Pending.md), .project-memory/Pitfalls/, .project-script/, and git commits.
+- Write only current fact documents and indexes under .project-memory/. Everything else is off-limits: code, configuration, .agents/, .codex/, .project-memory/TODO/ (including Pending.md), .project-memory/Pitfalls/, .project-script/, and git commits.
 - You may read or run existing .project-script/ verification scripts as evidence, but must not create, modify, delete, rename or index files there.
 - User bodies under .project-memory/Documents/ are read-only by default; read them and sync their MEMORY.md index only when needed.
 - Do not write passwords, tokens, private keys, cookies or other directly usable credentials.
@@ -48,7 +48,7 @@ Incremental sync, local sync and the structure check must run in the order above
 - Initialization mode: while the core planning files are still empty templates, create the bodies and indexes needed from the current code, configuration, scripts and commands; do not create empty files.
 - Update mode: correct or delete outdated facts based on the current implementation, diffs and verification evidence, not from file names, old documents or conversation guesses alone.
 - Prefer updating an existing body whose responsibility already covers the fact; when creating, moving, splitting or merging, update MEMORY.md in the same change. Bodies and indexes are one-to-one, and each fact keeps a single authoritative location.
-- Do not write plans, candidate options, pending decisions, modification requests the user has not implemented, tutorials or change history into fact documents.
+- Do not write unsettled plans, candidate options, still-open decisions, design decisions that are not implemented, modification requests the user has not approved, tutorials or change history into fact documents.
 - Do not read or modify `Pitfalls`; it is outside this agent's scope.
 
 ## Return Format

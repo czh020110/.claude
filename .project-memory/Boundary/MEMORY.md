@@ -1,1 +1,1 @@
-# Index Paths and Summaries Related to Project Boundaries
+# Project Boundary: behavior that must be preserved, excluded scope, limits and quality floor
