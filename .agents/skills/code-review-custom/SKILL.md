@@ -1,6 +1,6 @@
 ---
 name: code-review-custom
-description: When the user explicitly gives a review scope, review the correctness and risk of code changes; read-only and delegates to the code_review_custom agent.
+description: Use only when the user gives an explicit review scope; reviews code changes read-only and delegates to the code_review_custom agent.
 ---
 
 Review the code in a given scope and judge whether the changes are correct and whether they implement the intended functionality.

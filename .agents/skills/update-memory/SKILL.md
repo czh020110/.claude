@@ -1,11 +1,11 @@
 ---
 name: update-memory
-description: Use only when this round confirmed an implemented and verifiable project fact, effective constraint, preference, environment, command, or a reusable execution lesson.
+description: Write a confirmed, implemented and verifiable project fact into project memory.
 ---
 
 # update-memory
 
-Write only facts and reusable execution lessons that are currently adopted, implemented and verifiable into project memory. Do not invoke this skill when there are no such facts.
+Write only facts that are implemented and verifiable, plus reusable execution lessons, into project memory.
 
 ## Write Scope
 
@@ -23,10 +23,6 @@ Write only facts and reusable execution lessons that are currently adopted, impl
 - `MEMORY.md` in each topic directory only indexes and routes reads; it never holds fact bodies; index links must point to existing sub-topic files.
 - Sub-topic `.md` files in each topic directory record only current facts or reusable execution lessons within that topic's scope, and each fact keeps a single authoritative location.
 
-## Trigger Conditions
-
-Use it immediately when any of the following is confirmed in conversation or execution: user preferences/constraints already in effect, implemented design or boundary, an actual change in a long-term stage, environment facts, reusable commands/tools, reusable execution lessons, or discovered conflicts between memory and the current state. Temporary speculation and single results are not written.
-
 ## Update Process
 
 1. Execute immediately once a trigger condition is met; first confirm the content is a current fact or reusable execution lesson. If it is neither, stop this skill.
@@ -34,9 +30,9 @@ Use it immediately when any of the following is confirmed in conversation or exe
 3. Read that topic's `MEMORY.md` index and read only the relevant bodies per the index; do not read unrelated topics.
 4. **Before the first write or any structural change**, read [project-memory-format.md](references/project-memory-format.md) and follow its fact ownership, indexing and split rules.
    If the reference file is temporarily not visible, at minimum keep this: `MEMORY.md` contains only indexes, bodies and indexes are one-to-one, and each fact keeps a single authoritative location; continue with the existing format and state the risk in the result.
-5. Base everything on the current code, configuration, scripts, diffs and verification results: prefer updating existing bodies with clear semantics; create a new body only when it forms an independent read unit, and update the index in the same round.
-6. If a body is moved, split, merged or deleted, atomically update the corresponding `MEMORY.md`; when only content is corrected and responsibilities are unchanged, there is no need to mechanically update the index.
-7. At the end, check that the topics touched this round have index/body one-to-one correspondence, valid links, and no outdated duplicates; if there is no fact to write, do not modify files.
+5. Base everything on the current code, configuration, scripts, diffs and verification results. Prefer updating an existing body; create a new one only when a reader would fetch it on its own rather than as part of an existing body, and update the index in the same change.
+6. If a body is moved, split, merged or deleted, update its `MEMORY.md` in the same change. When only the content changed and responsibilities did not, the index does not need updating.
+7. At the end, check that the topics touched have index/body one-to-one correspondence, valid links, and no outdated duplicates; if there is no fact to write, do not modify files.
 
 ## Memory Topic Routing
 

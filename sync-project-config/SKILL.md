@@ -1,11 +1,11 @@
 ---
 name: sync-project-config
-description: Use when the user asks to sync base project config, or when config is found missing; as a global Skill, initializes and updates project agents, skills and project templates from the Codex source.
+description: Use when the user asks to sync base project config or config is found missing; initializes and updates project agents, skills and templates.
 ---
 
 # sync-project-config
 
-This is the global config migration entry point, not a project-level Skill that the current project loads automatically. Install this directory into the current client's global skill directory, then use it to initialize or update a project.
+This is the global config migration entry point, not a project-level skill that any project loads automatically. Install this directory into the current client's global skill directory, then use it to initialize or update a project.
 
 ## Single Source
 
@@ -24,17 +24,17 @@ This is the global config migration entry point, not a project-level Skill that 
    - OpenCode: `~/.agents/skills/sync-project-config/` (OpenCode reads that directory natively, no symlink needed)
 2. Or just prompt the agent: **"Install sync-project-config from the current project root into the current client's global skill directory, then use it to initialize the current project."**
 3. Determine the client and pass the platform argument: `codex`, `zcode`, `claude`, `codebuddy`, `workbuddy`, `workbuddy-cn` or `opencode`.
-4. **Check the custom-prompt marker before running the script.** The script splits `AGENTS.md` at `<!-- sync-project-config:custom-prompts -->`: everything strictly above it is replaced from the source, the marker line and everything below it are kept from the local file. If the local `AGENTS.md` already carries the marker, sync normally. If it does **not**, do **not** run the script — a file without the marker is never split, so the whole file (including any project-specific prompts) would be overwritten. Insert the marker first:
+4. **Check the custom-prompt marker before running the script.** The script splits `AGENTS.md` at `<!-- sync-project-config:custom-prompts -->`: everything strictly above the marker is replaced from the source; the marker line and everything below it are kept from the local file. **A file with no marker is never split**, so running the script would overwrite the whole file, including the project's own prompts. When the marker is missing, insert it first:
    1. Fetch the upstream `AGENTS.md` from the template repo (`PROJECT_CONFIG_REPO_URL`, default `https://github.com/czh020110/.claude.git`) and compare it with the local `AGENTS.md` line by line. If it cannot be fetched, ask the user to point out the boundary — do not guess it.
    2. The boundary is the point where the two files stop agreeing: everything up to the last shared line is the managed (template) section, everything after it is the project's own content. If the local file is entirely custom, the boundary is at the top of the file; if it has no custom content at all, the boundary is at the end.
    3. Show the user the inferred boundary and the lines that will be treated as the custom section, and get confirmation before writing.
    4. Insert `<!-- sync-project-config:custom-prompts -->` on its own line at that boundary, then run the sync. From then on the marker is present and the script handles the split on every run.
 
-**Unified install strategy (single copy + symlink)**: the script always installs the real directory into the canonical location `~/.agents/skills/sync-project-config/`; for clients that do not read `~/.agents/skills`, the script creates a symlink in their own skill directory pointing back to the canonical copy, preventing multiple copies from drifting. Existing symlinks are replaced; if the target location is a real directory, the script skips it and reports, never deleting it.
+**Unified install strategy (single copy + symlink)**: the script installs the real directory at `~/.agents/skills/sync-project-config/` and, for clients that do not read `~/.agents/skills`, symlinks it into their own skill directory — so there is only one copy on disk. An existing symlink is replaced; a real directory is left untouched and reported.
 
 `codebuddy`, `workbuddy` and `workbuddy-cn` are different targets: CodeBuddy uses `~/.codebuddy/skills`, `workbuddy` uses `~/.workbuddy-ai/skills` (international build), and `workbuddy-cn` uses `~/.workbuddy/skills` (domestic build). WorkBuddy's Code mode loads skills only from the global directory, so both WorkBuddy targets generate no project-level `agents/` or `skills/`.
 
-On every launch the script first fetches the latest `sync-project-config` from the remote template repo, overwrites the directory of the same name in the current project root, then re-executes the updated script before running the remaining sync. This way even a stale global install self-updates before running the latest logic.
+On every launch the script fetches the latest `sync-project-config` from the remote template repo, overwrites the directory of the same name in the project root, then re-executes the updated script before running the rest of the sync.
 
 ## Context7 MCP
 
@@ -72,4 +72,4 @@ All platforms only add missing `.project-memory/` and `.project-script/` templat
 
 - The AGENTS.md marker split (replace above, preserve below), per-platform tool renaming, the "generated directories are not sources" rule, and the credential/cache exclusions are enforced by `sync.sh`. Never hand-edit generated directories, never sync back from `.claude/`, `.zcode/`, `.codebuddy/` or `.opencode/` into `.codex/` / `.agents/skills/`, and never copy credentials, local caches, `settings.local.json`, `CODEBUDDY.local.md` or the Codex-UI-only `agents/openai.yaml` to other platforms.
 - Do not configure a project-level Context7 MCP in the repo; this Skill guides the agent to reuse or configure the current client's global `context7` MCP first.
-- Do not invoke it unless the user explicitly asks for a sync; after the script succeeds, report only the sync scope, file changes and verification results.
+- After the script succeeds, report only the sync scope, file changes and verification results.

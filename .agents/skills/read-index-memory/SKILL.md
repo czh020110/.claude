@@ -1,6 +1,6 @@
 ---
 name: read-index-memory
-description: At the start of every new task, reads the `MEMORY.md` index of each `.project-memory/` topic and decides from the index whether to read the bodies.
+description: Read the `.project-memory/` topic indexes and route to the relevant bodies.
 ---
 
 # Purpose
@@ -15,7 +15,7 @@ Use the Python script to read the indexes so it runs cross-platform (Windows/mac
 
 Run `scripts/read_index_memory.py` under the current `read-index-memory` Skill directory.
 
-The script never modifies, creates or deletes any file; it only outputs index content. Do not read this script's source code. Only get the script's execution result.
+The script never modifies, creates or deletes any file; it only outputs index content. Do not read its source; just use its output.
 
 # Output and Next Actions
 

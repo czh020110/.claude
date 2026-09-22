@@ -1,19 +1,15 @@
 ---
 name: post-verify
-description: After finishing code, configuration, template, doc or prompt changes, run the final targeted verification and leave evidence.
+description: Final verification gate: run once, after all edits of a modification task are done and before delivery.
 ---
 
 # post-verify
 
 The final verification entry point after a modification task completes, covering reuse, creation, index sync and the fix loop for verification scripts.
 
-## Trigger Timing (MUST)
+## Timing (MUST)
 
-All development and modification tasks (add/fix/refactor/config/test/docs/prompt sync) must run this skill after the main modifications of this round are done and before delivery.
-
-- Pure consultation, review and research requests do not need it.
-- Tasks that produced no actual file changes do not need it; doc, prompt and agent/skill configuration changes still need targeted verification.
-- Intermediate states of an unfinished task do not need it; run it only after the modifications for this round's delivery are complete.
+Run this skill after the main edits of a task are done and before delivery, for every development and modification task (add/fix/refactor/config/test/docs/prompt sync). Do not run it on intermediate states — only once the edits for this delivery are complete.
 
 ## Execution Flow (MUST)
 
@@ -23,7 +19,7 @@ Check `.project-script/MEMORY.md` first; if it does not exist, create it per the
 
 ### 2. Determine the verification scope
 
-Base it on the files actually modified this time, covering:
+Scope the verification to the files this task changed:
 
 - Added/modified/deleted source code, scripts, configuration, templates and docs (must be checked when replacement rules or path references are involved).
 - Downstream objects affected by the change: callers, interfaces, data flows, pages, etc.
@@ -36,19 +32,19 @@ Choose in order of priority:
 
 1. **Reuse an existing verification script**: when `MEMORY.md` has a script matching this change, run it with the entry command recorded in the index.
 2. **Verify with existing commands**: with no dedicated script, run the applicable checks from the coverage list below with existing commands.
-3. **Create a reusable script**: for non-trivial logic, interface, configuration, data flow, page or security-related changes with no suitable existing script, create a reusable script in `.project-script/<verification-type>/`.
+3. **Create a reusable script**: for logic with branches or side effects, or for interface, configuration, data flow, page or security-related changes, with no suitable existing script, create one in `.project-script/<verification-type>/`.
 
 What verification scripts need to cover includes but is not limited to:
 
 1. Code logic: run the relevant test script or a minimal reproduction command.
 2. Type/API: run type checks, interface tests or import checks.
-3. Frontend pages: start them and actually view the critical path; if it cannot be viewed, explain why.
+3. Frontend pages: start them and look at the critical path yourself; if it cannot be viewed, explain why.
 4. Configuration changes: verify the configuration is read correctly.
 5. Doc/template changes: search for old project-bound words and check that referenced paths exist.
 
 ### 4. Manage the verification script index
 
-When adding, deleting, moving or renaming a reusable script, `.project-script/MEMORY.md` must be synced in the same round.
+When adding, deleting, moving or renaming a reusable script, update `.project-script/MEMORY.md` in the same change.
 
 - `.project-script/MEMORY.md` records only the script path, purpose, applicable scenarios, entry command and necessary prerequisites; it does not copy the script body.
 - Reusable scripts go in `.project-script/<verification-type>/`; do not pile them at the root.
@@ -68,4 +64,4 @@ Report to the user:
 - If verification could not be run, explain the reason and the alternative check results.
 
 ## Boundaries
-- A simple, low-risk one-line change may use static checks, diff checks or existing commands and is not forced to create a new verification script; "no tests needed" only means no dedicated new test script is needed, not that verification can be skipped.
+- For a simple, low-risk one-line change, static or diff checks are enough; you are not required to add a new verification script. "No tests needed" means no new test script, not that verification can be skipped.

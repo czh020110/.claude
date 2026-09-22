@@ -1,6 +1,6 @@
 ---
 name: sync-project-memory
-description: When the user asks to push, pull or check project memory sync status, handles `.project-memory/` through a standalone remote git repository and its docs branch.
+description: When the user asks to push, pull or check project memory sync status, handles `.project-memory/` through a standalone remote git repo.
 ---
 
 # sync-project-memory
@@ -18,8 +18,6 @@ Syncs `.project-memory/` to a remote project memory repository as a standalone g
 The entry script is `scripts/sync-memory.sh` under the current `sync-project-memory` Skill directory, with the argument `pull`, `push` or `info`.
 
 ## Handling by Output
-
-After the script outputs, report to the user based on the result:
 
 The script outputs in English; match the keywords in the table below when reporting to the user:
 

@@ -1,19 +1,11 @@
 ---
 name: docs-research
-description: When three or more external libraries/interfaces need to be verified at once, or a single technical question involves complex version/migration details, delegate to the docs_research agent to check official sources.
+description: Batched external documentation lookup, delegated to the docs_research agent.
 ---
 
 # docs-research
 
 Entry point for batched external technical documentation lookups. The main model calls the `docs_research` agent to do the lookup; this skill only organizes the questions, invokes, and assembles the results.
-
-## Trigger Scenarios (MUST)
-
-- Three or more technical docs/interfaces/libraries/frameworks/SDKs need to be looked up.
-- A single interface lookup that involves multiple versions, migration, authentication or build details — a complex scenario where a direct lookup is inefficient.
-- Usage of multiple external dependencies in the current task needs to be confirmed at the same time.
-
-Do not use this skill for fewer than three interfaces; the main model queries directly with `context7` or web search tools.
 
 ## Invocation (MUST)
 
