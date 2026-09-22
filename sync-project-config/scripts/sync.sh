@@ -102,9 +102,9 @@ fi
 # never be translated, reworded or edited.
 CUSTOM_MARKER='<!-- sync-project-config:custom-prompts -->'
 
-# True when a file already carries the custom-prompt marker. A file without it is
-# never split, so the agent must insert the marker at the managed/custom boundary
-# before running the sync (see SKILL.md); otherwise the whole file is overwritten.
+# True when a file already carries the custom-prompt marker. A file without one is
+# taken to be the project's own prompts: the sync moves all of it below the marker
+# instead of overwriting it (see sync_agents_md / sync_claude_md).
 has_custom_marker() {
   [ -f "$1" ] || return 1
   grep -qxF "$CUSTOM_MARKER" "$1"
@@ -141,7 +141,7 @@ copy_tree() {
   while IFS= read -r -d '' rel_path; do
     rel_path="${rel_path#./}"
     case "$rel_path" in
-      .cache/*|settings.local.json|*.local.json|*.secret*|*.key|.DS_Store|CODEBUDDY.local.md)
+      .cache/*|settings.local.json|*.local.json|*.secret*|*.key|.DS_Store|CODEBUDDY.local.md|__pycache__/*|*.pyc)
         continue
         ;;
     esac
@@ -238,22 +238,27 @@ copy_skill_tree() {
   while IFS= read -r -d '' rel_path; do
     rel_path="${rel_path#./}"
     case "$rel_path" in
-      */agents/openai.yaml|*/agents/*.yaml|.DS_Store)
+      */agents/openai.yaml|*/agents/*.yaml|.DS_Store|__pycache__/*|*.pyc)
         continue
         ;;
     esac
     local src_file="$src/$rel_path"
     local dest_file="$dest/$rel_path"
     mkdir -p "$(dirname "$dest_file")"
-    if [[ "$rel_path" == */SKILL.md ]]; then
-      python3 - "$src_file" "$dest_file" "$target_platform" <<'PY'
+      if [[ "$rel_path" == */SKILL.md ]]; then
+        python3 - "$src_file" "$dest_file" "$target_platform" "$PLAN_TOOL" "$QUESTION_TOOL" <<'PY'
 import sys
 from pathlib import Path
 
 source = Path(sys.argv[1])
 target = Path(sys.argv[2])
 platform = sys.argv[3]
+plan_tool = sys.argv[4]
+question_tool = sys.argv[5]
 text = source.read_text(encoding="utf-8")
+# Skill bodies are authored against Codex's tool names, exactly like AGENTS.md,
+# so they are renamed per platform here too.
+text = text.replace("update_plan", plan_tool).replace("request_user_input", question_tool)
 if not text.startswith("---\n"):
     target.write_text(text, encoding="utf-8")
     raise SystemExit
@@ -276,7 +281,7 @@ from pathlib import Path
 
 source, target, platform = Path(sys.argv[1]), Path(sys.argv[2]), sys.argv[3]
 text = source.read_text(encoding="utf-8")
-prefix = {"claude": ".claude", "codebuddy": ".codebuddy", "workbuddy": ".workbuddy", "opencode": ".opencode"}[platform]
+prefix = {"claude": ".claude", "codebuddy": ".codebuddy", "workbuddy": ".codebuddy", "opencode": ".opencode"}[platform]
 text = text.replace(".agents/.cache", f"{prefix}/.cache")
 text = text.replace(".agents/skills/sync-project-memory/scripts/sync-memory.sh", f"{prefix}/skills/sync-project-memory/scripts/sync-memory.sh")
 target.write_text(text, encoding="utf-8")
@@ -383,7 +388,11 @@ sync_agents_md() {
   local local_file="$PROJECT_DIR/AGENTS.md"
   [ -f "$remote" ] || return 0
 
-  if has_custom_marker "$local_file" && grep -qxF "$CUSTOM_MARKER" "$remote"; then
+  # A source without a marker cannot be split, and a project with no AGENTS.md yet
+  # has nothing to preserve, so both are copied whole.
+  if ! grep -qxF "$CUSTOM_MARKER" "$remote" || [ ! -f "$local_file" ]; then
+    cp "$remote" "$local_file"
+  elif has_custom_marker "$local_file"; then
     local remote_end local_start
     remote_end=$(grep -n -xF "$CUSTOM_MARKER" "$remote" | head -1 | cut -d: -f1)
     local_start=$(grep -n -xF "$CUSTOM_MARKER" "$local_file" | head -1 | cut -d: -f1)
@@ -394,7 +403,16 @@ sync_agents_md() {
     tail -n +"$((local_start + 1))" "$local_file" >> "$local_file.tmp"
     mv "$local_file.tmp" "$local_file"
   else
-    cp "$remote" "$local_file"
+    # No marker: the whole file is the project's own prompts. Keep all of it by
+    # moving it below the marker, under the source's custom-prompt note.
+    local remote_end
+    remote_end=$(grep -n -xF "$CUSTOM_MARKER" "$remote" | head -1 | cut -d: -f1)
+    head -n "$((remote_end - 1))" "$remote" > "$local_file.tmp"
+    printf '%s\n' "$CUSTOM_MARKER" >> "$local_file.tmp"
+    tail -n +"$((remote_end + 1))" "$remote" >> "$local_file.tmp"
+    cat "$local_file" >> "$local_file.tmp"
+    mv "$local_file.tmp" "$local_file"
+    echo "  + adopted: AGENTS.md had no marker, its content was moved below the marker"
   fi
 
   if [ "$PLAN_TOOL" != "update_plan" ] || [ "$QUESTION_TOOL" != "request_user_input" ]; then
@@ -408,23 +426,30 @@ sync_claude_md() {
   [ -f "$remote" ] || return 0
   local target="$PROJECT_DIR/CLAUDE.md"
   local tmp="$PROJECT_DIR/CLAUDE.md.tmp"
-  if grep -qxF "$CUSTOM_MARKER" "$remote"; then
-    local remote_end
-    remote_end=$(grep -n -xF "$CUSTOM_MARKER" "$remote" | head -1 | cut -d: -f1)
-    head -n "$((remote_end - 1))" "$remote" > "$tmp"
-    adapt_agent_tools "$tmp" "$CUSTOM_MARKER" update_plan "$PLAN_TOOL" request_user_input "$QUESTION_TOOL"
-    if has_custom_marker "$target"; then
-      local custom_start
-      custom_start=$(grep -n -xF "$CUSTOM_MARKER" "$target" | head -1 | cut -d: -f1)
-      printf '%s\n' "$CUSTOM_MARKER" >> "$tmp"
-      tail -n +"$((custom_start + 1))" "$target" >> "$tmp"
-    else
-      tail -n +"$remote_end" "$remote" >> "$tmp"
-    fi
-    mv "$tmp" "$target"
-  else
+  if ! grep -qxF "$CUSTOM_MARKER" "$remote"; then
     cp "$remote" "$target"
+    return 0
   fi
+  local remote_end
+  remote_end=$(grep -n -xF "$CUSTOM_MARKER" "$remote" | head -1 | cut -d: -f1)
+  head -n "$((remote_end - 1))" "$remote" > "$tmp"
+  adapt_agent_tools "$tmp" "$CUSTOM_MARKER" update_plan "$PLAN_TOOL" request_user_input "$QUESTION_TOOL"
+  if [ ! -f "$target" ]; then
+    tail -n +"$remote_end" "$remote" >> "$tmp"
+  elif has_custom_marker "$target"; then
+    local custom_start
+    custom_start=$(grep -n -xF "$CUSTOM_MARKER" "$target" | head -1 | cut -d: -f1)
+    printf '%s\n' "$CUSTOM_MARKER" >> "$tmp"
+    tail -n +"$((custom_start + 1))" "$target" >> "$tmp"
+  else
+    # No marker: the whole file is the project's own prompts. Keep all of it by
+    # moving it below the marker, under the source's custom-prompt note.
+    printf '%s\n' "$CUSTOM_MARKER" >> "$tmp"
+    tail -n +"$((remote_end + 1))" "$remote" >> "$tmp"
+    cat "$target" >> "$tmp"
+    echo "  + adopted: CLAUDE.md had no marker, its content was moved below the marker"
+  fi
+  mv "$tmp" "$target"
 }
 
 sync_platform() {
@@ -446,8 +471,11 @@ sync_platform() {
       copy_skill_tree "$TMP_DIR/.agents/skills" "$PROJECT_DIR/.codebuddy/skills" codebuddy
       ;;
     workbuddy)
-      # WorkBuddy loads skills only from the global directory, so no project-level
-      # agents/ or skills/ are generated here.
+      # WorkBuddy reuses CodeBuddy Code's workspace layout, so its project-level
+      # config lives in `.codebuddy/` even though its user-level directory is
+      # ~/.workbuddy-ai (international) or ~/.workbuddy (domestic).
+      generate_agents "$TMP_DIR/.codex/agents" "$PROJECT_DIR/.codebuddy/agents" workbuddy
+      copy_skill_tree "$TMP_DIR/.agents/skills" "$PROJECT_DIR/.codebuddy/skills" workbuddy
       ;;
     opencode)
       generate_agents "$TMP_DIR/.codex/agents" "$PROJECT_DIR/.opencode/agents" opencode
@@ -476,8 +504,10 @@ link_skill_into() {
 }
 
 sync_global_skill() {
+  # The freshly fetched remote is authoritative; the project-root copy is only a
+  # fallback for a run that was started without a bootstrap clone.
   local source=""
-  for candidate in "$PROJECT_DIR/$SKILL_NAME" "$TMP_DIR/$SKILL_NAME"; do
+  for candidate in "$TMP_DIR/$SKILL_NAME" "$PROJECT_DIR/$SKILL_NAME"; do
     if [ -d "$candidate" ]; then
       source="$candidate"
       break
@@ -512,9 +542,9 @@ sync_global_skill() {
   esac
 }
 
+echo "[2/7] Syncing AGENTS.md and the global skill..."
 sync_agents_md
 sync_claude_md
-echo "[2/7] Syncing AGENTS.md and the global skill..."
 sync_global_skill
 echo ""
 
@@ -534,20 +564,20 @@ echo ""
 echo "[6/7] Checking .gitignore..."
 GITIGNORE="$PROJECT_DIR/.gitignore"
 if [ "$PLATFORM" = "opencode" ]; then
-  ENTRIES=( ".project-memory/" ".project-script/" ".opencode/" )
+  ENTRIES=( ".project-memory/" ".project-script/" ".opencode/" "sync-project-config/" )
   HEADER="# OpenCode / project-local config"
-elif [ "$PLATFORM" = "workbuddy" ]; then
-  ENTRIES=( ".project-memory/" ".project-script/" )
-  if [ "$WORKBUDDY_VARIANT" = "domestic" ]; then
-    HEADER="# WorkBuddy domestic / project-local config"
-  else
-    HEADER="# WorkBuddy international / project-local config"
-  fi
-elif [ "$PLATFORM" = "codebuddy" ]; then
-  ENTRIES=( ".project-memory/" ".project-script/" ".codebuddy/settings.local.json" ".codebuddy/CODEBUDDY.local.md" ".codebuddy/.cache/" )
-  HEADER="# CodeBuddy / project-local config"
+  elif [ "$PLATFORM" = "workbuddy" ]; then
+    ENTRIES=( ".project-memory/" ".project-script/" "sync-project-config/" ".codebuddy/" )
+    if [ "$WORKBUDDY_VARIANT" = "domestic" ]; then
+      HEADER="# WorkBuddy domestic / project-local config"
+    else
+      HEADER="# WorkBuddy international / project-local config"
+    fi
+  elif [ "$PLATFORM" = "codebuddy" ]; then
+    ENTRIES=( ".project-memory/" ".project-script/" "sync-project-config/" ".codebuddy/" )
+    HEADER="# CodeBuddy / project-local config"
 else
-  ENTRIES=( ".codex/" ".zcode/" ".claude/" ".agents/" ".project-memory/" ".project-script/" "AGENTS.md" "CLAUDE.md" )
+  ENTRIES=( ".codex/" ".zcode/" ".claude/" ".agents/" ".project-memory/" ".project-script/" "sync-project-config/" "AGENTS.md" "CLAUDE.md" )
   HEADER="# Agent / project-local config"
 fi
 if [ ! -f "$GITIGNORE" ]; then

@@ -15,7 +15,7 @@ description: Create a git commit: group the changes by purpose, write the struct
 # Commit Scope and Behavior
 
 - When the user specifies or excludes a scope, commit strictly within it and do not fall back to "all changed files"; the user's request takes priority over the default.
-- When the working tree (unignored) contains parts that clearly should not be committed (local temp files, personal config, credential files, etc.), do not commit or delete them yourself; use AskUserQuestion to let the user choose: **add to `.gitignore`** or **commit directly**; continue the commit flow after handling it per the user's choice.
+- When the working tree (unignored) contains parts that clearly should not be committed (local temp files, personal config, credential files, etc.), do not commit or delete them yourself; use `request_user_input` to let the user choose: **add to `.gitignore`** or **commit directly**; continue the commit flow after handling it per the user's choice.
 - When the repo contains changes clearly unrelated to this task, report the conflict in the result first and do not commit them yourself.
 - After committing, perform no branch operations; the current branch stays unchanged.
 - Before committing, always check that no keys, accounts, local private paths or temp files are being committed.

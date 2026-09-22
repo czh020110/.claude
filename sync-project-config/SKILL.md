@@ -15,26 +15,32 @@ This is the global config migration entry point, not a project-level skill that 
 
 ## Usage
 
-1. Install the current directory `sync-project-config/` into the client's global skill directory:
+1. Install it once, into the client's global skill directory:
    - Codex/ZCode: `~/.agents/skills/sync-project-config/`
    - Claude Code: `~/.claude/skills/sync-project-config/`
    - CodeBuddy (domestic build): `~/.codebuddy/skills/sync-project-config/`
    - WorkBuddy international: `~/.workbuddy-ai/skills/sync-project-config/`
    - WorkBuddy domestic: `~/.workbuddy/skills/sync-project-config/`
    - OpenCode: `~/.agents/skills/sync-project-config/` (OpenCode reads that directory natively, no symlink needed)
+
+   Prefer letting the script install it (see "Unified install strategy" below), which keeps one real copy plus symlinks. A hand copy is a second real copy that the script will never replace — if you copied by hand, delete that copy before switching to script-managed install, otherwise the two drift apart.
 2. Or just prompt the agent: **"Install sync-project-config from the current project root into the current client's global skill directory, then use it to initialize the current project."**
-3. Determine the client and pass the platform argument: `codex`, `zcode`, `claude`, `codebuddy`, `workbuddy`, `workbuddy-cn` or `opencode`.
-4. **Check the custom-prompt marker before running the script.** The script splits `AGENTS.md` at `<!-- sync-project-config:custom-prompts -->`: everything strictly above the marker is replaced from the source; the marker line and everything below it are kept from the local file. **A file with no marker is never split**, so running the script would overwrite the whole file, including the project's own prompts. When the marker is missing, insert it first:
-   1. Fetch the upstream `AGENTS.md` from the template repo (`PROJECT_CONFIG_REPO_URL`, default `https://github.com/czh020110/.claude.git`) and compare it with the local `AGENTS.md` line by line. If it cannot be fetched, ask the user to point out the boundary — do not guess it.
-   2. The boundary is the point where the two files stop agreeing: everything up to the last shared line is the managed (template) section, everything after it is the project's own content. If the local file is entirely custom, the boundary is at the top of the file; if it has no custom content at all, the boundary is at the end.
-   3. Show the user the inferred boundary and the lines that will be treated as the custom section, and get confirmation before writing.
-   4. Insert `<!-- sync-project-config:custom-prompts -->` on its own line at that boundary, then run the sync. From then on the marker is present and the script handles the split on every run.
+3. Determine the client and pass the platform argument: `codex`, `zcode`, `claude`, `codebuddy`, `workbuddy`, `workbuddy-cn` or `opencode`. Capitalized and `--`-prefixed spellings are also accepted, as are `workbuddy-ai` (international) and `workbuddy-domestic` (domestic).
+4. **Confirm, sync, then offer to migrate.**
+   1. Ask the user whether to use this Skill in the current repo to load the memory templates and generate the platform config. **If the answer is no, stop here and do not run the script.**
+   2. Run the sync. The script handles the prompt file by itself — `AGENTS.md` on every platform, plus `CLAUDE.md` on `claude`:
+      - no such file yet → the template is written whole;
+      - a file that already carries `<!-- sync-project-config:custom-prompts -->` → everything strictly above the marker is replaced from the source, and the marker with everything below it is kept;
+      - a file with **no** marker → the whole file is taken to be the project's own prompts and is moved below the marker, under the template's custom-prompt note, so none of it is overwritten. The script reports this as `adopted`.
+   3. After the sync, read the custom region: everything below the marker in `AGENTS.md`, and in `CLAUDE.md` on `claude`. If it holds nothing beyond the template's own note, say nothing. If it holds project prompts, **ask the user whether to migrate them** — never migrate on your own initiative.
+   4. If the user wants the migration: **commands and rules stay where they are**, because the custom region of `AGENTS.md` is loaded on every task. Everything that is a project fact — environment, versions, paths, architecture, constraints, reusable lessons — moves into `.project-memory/` through the `update-memory` skill, following `.agents/skills/update-memory/references/project-memory-format.md`.
+   5. Report the sync scope, what was adopted, and, if a migration ran, what moved and into which topic.
 
 **Unified install strategy (single copy + symlink)**: the script installs the real directory at `~/.agents/skills/sync-project-config/` and, for clients that do not read `~/.agents/skills`, symlinks it into their own skill directory — so there is only one copy on disk. An existing symlink is replaced; a real directory is left untouched and reported.
 
-`codebuddy`, `workbuddy` and `workbuddy-cn` are different targets: CodeBuddy uses `~/.codebuddy/skills`, `workbuddy` uses `~/.workbuddy-ai/skills` (international build), and `workbuddy-cn` uses `~/.workbuddy/skills` (domestic build). WorkBuddy's Code mode loads skills only from the global directory, so both WorkBuddy targets generate no project-level `agents/` or `skills/`.
+`codebuddy`, `workbuddy` and `workbuddy-cn` are three separate targets with different **user-level** skill directories (see the table in step 1). At the **project** level, `workbuddy` and `workbuddy-cn` share CodeBuddy's `.codebuddy/` layout with `codebuddy`. Picking the wrong target fails silently rather than erroring.
 
-On every launch the script fetches the latest `sync-project-config` from the remote template repo, overwrites the directory of the same name in the project root, then re-executes the updated script before running the rest of the sync.
+On every launch the script fetches the latest `sync-project-config` from the remote template repo, overwrites the directory of the same name in the project root, then re-executes the updated script before running the rest of the sync. That project-root copy is the entry point for later runs, and the sync adds it to `.gitignore`.
 
 ## Context7 MCP
 
@@ -62,14 +68,15 @@ If the global configuration is not writable or the current client does not suppo
 - `zcode`: generates `.zcode/agents/` from the Codex agent source; skills use the shared `.agents/skills/` source.
 - `claude`: generates `.claude/agents/` and `.claude/skills/` from the Codex source, and generates `CLAUDE.md` per the rules.
 - `codebuddy`: generates `.codebuddy/agents/` and `.codebuddy/skills/` from the Codex source, copying only resources usable by CodeBuddy.
-- `workbuddy`: installs the global skill only (canonical copy + international symlink into `~/.workbuddy-ai/skills`); **generates no project-level directories**.
-- `workbuddy-cn`: installs the global skill only (canonical copy + domestic symlink into `~/.workbuddy/skills`); **generates no project-level directories**.
+- `workbuddy`: generates `.codebuddy/agents/` and `.codebuddy/skills/`. WorkBuddy reuses CodeBuddy Code's workspace layout, so **project-level** config always lives in `.codebuddy/`, while its **user-level** directory is `~/.workbuddy-ai/` (international) or `~/.workbuddy/` (domestic) — do not put project config under either of those.
+- `workbuddy-cn`: same as `workbuddy`, for the domestic build.
 - `opencode`: generates `.opencode/agents/` and `.opencode/skills/` from the Codex source; the global skill uses the canonical directory directly (OpenCode reads `~/.agents/skills/` natively) and no symlink is created — OpenCode requires skill names to be unique across locations, and duplicates cause conflicts.
 
 All platforms add missing `.project-memory/` and `.project-script/` templates and never overwrite content a project has accumulated. For `.project-memory/`, the first-line title of each file is refreshed from the template on every sync while everything below that title is left untouched. The sync script does not generate or copy project-level MCP configuration files.
 
 ## Boundaries
 
-- The AGENTS.md marker split (replace above, preserve below), per-platform tool renaming, the "generated directories are not sources" rule, and the credential/cache exclusions are enforced by `sync.sh`. Never hand-edit generated directories, never sync back from `.claude/`, `.zcode/`, `.codebuddy/` or `.opencode/` into `.codex/` / `.agents/skills/`, and never copy credentials, local caches, `settings.local.json`, `CODEBUDDY.local.md` or the Codex-UI-only `agents/openai.yaml` to other platforms.
-- Do not configure a project-level Context7 MCP in the repo; this Skill guides the agent to reuse or configure the current client's global `context7` MCP first.
+- `sync.sh` enforces the marker split (replace above, preserve below), the adoption of a marker-less prompt file, the per-platform tool renaming and the credential/cache exclusions. The confirmation step and the optional migration into `.project-memory/` are the agent's responsibility — the script does not do them.
+- Never hand-edit a generated platform directory, and never sync back from `.claude/`, `.zcode/`, `.codebuddy/` or `.opencode/` into `.codex/` / `.agents/skills/`.
+- Never copy credentials, local caches, `settings.local.json`, `CODEBUDDY.local.md` or the Codex-UI-only `agents/openai.yaml` to another platform.
 - After the script succeeds, report only the sync scope, file changes and verification results.
