@@ -137,7 +137,6 @@ Memory never stores credentials. A sync adds missing template files and refreshe
 | `docs-research` | Batched external documentation lookup, delegated to the `docs_research` agent | agent |
 | `git-commit` | Creates a git commit: groups by purpose, writes the structured message, verifies | user |
 | `collect-update-memory` | Orchestrates a full memory sync, delegated to the `collect_update_memory` agent | user |
-| `code-review-custom` | Determines the review scope and delegates to the `code_review_custom` agent | user |
 | `sync-project-memory` | Pushes and pulls `.project-memory/` through a standalone remote repo, so memory survives across devices | user |
 | `sync-project-config` | The distribution entry: installs and updates a project's agents, skills and templates | user |
 
@@ -145,7 +144,6 @@ Memory never stores credentials. A sync adds missing template files and refreshe
 
 | Agent | What it does |
 | --- | --- |
-| `code_review_custom` | Reviews code changes in a given scope, judges correctness and risk, reports findings graded P0–P3 |
 | `collect_update_memory` | Full memory sync: consolidates current facts, in commit / incremental / local-change order |
 | `docs_research` | Pure external documentation lookup; never reads local code |
 

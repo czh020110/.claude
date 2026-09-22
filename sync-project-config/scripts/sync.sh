@@ -311,17 +311,11 @@ target_dir = Path(sys.argv[2])
 platform = sys.argv[3]
 
 claude_models = {
-    "code_review_custom": "sonnet",
     "docs_research": "haiku",
 }
 codebuddy_tools = {
-    "code_review_custom": ("Read, Grep, Glob, Bash", "Edit, Write"),
     "collect_update_memory": ("Read, Grep, Glob, Bash, Write, Edit", ""),
     "docs_research": ("Read, Grep, Glob, Bash, WebFetch", "Edit, Write"),
-}
-# OpenCode restricts agents through `permission`, not `tools`.
-opencode_permissions = {
-    "code_review_custom": {"edit": "deny"},
 }
 
 for source in sorted(source_dir.glob("*.toml")):
@@ -353,11 +347,6 @@ for source in sorted(source_dir.glob("*.toml")):
             lines.append(f"disallowedTools: {disallowed}")
     elif platform == "opencode":
         lines.append("mode: subagent")
-        perms = opencode_permissions.get(source_name, {})
-        if perms:
-            lines.append("permission:")
-            for key, value in perms.items():
-                lines.append(f"  {key}: {value}")
     lines += ["---", body, ""]
     (target_dir / f"{target_name}.md").write_text("\n".join(lines), encoding="utf-8")
 PY

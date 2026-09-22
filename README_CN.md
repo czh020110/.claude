@@ -137,7 +137,6 @@ bash ~/.agents/skills/sync-project-config/scripts/sync.sh codex   # 或你客户
 | `docs-research` | 批量外部文档查询，委托给 `docs_research` agent | Agent |
 | `git-commit` | 创建 git commit：按目的分组、生成结构化描述、验证 | 用户 |
 | `collect-update-memory` | 全量记忆同步编排，委托给 `collect_update_memory` agent | 用户 |
-| `code-review-custom` | 确定审查范围，委托给 `code_review_custom` agent | 用户 |
 | `sync-project-memory` | 通过独立远程仓库推拉 `.project-memory/`，实现跨设备记忆延续 | 用户 |
 | `sync-project-config` | 分发入口：初始化并更新项目的 Agent、Skill 与模板 | 用户 |
 
@@ -145,7 +144,6 @@ bash ~/.agents/skills/sync-project-config/scripts/sync.sh codex   # 或你客户
 
 | Agent | 作用 |
 | --- | --- |
-| `code_review_custom` | 审查指定范围的代码变更，判断正确性与风险，输出 P0–P3 分级结论 |
 | `collect_update_memory` | 全量记忆同步：按 commit / 增量 / 本地变更顺序收敛当前事实 |
 | `docs_research` | 纯外部文档查询，不读本地代码 |
 
