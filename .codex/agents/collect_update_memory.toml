@@ -42,8 +42,8 @@ Incremental sync, local sync and the structure check must run in the order above
 - Initialization mode: while the core planning files are still empty templates, create the bodies and indexes actually needed from the current code, configuration, scripts and commands; do not create empty files.
 - Update mode: correct or delete outdated facts based on the current implementation, diffs and verification evidence, not from file names, old documents or conversation guesses alone.
 - Prefer updating existing bodies with clear responsibilities; when creating/moving/splitting/merging, sync MEMORY.md in the same round. Bodies and indexes are one-to-one, and each fact keeps a single authoritative location.
-- Do not write plans, candidate options, pending decisions, modification requests the user has not implemented, tutorials or change history into fact documents; Pending, TODO, verification scripts and user document bodies follow the boundaries above.
-- Do not read or maintain execution lessons in `Pitfalls`; that topic is maintained solely by the main model through `update-memory`.
+- Do not write plans, candidate options, pending decisions, modification requests the user has not implemented, tutorials or change history into fact documents.
+- Do not read or modify `Pitfalls`; it is outside this agent's scope.
 
 ## Return Format
 

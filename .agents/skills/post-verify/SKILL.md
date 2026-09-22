@@ -35,7 +35,7 @@ Do not verify only "the last command"; verify the completeness of the task requi
 Choose in order of priority:
 
 1. **Reuse an existing verification script**: when `MEMORY.md` has a script matching this change, run it with the entry command recorded in the index.
-2. **Verify with existing commands**: with no dedicated script, verify using existing commands such as static checks, diff checks, type checks, import checks or test commands.
+2. **Verify with existing commands**: with no dedicated script, run the applicable checks from the coverage list below with existing commands.
 3. **Create a reusable script**: for non-trivial logic, interface, configuration, data flow, page or security-related changes with no suitable existing script, create a reusable script in `.project-script/<verification-type>/`.
 
 What verification scripts need to cover includes but is not limited to:

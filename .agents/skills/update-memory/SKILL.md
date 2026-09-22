@@ -22,8 +22,6 @@ Write only facts and reusable execution lessons that are currently adopted, impl
 
 - `MEMORY.md` in each topic directory only indexes and routes reads; it never holds fact bodies; index links must point to existing sub-topic files.
 - Sub-topic `.md` files in each topic directory record only current facts or reusable execution lessons within that topic's scope, and each fact keeps a single authoritative location.
-- `Commands`, `Environment`, `Target`, `Design`, `Boundary`, `Tools` and `Pitfalls` are memory directories this skill may update by topic routing; `Documents` bodies are read-only by default and are not modified by this skill.
-- When a topic is created, deleted, renamed, moved, split or merged, the corresponding `MEMORY.md` must be synced in the same round; when only body content is corrected and responsibilities are unchanged, there is no need to mechanically update the index.
 
 ## Trigger Conditions
 
@@ -42,12 +40,4 @@ Use it immediately when any of the following is confirmed in conversation or exe
 
 ## Memory Topic Routing
 
-- `Commands`: install, run, build, test, evaluate, deploy and recover.
-- `Environment`: tools/versions, hardware, paths, variables, external services and platform limits.
-- `Target`: currently effective project purpose, scope and acceptance criteria.
-- `Design`: current architecture, module responsibilities, collaboration model and design rationale.
-- `Boundary`: behavior that must be preserved, out-of-scope items, limits and quality floor.
-- `Tools`: reusable helper scripts, visualizations, statistics or data conversion tools.
-- `Pitfalls`: confirmed execution lessons that may recur, applicable scenarios, detection signals, root cause and avoidance steps; do not record one-off errors or raw logs.
-
-Detailed format, split/merge conditions, initialization rules and topic ownership are in `references/project-memory-format.md`.
+Topic ownership, per-topic content rules, the detailed format, split/merge conditions and initialization rules are all defined in `references/project-memory-format.md` — read it and follow it; do not restate those rules here.

@@ -12,7 +12,7 @@ description: When the user explicitly asks to commit or save changes, groups the
 1. Run `git status --short` and review `git diff` and `git diff --staged` (when the user specifies a scope, use that scope).
 2. **Group by modification purpose**: it is not required to put everything into one commit. Judge the purpose from the code changes; if the changes clearly do not belong to a single modification (inconsistent purposes, e.g. one is a feature implementation and another is an unrelated config fix), split them into multiple commits and commit each separately; each commit's short and detailed description covers only its own group. Changes with the same purpose stay in one commit and are not split forcibly.
 3. For each group, judge the change type and generate the short commit description: `<type-prefix>: verb + object + purpose`. Prefixes: `feat:` new feature or file; `fix:` bug or incorrect behavior fix; `docs:` only docs/description updates; `test:` add or modify tests; `build:` affects the build system or external dependencies; `refactor:` refactoring that does not change external behavior. Any modification or deletion of code files (source, scripts) disqualifies `docs:`; use `docs:` only when there is no code change at all.
-4. Generate each commit's detailed description (commit body) from the real changes.
+4. Generate each commit's detailed description (commit body) per the format below.
 5. Run verification; if it cannot be run, explain why.
 6. Create the git commits group by group; **once all commits are done, the working tree (unignored parts) must be clean**. If the commit or verification did not actually run successfully, state the specific reason; do not just write "not committed / not executed".
 
@@ -61,9 +61,8 @@ description: When the user explicitly asks to commit or save changes, groups the
 
 - Every git commit must contain both:
   1. Short description: the first line, preferably in "verb + object + purpose" form.
-  2. Detailed description: the commit body, explaining the change goal, before/after, key files, verification result and follow-ups, consistent with the real changes this time.
-- The detailed description must cover: change goal, files involved, reason for change, before/after differences, key function/interface/doc items, verification result and follow-on impact.
-- Unverified content must be marked with the reason it was not verified; never write "verification passed".
+  2. Detailed description: the commit body, covering the change goal, files involved, reason for change, before/after differences, key function/interface/doc items, verification result and follow-on impact, consistent with the real changes this time.
+- Never write "verification passed" for content that was not verified.
 - The detailed git commit description is explanatory summary only; do not copy code diffs or paste large source blocks.
 - A git commit must not include an AI co-author line (such as `Co-Authored-By: Claude ...`); the commit must not contain any AI attribution.
 - The commit description (short and detailed) must not expose platform-internal config directories or project memory directory maintenance details.

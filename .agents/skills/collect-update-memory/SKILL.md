@@ -19,6 +19,4 @@ This is the orchestration entry for a "full memory sync"; use `update-memory` fo
 
 - Delegate only to `collect_update_memory`; do not switch to another agent; the skill itself does not scan or modify memory bodies.
 - The agent syncs only currently implemented facts in `.project-memory/`, and does not touch `TODO/` (including `Pending.md`), `Pitfalls/`, `.project-script/`, code or configuration, and creates no commits; it may read relevant bodies and existing verification scripts.
-- Unimplemented plans, design decisions and modification requests in Pending are not sources of facts and must not be copied into any memory body. Adding, completing or cancelling Pending entries is handled by the main model.
-- Execution lessons in `Pitfalls` are not added, modified, cleaned up or copied by this skill or its agent; the main model maintains that topic with `update-memory` once trigger conditions are met.
 - When there is no fact that needs persisting, the agent may return "no changes needed".

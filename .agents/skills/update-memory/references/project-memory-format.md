@@ -42,7 +42,6 @@ Structural changes (create, delete, rename, move, split, merge) must land in the
 - Write into the matching `Pitfalls` sub-topic only when a problem is confirmed during execution to carry recurrence risk and can be abstracted into applicable scenarios, detection signals, root cause or avoidance actions.
 - One-off command failures, transient network/environment failures, debugging details with no reproduction value, and pure change history are not written; state them in the current task result instead.
 - Each lesson sub-topic records only experiential conclusions and their reuse conditions; if it also touches current design or constraints, write those separately into the matching fact topics and cross-link them, and never write candidate options as execution lessons.
-- `collect-update-memory` does not create, modify or clean up `Pitfalls`; only the main model maintains that topic with `update-memory` once trigger conditions are met.
 
 ## Write Decisions
 
