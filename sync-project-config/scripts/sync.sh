@@ -101,23 +101,13 @@ fi
 # below). Matched byte for byte, so it is deliberately language-neutral and must
 # never be translated, reworded or edited.
 CUSTOM_MARKER='<!-- sync-project-config:custom-prompts -->'
-# Spelling used before the marker was introduced. Still recognised when reading an
-# existing file so older projects keep their custom section; it is rewritten to the
-# current marker during the merge.
-LEGACY_CUSTOM_MARKER='# 自定义提示词说明'
 
-# Echo the custom-prompt marker present in a file, preferring the current spelling.
-find_custom_marker() {
-  local file="$1"
-  local marker
-  [ -f "$file" ] || return 0
-  for marker in "$CUSTOM_MARKER" "$LEGACY_CUSTOM_MARKER"; do
-    if grep -qxF "$marker" "$file"; then
-      printf '%s' "$marker"
-      return 0
-    fi
-  done
-  return 0
+# True when a file already carries the custom-prompt marker. A file without it is
+# never split, so the agent must insert the marker at the managed/custom boundary
+# before running the sync (see SKILL.md); otherwise the whole file is overwritten.
+has_custom_marker() {
+  [ -f "$1" ] || return 1
+  grep -qxF "$CUSTOM_MARKER" "$1"
 }
 
 # AGENTS.md is authored against Codex's tool names. Select the equivalent names
@@ -341,18 +331,12 @@ sync_agents_md() {
   local local_file="$PROJECT_DIR/AGENTS.md"
   [ -f "$remote" ] || return 0
 
-  local local_marker=""
-  if [ -f "$local_file" ]; then
-    local_marker="$(find_custom_marker "$local_file")"
-  fi
-
-  if [ -n "$local_marker" ] && grep -qxF "$CUSTOM_MARKER" "$remote"; then
+  if has_custom_marker "$local_file" && grep -qxF "$CUSTOM_MARKER" "$remote"; then
     local remote_end local_start
     remote_end=$(grep -n -xF "$CUSTOM_MARKER" "$remote" | head -1 | cut -d: -f1)
-    local_start=$(grep -n -xF "$local_marker" "$local_file" | head -1 | cut -d: -f1)
+    local_start=$(grep -n -xF "$CUSTOM_MARKER" "$local_file" | head -1 | cut -d: -f1)
     # Everything strictly above the marker is managed and comes from the source;
-    # the marker and everything below it come from the local file, normalised to
-    # the current marker spelling.
+    # the marker and everything below it come from the local file.
     head -n "$((remote_end - 1))" "$remote" > "$local_file.tmp"
     printf '%s\n' "$CUSTOM_MARKER" >> "$local_file.tmp"
     tail -n +"$((local_start + 1))" "$local_file" >> "$local_file.tmp"
@@ -377,13 +361,9 @@ sync_claude_md() {
     remote_end=$(grep -n -xF "$CUSTOM_MARKER" "$remote" | head -1 | cut -d: -f1)
     head -n "$((remote_end - 1))" "$remote" > "$tmp"
     adapt_agent_tools "$tmp" "$CUSTOM_MARKER" update_plan "$PLAN_TOOL" request_user_input "$QUESTION_TOOL"
-    local target_marker=""
-    if [ -f "$target" ]; then
-      target_marker="$(find_custom_marker "$target")"
-    fi
-    if [ -n "$target_marker" ]; then
+    if has_custom_marker "$target"; then
       local custom_start
-      custom_start=$(grep -n -xF "$target_marker" "$target" | head -1 | cut -d: -f1)
+      custom_start=$(grep -n -xF "$CUSTOM_MARKER" "$target" | head -1 | cut -d: -f1)
       printf '%s\n' "$CUSTOM_MARKER" >> "$tmp"
       tail -n +"$((custom_start + 1))" "$target" >> "$tmp"
     else
