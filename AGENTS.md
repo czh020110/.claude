@@ -42,8 +42,8 @@ This repository's long-term project memory lives in `.project-memory/`. Memory u
 
 - `update_plan` only records the decomposition and status of the current task; it does not write project memory or TODO, nor replace them.
 - The completion standard is decided by the user's request; the default delivery is "result implemented, critical path checked, verification evidence recorded, remaining risks stated".
-- When a task spans a long-term stage, split it into verifiable stages and update `.project-memory/TODO/STEP.md`; do not design a full history table for an empty template, and one-off tasks are not written into STEP. If the long-term direction changes too, get the user's confirmation first (see the next item).
-- When long-term design, boundary or stage direction changes are needed, analyze the conflicts and risks first, then ask the user to confirm with `request_user_input` (multiple rounds if needed); do not change the design memory before that confirmation. If the environment cannot interact, make the most conservative assumption and say so in the result.
+- When a task spans a long-term stage, split it into verifiable stages and update `.project-memory/TODO/STEP.md`; do not design a full history table for an empty template, and one-off tasks are not written into STEP.
+- When a design is added or changed, or a design conflict or problem is found, use the `design-alignment` skill: it settles the design with the user and records the agreed plan in `.project-memory/TODO/Pending.md` before any of it is implemented.
 
 ## Code and Configuration Update Rules
 

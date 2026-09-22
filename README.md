@@ -66,6 +66,16 @@ bash sync-project-config/scripts/sync.sh opencode
 
 `codebuddy`, `workbuddy` and `workbuddy-cn` are different targets and write to different directories. Quick check: `~/.codebuddy/` means `codebuddy`, `~/.workbuddy-ai/` means `workbuddy`, `~/.workbuddy/` means `workbuddy-cn`. Picking the wrong one fails silently rather than erroring.
 
+The **first** run in a repo uses the global copy instead, because the project-local `sync-project-config/` does not exist yet — that run fetches the latest template and drops the project copy in place:
+
+```bash
+bash ~/.agents/skills/sync-project-config/scripts/sync.sh codex   # or your client's global skill directory
+```
+
+After that, the project copy is the entry point, and the sync adds `sync-project-config/` to `.gitignore` along with the other generated paths.
+
+Before the first sync in a repo, the skill asks whether to use it there — if you say no, it does not run the script. If the repo already has its own `AGENTS.md` (or `CLAUDE.md` on Claude) **without** the `<!-- sync-project-config:custom-prompts -->` marker, nothing is overwritten: the whole file is taken to be your own prompts and moved below the marker. Afterwards the skill reads that custom region and, if it holds project prompts, asks whether to migrate them — commands and rules stay in `AGENTS.md`, project facts move into `.project-memory/`.
+
 ### Step 3: Confirm the result
 
 When it finishes, the target repo should contain the platform's `agents/` and `skills/` directories, `AGENTS.md` (plus `CLAUDE.md` on Claude), and the `.project-memory/` and `.project-script/` templates.
@@ -122,6 +132,7 @@ Memory never stores credentials. A sync adds missing template files and refreshe
 | `read-index-memory` | Reads the topic indexes and routes to the relevant bodies | agent |
 | `update-memory` | Writes the facts this round confirmed into the matching topic | agent |
 | `post-verify` | Final verification gate before delivery | agent |
+| `design-alignment` | Settles a design change or conflict with the user through multi-round options, then records the agreed plan in `Pending.md` | agent |
 | `docs-research` | Batched external documentation lookup, delegated to the `docs_research` agent | agent |
 | `git-commit` | Creates a git commit: groups by purpose, writes the structured message, verifies | user |
 | `collect-update-memory` | Orchestrates a full memory sync, delegated to the `collect_update_memory` agent | user |

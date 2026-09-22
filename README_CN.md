@@ -66,6 +66,16 @@ bash sync-project-config/scripts/sync.sh opencode
 
 `codebuddy`、`workbuddy` 与 `workbuddy-cn` 是不同目标，写到不同目录。快速判断：`~/.codebuddy/` 对应 `codebuddy`，`~/.workbuddy-ai/` 对应 `workbuddy`，`~/.workbuddy/` 对应 `workbuddy-cn`。选错不会报错，而是静默失效。
 
+仓库里的**第一次**运行要用全局那份脚本——因为此时项目里还没有 `sync-project-config/`。这一次运行会拉取最新模板并把项目副本落地：
+
+```bash
+bash ~/.agents/skills/sync-project-config/scripts/sync.sh codex   # 或你客户端对应的全局 Skill 目录
+```
+
+之后项目副本就是入口，同步会把 `sync-project-config/` 连同其他生成路径一起写进 `.gitignore`。
+
+在某个仓库首次同步前，Skill 会先询问是否要在这里使用它——你答否，它就不执行脚本。如果该仓库已有自己的 `AGENTS.md`（Claude 平台还可能是 `CLAUDE.md`）且**没有** `<!-- sync-project-config:custom-prompts -->` 标记，那么什么都不会被覆盖：整个文件被认定为你自己写的提示词，原样挪到标记以下。同步完成后 Skill 会读取该自定义区，如果里面确实有项目提示词，就询问你是否要迁移——命令与规则留在 `AGENTS.md`，项目事实类内容迁入 `.project-memory/`。
+
 ### 第三步：确认结果
 
 执行完成后，目标仓库里应当出现对应平台的 `agents/` 与 `skills/` 目录、`AGENTS.md`（Claude 平台额外生成 `CLAUDE.md`），以及 `.project-memory/` 与 `.project-script/` 模板。
@@ -122,6 +132,7 @@ bash sync-project-config/scripts/sync.sh opencode
 | `read-index-memory` | 读取各主题索引，路由到相关正文 | Agent |
 | `update-memory` | 把本轮确认的事实写入对应主题 | Agent |
 | `post-verify` | 交付前的收口验证闸门 | Agent |
+| `design-alignment` | 通过多轮选项与用户把方案变更/冲突定下来，再把确认的方案写进 `Pending.md` | Agent |
 | `docs-research` | 批量外部文档查询，委托给 `docs_research` agent | Agent |
 | `git-commit` | 创建 git commit：按目的分组、生成结构化描述、验证 | 用户 |
 | `collect-update-memory` | 全量记忆同步编排，委托给 `collect_update_memory` agent | 用户 |
