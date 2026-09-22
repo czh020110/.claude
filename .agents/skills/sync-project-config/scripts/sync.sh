@@ -96,10 +96,29 @@ else
   GLOBAL_SKILL_DIR="$CANONICAL_SKILL_DIR"
 fi
 
-# Protocol token: must match the custom-prompt heading inside AGENTS.md byte for
-# byte. It is file-format data matched against existing AGENTS.md files, so it is
-# intentionally left in its source language instead of being translated.
-CUSTOM_HEADING='# 自定义提示词说明'
+# Protocol marker: splits AGENTS.md into the managed section (everything strictly
+# above the marker) and the project's custom prompts (the marker and everything
+# below). Matched byte for byte, so it is deliberately language-neutral and must
+# never be translated, reworded or edited.
+CUSTOM_MARKER='<!-- sync-project-config:custom-prompts -->'
+# Spelling used before the marker was introduced. Still recognised when reading an
+# existing file so older projects keep their custom section; it is rewritten to the
+# current marker during the merge.
+LEGACY_CUSTOM_MARKER='# 自定义提示词说明'
+
+# Echo the custom-prompt marker present in a file, preferring the current spelling.
+find_custom_marker() {
+  local file="$1"
+  local marker
+  [ -f "$file" ] || return 0
+  for marker in "$CUSTOM_MARKER" "$LEGACY_CUSTOM_MARKER"; do
+    if grep -qxF "$marker" "$file"; then
+      printf '%s' "$marker"
+      return 0
+    fi
+  done
+  return 0
+}
 
 # AGENTS.md is authored against Codex's tool names. Select the equivalent names
 # before generating a platform-specific copy.
@@ -304,12 +323,12 @@ adapt_agent_tools() {
 import sys
 from pathlib import Path
 
-path, heading, from1, to1, from2, to2 = sys.argv[1:7]
+path, marker, from1, to1, from2, to2 = sys.argv[1:7]
 text = Path(path).read_text(encoding="utf-8")
 lines = text.splitlines(keepends=True)
 rule_end = len(lines)
 for i, line in enumerate(lines):
-    if line.rstrip("\n") == heading:
+    if line.rstrip("\n") == marker:
         rule_end = i
         break
 rule = "".join(lines[:rule_end]).replace(from1, to1).replace(from2, to2)
@@ -322,21 +341,28 @@ sync_agents_md() {
   local local_file="$PROJECT_DIR/AGENTS.md"
   [ -f "$remote" ] || return 0
 
-  if [ ! -f "$local_file" ]; then
-    cp "$remote" "$local_file"
-  elif grep -qxF "$CUSTOM_HEADING" "$local_file" && grep -qxF "$CUSTOM_HEADING" "$remote"; then
+  local local_marker=""
+  if [ -f "$local_file" ]; then
+    local_marker="$(find_custom_marker "$local_file")"
+  fi
+
+  if [ -n "$local_marker" ] && grep -qxF "$CUSTOM_MARKER" "$remote"; then
     local remote_end local_start
-    remote_end=$(grep -n -xF "$CUSTOM_HEADING" "$remote" | head -1 | cut -d: -f1)
-    local_start=$(grep -n -xF "$CUSTOM_HEADING" "$local_file" | head -1 | cut -d: -f1)
+    remote_end=$(grep -n -xF "$CUSTOM_MARKER" "$remote" | head -1 | cut -d: -f1)
+    local_start=$(grep -n -xF "$local_marker" "$local_file" | head -1 | cut -d: -f1)
+    # Everything strictly above the marker is managed and comes from the source;
+    # the marker and everything below it come from the local file, normalised to
+    # the current marker spelling.
     head -n "$((remote_end - 1))" "$remote" > "$local_file.tmp"
-    tail -n +"$local_start" "$local_file" >> "$local_file.tmp"
+    printf '%s\n' "$CUSTOM_MARKER" >> "$local_file.tmp"
+    tail -n +"$((local_start + 1))" "$local_file" >> "$local_file.tmp"
     mv "$local_file.tmp" "$local_file"
   else
     cp "$remote" "$local_file"
   fi
 
   if [ "$PLAN_TOOL" != "update_plan" ] || [ "$QUESTION_TOOL" != "request_user_input" ]; then
-    adapt_agent_tools "$local_file" "$CUSTOM_HEADING" update_plan "$PLAN_TOOL" request_user_input "$QUESTION_TOOL"
+    adapt_agent_tools "$local_file" "$CUSTOM_MARKER" update_plan "$PLAN_TOOL" request_user_input "$QUESTION_TOOL"
   fi
 }
 
@@ -346,15 +372,20 @@ sync_claude_md() {
   [ -f "$remote" ] || return 0
   local target="$PROJECT_DIR/CLAUDE.md"
   local tmp="$PROJECT_DIR/CLAUDE.md.tmp"
-  if grep -qxF "$CUSTOM_HEADING" "$remote"; then
+  if grep -qxF "$CUSTOM_MARKER" "$remote"; then
     local remote_end
-    remote_end=$(grep -n -xF "$CUSTOM_HEADING" "$remote" | head -1 | cut -d: -f1)
+    remote_end=$(grep -n -xF "$CUSTOM_MARKER" "$remote" | head -1 | cut -d: -f1)
     head -n "$((remote_end - 1))" "$remote" > "$tmp"
-    adapt_agent_tools "$tmp" "$CUSTOM_HEADING" update_plan "$PLAN_TOOL" request_user_input "$QUESTION_TOOL"
-    if [ -f "$target" ] && grep -qxF "$CUSTOM_HEADING" "$target"; then
+    adapt_agent_tools "$tmp" "$CUSTOM_MARKER" update_plan "$PLAN_TOOL" request_user_input "$QUESTION_TOOL"
+    local target_marker=""
+    if [ -f "$target" ]; then
+      target_marker="$(find_custom_marker "$target")"
+    fi
+    if [ -n "$target_marker" ]; then
       local custom_start
-      custom_start=$(grep -n -xF "$CUSTOM_HEADING" "$target" | head -1 | cut -d: -f1)
-      tail -n +"$custom_start" "$target" >> "$tmp"
+      custom_start=$(grep -n -xF "$target_marker" "$target" | head -1 | cut -d: -f1)
+      printf '%s\n' "$CUSTOM_MARKER" >> "$tmp"
+      tail -n +"$((custom_start + 1))" "$target" >> "$tmp"
     else
       tail -n +"$remote_end" "$remote" >> "$tmp"
     fi

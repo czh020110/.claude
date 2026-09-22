@@ -1,3 +1,3 @@
 # STEP
 
-- [ ] S-001：[项目大方向步骤]
+- [ ] S-001: [major project direction step]

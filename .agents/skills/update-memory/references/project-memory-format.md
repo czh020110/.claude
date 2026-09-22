@@ -1,63 +1,64 @@
-# 项目记忆格式与维护规范
+# Project Memory Format and Maintenance Spec
 
-本文件是 `update-memory` 与 `collect_update_memory` 共用的按需参考。只有在实际写入或重构 `.project-memory/` 时读取；它不是每轮任务的必读提示词。未实施方案和决策统一登记在 `.project-memory/TODO/Pending.md`，不属于本文件管理的事实。
+This file is on-demand reference shared by `update-memory` and `collect_update_memory`. Read it only when actually writing to or restructuring `.project-memory/`; it is not a must-read prompt for every round. Unimplemented plans and decisions are recorded uniformly in `.project-memory/TODO/Pending.md` and are not facts managed by this file.
 
-## 目录与事实归属
+## Directory and Fact Ownership
 
-项目记忆由八个主题组成：`Commands`、`Environment`、`Documents`、`Target`、`Design`、`Boundary`、`Tools`、`Pitfalls`。每个主题目录包含一个只做索引的 `MEMORY.md` 和职责明确的分主题正文文件；不创建“其他/杂项/基础操作”等兜底正文。
+Project memory consists of eight topics: `Commands`, `Environment`, `Documents`, `Target`, `Design`, `Boundary`, `Tools`, `Pitfalls`. Each topic directory contains an index-only `MEMORY.md` plus sub-topic body files with clear responsibilities; do not create catch-all bodies like "other/misc/basic operations".
 
-- `Commands`：安装、运行、构建、测试、评估、部署和故障恢复的工作流。
-- `Environment`：工具/版本、硬件、路径、环境变量、外部服务和平台限制。
-- `Documents`：用户维护的项目文档；正文默认只读，索引由全量记忆 agent 维护。
-- `Target`：当前已经生效的项目目的、范围和验收标准；未实施的阶段计划和方案写入 TODO/STEP/Pending。
-- `Design`：当前架构、模块职责、协作方式和已采用的设计理由。
-- `Boundary`：必须保持的行为、明确不做的范围、限制和质量底线。
-- `Tools`：可复用的辅助脚本、可视化、统计或数据转换工具。
-- `Pitfalls`：执行中已经确认可能重复出现的可复用执行经验、适用场景、识别信号、根因和规避方式；不记录单次工具错误、偶发故障、原始日志或无法迁移的细节。
+- `Commands`: install, run, build, test, evaluate, deploy and failure-recovery workflows.
+- `Environment`: tools/versions, hardware, paths, environment variables, external services and platform limits.
+- `Documents`: user-maintained project docs; bodies are read-only by default, indexes are maintained by the full memory agent.
+- `Target`: currently effective project purpose, scope and acceptance criteria; unimplemented stage plans and options go into TODO/STEP/Pending.
+- `Design`: current architecture, module responsibilities, collaboration model and adopted design rationale.
+- `Boundary`: behavior that must be preserved, explicitly excluded scope, limits and quality floor.
+- `Tools`: reusable helper scripts, visualizations, statistics or data conversion tools.
+- `Pitfalls`: reusable execution lessons confirmed during execution that may recur, with applicable scenarios, detection signals, root cause and avoidance steps; do not record one-off tool errors, transient failures, raw logs or details that cannot be transferred.
 
-同一事实只保留一个权威归属，其他主题用链接引用。新事实归入对应主题，不按时间追加到 `Target`，不写未实施方案、待定决策、用户未落地的修改要求、教程、候选方案或修改历史。执行经验正文只保留可复用的经验，不替代其他主题中的规范事实。
+Each fact keeps a single authoritative home and other topics reference it by link. New facts go into the matching topic, are not appended to `Target` by time, and never include unimplemented plans, pending decisions, modification requests the user has not landed, tutorials, candidate options or change history. Execution-lesson bodies hold only reusable lessons and do not replace normative facts in other topics.
 
-## 索引规则
+## Index Rules
 
-`MEMORY.md` 只能包含索引行，不承载正文。正文存在就必须有索引，索引不能指向不存在的文件。索引描述要说明覆盖范围、关键对象和应读取的任务场景，并避免复述易变实现细节。
+`MEMORY.md` may contain only index lines and carries no bodies. If a body exists it must have an index, and an index must not point at a missing file. Index descriptions must state coverage, key objects and the task scenarios in which the file should be read, and must avoid restating volatile implementation details.
 
 ```md
 # Index Paths and Summaries Related to <Topic>
 
-- [文档名称](文档名称.md) - 覆盖范围、关键对象及应当读取该文档的任务场景。
+- [document name](document-name.md) - coverage, key objects, and the task scenarios in which this document should be read.
 ```
 
-结构变化（新建、删除、重命名、移动、拆分、合并）必须与索引同轮完成并校验；只有内容修正且职责不变时无需机械改索引。收尾检查索引与实际正文一一对应、无断链/孤儿/过时重复内容。
+Structural changes (create, delete, rename, move, split, merge) must land in the same round as the index and be verified; only content corrections with unchanged responsibilities skip the mechanical index update. At the end, check that indexes and actual bodies are one-to-one with no broken links, orphans or outdated duplicates.
 
-## Pending 与事实分流
+## Pending vs. Fact Split
 
-- `TODO/Pending.md` 使用与 `TODO.md` 相同的复选框格式，专门记录尚未实施的方案、架构/边界调整、实现决策和用户要求的项目方案变更。
-- `TODO/TODO.md` 是用户维护的普通待办表；只有用户明确要求写入或更新时才允许主模型修改，不能因任务执行过程主动追加待办。
-- 讨论中首次出现这类内容时，主模型立即写入 Pending；Pending 条目必须包含背景、待确认决策、完成条件和关联范围。
-- Pending 条目在实现完成并通过验证后移除，再把最终真实状态写入对应事实正文；如果方案被否决或取消，只移除 Pending，不写入事实。
-- `update-memory` 和 `collect-update-memory` 不创建、修改或清理 Pending，也不得把 Pending 内容当作事实来源。
+- `TODO/Pending.md` uses the same checkbox format as `TODO.md` and records specifically not-yet-implemented plans, architecture/boundary adjustments, implementation decisions, and project plan changes requested by the user.
+- `TODO/TODO.md` is the user-maintained ordinary todo list; the main model may modify it only when the user explicitly asks to write or update it, and must not append todos proactively because of task execution.
+- When such content first appears in a discussion, the main model writes it into Pending immediately; a Pending entry must contain background, the decision pending confirmation, completion criteria and related scope.
+- A Pending entry is removed once the implementation is complete and verified, and the final real state is then written into the matching fact body; if a plan is rejected or cancelled, only the Pending entry is removed and nothing is written into facts.
+- `update-memory` and `collect-update-memory` do not create, modify or clean up Pending, and must not treat Pending content as a source of facts.
 
-## Pitfalls 写入边界（可复用执行经验）
+## Pitfalls Write Boundary (Reusable Execution Lessons)
 
-- 只有在执行中确认某个问题具有重复风险，并且能抽象出适用场景、识别信号、根因或规避动作时，才写入 `Pitfalls` 的对应分主题。
-- 单次命令失败、短暂网络/环境故障、无复现价值的调试细节和纯粹修改历史不写入；应在当前任务结果中说明即可。
-- 每个经验分主题只记录经验性结论及其复用条件；若同时涉及当前设计或约束，分别写入对应事实主题并互相链接，不把候选方案写成执行经验。
-- `collect-update-memory` 不创建、修改或清理 `Pitfalls`；只有主模型在触发条件满足后使用 `update-memory` 维护该主题。
+- Write into the matching `Pitfalls` sub-topic only when a problem is confirmed during execution to carry recurrence risk and can be abstracted into applicable scenarios, detection signals, root cause or avoidance actions.
+- One-off command failures, transient network/environment failures, debugging details with no reproduction value, and pure change history are not written; state them in the current task result instead.
+- Each lesson sub-topic records only experiential conclusions and their reuse conditions; if it also touches current design or constraints, write those separately into the matching fact topics and cross-link them, and never write candidate options as execution lessons.
+- `collect-update-memory` does not create, modify or clean up `Pitfalls`; only the main model maintains that topic with `update-memory` once trigger conditions are met.
 
-## 写入决策
+## Write Decisions
 
-1. 先读目标主题的 `MEMORY.md`，再按索引只读相关正文；不扫描无关主题。
-2. 优先更新同一对象/工作流的已有正文；确有独立读取场景、完整工作流或不同代码路径时才新建主题。
-3. 判断是否拆分时优先看语义边界：不同读取条件、入口/输出/验证方式、独立演化或合并后明显过长（约 250–300 行以上）可拆分；总是一起读取和修改的短文档应合并。
-4. 正文只记录当前可验证事实。不得写入密码、token、私钥、Cookie 或其他可直接使用的凭证；只记录变量名和安全配置方式。
+1. First read the target topic's `MEMORY.md`, then read only the relevant bodies per the index; do not scan unrelated topics.
+2. Prefer updating an existing body for the same object/workflow; create a new topic only when there is genuinely an independent read scenario, a complete workflow, or a different code path.
+3. When judging whether to split, look at semantic boundaries first: different read conditions, entry/output/verification methods, independent evolution, or a merged file that is clearly too long (about 250–300 lines or more) can be split; short documents that are always read and modified together should be merged.
+4. Bodies record only currently verifiable facts. Never write passwords, tokens, private keys, cookies or other directly usable credentials; record only variable names and secure configuration methods.
+5. Do not change the language that existing memory documents are written in (English, Chinese, etc.).
 
-比较两个候选主题时，至少检查：主要问题、核心对象、输入输出、执行阶段/状态、结果/验证、触发它们的代码变更是否相同。高度相同（5–6 项）必须合并；中等相同（3–4 项）默认合并，只有不同读取场景/入口/输出/验证、独立演化或合并后明显过长等条件同时成立时才拆分；低度相同（0–2 项）可新建独立主题。拆分后的正文必须自包含，不能只留下“公共主流程 + 差异补丁”。
+When comparing two candidate topics, check at least: whether the main problem, core objects, inputs/outputs, execution stage/state, results/verification, and the code changes that trigger them are the same. Highly identical (5–6 items) must be merged; moderately identical (3–4 items) defaults to merging and split only when conditions such as different read scenarios/entry/output/verification, independent evolution, or a clearly over-long merged file hold at the same time; low similarity (0–2 items) may become a separate topic. Split bodies must be self-contained and cannot leave only a "common main flow + diff patch".
 
-正文必须遵守本文件规定的事实归属、索引和主题边界；发现已有记忆格式或主题归属不合规时，按本规范修正并同步索引，而不是保留不一致格式。
+Bodies must follow the fact ownership, indexing and topic boundaries defined in this file; when existing memory format or topic ownership is found non-compliant, fix it per this spec and sync the index rather than keeping the inconsistent format.
 
-## 初始化与更新
+## Initialization and Update
 
-- 初始化：核心规划文件仍为空模板时，根据当前代码、配置、脚本和命令建立实际需要的主题正文及索引，不创建空文件。
-- 项目完全没有源代码、只有项目记忆模板时，只初始化确有事实的 `Boundary` 与 `Target`；有代码时再按实际内容初始化 `Environment`、`Commands` 等主题，存在可复用脚本才初始化 `Tools`。
-- 更新：已有记忆时，依据当前代码、配置、提交差异和验证结果替换过时事实；不要仅凭文件名、旧文档或对话猜测。
-- `TODO/STEP.md`、`TODO/TODO.md` 和 `TODO/Pending.md` 不由本规范的实时记忆更新流程维护；其中 TODO.md 受用户明确授权后才可由主模型写入，Pending.md 由主模型直接登记；`.project-script/` 也不属于项目记忆正文或索引。
+- Initialization: while the core planning files are still empty templates, create the topic bodies and indexes actually needed from the current code, configuration, scripts and commands; do not create empty files.
+- When the project has no source code at all and only has project memory templates, initialize only `Boundary` and `Target` where facts genuinely exist; once code exists, initialize topics such as `Environment` and `Commands` from the actual content, and initialize `Tools` only if reusable scripts exist.
+- Update: when memory already exists, replace outdated facts based on the current code, configuration, commit diffs and verification results; do not guess from file names, old documents or conversation alone.
+- `TODO/STEP.md`, `TODO/TODO.md` and `TODO/Pending.md` are not maintained by this spec's real-time memory update flow; among them TODO.md may be written by the main model only after explicit user authorization, and Pending.md is recorded directly by the main model; `.project-script/` is likewise not part of project memory bodies or indexes.

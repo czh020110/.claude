@@ -1,1 +1,1 @@
-- [ ] [待办事项：任何粒度，写清楚要做什么即可]
+- [ ] [Todo item: any granularity, just write clearly what needs to be done]

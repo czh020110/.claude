@@ -1,51 +1,51 @@
 ---
 name: code-review-custom
-description: 用户明确给出审查范围时，审查代码变更的正确性与风险；只读并委托 code_review_custom agent。
+description: When the user explicitly gives a review scope, review the correctness and risk of code changes; read-only and delegates to the code_review_custom agent.
 ---
 
-对指定范围的代码进行审查，判断修改是否正确、能否按预期实现功能。
+Review the code in a given scope and judge whether the changes are correct and whether they implement the intended functionality.
 
-## 你的职责
+## Your Responsibilities
 
-1. **确定审查范围**，必须明确传给 agent：
-   - 用户说"审查当前修改"→ 工作区变更：`git diff` + `git diff --staged`
-   - 用户说"审查最近 N 次提交"→ `HEAD~N..HEAD`
-   - 用户给出具体 commit SHA → `SHA1..SHA2` 或单个 SHA
-   - 用户说"审查某个文件"→ 指定文件路径
-   - **不要自行猜测范围**，如果用户没说清楚，先问用户
-2. **必须委托 `code_review_custom` agent**，不使用其他 code-review agent
-3. 收到结果后，向用户转述审查结论
+1. **Determine the review scope**; it must be passed to the agent explicitly:
+   - User says "review current changes" → working tree changes: `git diff` + `git diff --staged`
+   - User says "review the last N commits" → `HEAD~N..HEAD`
+   - User gives a specific commit SHA → `SHA1..SHA2` or a single SHA
+   - User says "review a file" → the specified file path
+   - **Do not guess the scope**; if the user was not clear, ask first
+2. **You must delegate to the `code_review_custom` agent**; do not use another code-review agent
+3. After receiving the result, relay the review conclusion to the user
 
-## 调用方式
+## Invocation
 
-使用 Codex 多代理工具 `spawn_agent`，agent 名必须为 `code_review_custom`，prompt 中必须包含：
+Use the Codex multi-agent tool `spawn_agent`; the agent name must be `code_review_custom`, and the prompt must include:
 
-- **审查范围**（必填）：明确告诉 agent 审查哪些代码
-- **修改意图**（可选）：如果用户说明了意图，一并传入；否则让 agent 从 diff 推断
+- **Review scope** (required): tell the agent explicitly which code to review
+- **Change intent** (optional): if the user stated the intent, pass it along; otherwise let the agent infer it from the diff
 
-示例：
-
-```
-审查范围：当前工作区变更（git diff + git diff --staged）
-修改意图：[用户说明的意图，或留空]
-```
+Examples:
 
 ```
-审查范围：HEAD~3..HEAD
-修改意图：[用户说明的意图，或留空]
+Review scope: current working tree changes (git diff + git diff --staged)
+Change intent: [the intent stated by the user, or leave empty]
 ```
 
 ```
-审查范围：文件 `sync-project-config/scripts/sync.sh` 的 HEAD~1..HEAD 变更
-修改意图：修复空参时不显示 URL 配置状态的问题
+Review scope: HEAD~3..HEAD
+Change intent: [the intent stated by the user, or leave empty]
 ```
 
-## 结果处理
+```
+Review scope: the HEAD~1..HEAD change of file `sync-project-config/scripts/sync.sh`
+Change intent: fix the issue where URL config status is not shown when the argument is empty
+```
 
-收到 agent 返回的审查结果后：
+## Result Handling
 
-- **有 P0/P1 问题**：向用户明确报告，说明需要修改
-- **只有 P2/P3 问题**：向用户报告，由用户决定是否修改
-- **未发现问题**：告诉用户审查通过
+After receiving the agent's review result:
 
-不要自行修改代码，只报告审查结果。
+- **P0/P1 issues present**: report them clearly to the user and state that changes are needed
+- **Only P2/P3 issues**: report them and let the user decide whether to change
+- **No issues found**: tell the user the review passed
+
+Do not modify code yourself; only report the review result.

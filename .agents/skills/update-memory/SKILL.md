@@ -1,53 +1,53 @@
 ---
 name: update-memory
-description: 仅在本轮确认了已实施且可验证的项目事实、有效约束、偏好、环境、命令或可复用执行经验时使用。
+description: Use only when this round confirmed an implemented and verifiable project fact, effective constraint, preference, environment, command, or a reusable execution lesson.
 ---
 
 # update-memory
 
-只把当前已经采用、实施并可验证的事实和可复用执行经验写入项目记忆。没有这类事实时不调用本 skill。
+Write only facts and reusable execution lessons that are currently adopted, implemented and verifiable into project memory. Do not invoke this skill when there are no such facts.
 
-## 写入范围
+## Write Scope
 
-- 已实施并有验证证据的行为、配置、约束、环境、命令和长期偏好，才属于项目事实，可以写入对应主题；执行中确认的、可能重复出现且能概括出适用场景、识别信号与规避方式的执行经验，可以写入 `Pitfalls`。
+- Only behavior, configuration, constraints, environment, commands and long-term preferences that are implemented and have verification evidence count as project facts and may be written into the matching topic; execution lessons confirmed during execution that may recur and can be generalized into applicable scenarios, detection signals and avoidance steps may be written into `Pitfalls`.
 
-## 边界
+## Boundaries
 
-- 由主模型亲自执行；不调用 subagent，不创建 git commit。
-- 只做局部更新，不扫描全部项目或读取无关主题。
-- 不维护 `.project-script/` 或 `.project-memory/Documents/`；验证脚本由 `post-verify` 管理，用户文档由 `collect-update-memory` 同步索引。
-- 只写当前可验证事实和可复用执行经验，不写密码、token、私钥、Cookie、候选方案、单次工具报错、偶发故障或修改日志。
+- Executed by the main model personally; do not call a subagent, and do not create a git commit.
+- Do local updates only; do not scan the whole project or read unrelated topics.
+- Do not maintain `.project-script/` or `.project-memory/Documents/`; verification scripts are managed by `post-verify`, and user document indexes are synced by `collect-update-memory`.
+- Write only currently verifiable facts and reusable execution lessons; do not write passwords, tokens, private keys, cookies, candidate options, one-off tool errors, transient failures or change logs.
 
-## `.project-memory/` 文件职责
+## `.project-memory/` File Responsibilities
 
-- 各主题目录下的 `MEMORY.md` 只做索引和读取路由，不写事实正文；索引链接必须指向存在的分主题文件。
-- 各主题目录下的分主题 `.md` 文件只记录该主题范围内的当前事实或可复用执行经验，同一事实只保留一个权威位置。
-- `Commands`、`Environment`、`Target`、`Design`、`Boundary`、`Tools` 和 `Pitfalls` 是可由本 skill 按主题路由更新的记忆目录；`Documents` 正文默认只读，不由本 skill 修改。
-- 主题新增、删除、重命名、移动、拆分或合并时，必须在同一轮同步对应 `MEMORY.md`；仅修正文内容且职责不变时无需机械改索引。
+- `MEMORY.md` in each topic directory only indexes and routes reads; it never holds fact bodies; index links must point to existing sub-topic files.
+- Sub-topic `.md` files in each topic directory record only current facts or reusable execution lessons within that topic's scope, and each fact keeps a single authoritative location.
+- `Commands`, `Environment`, `Target`, `Design`, `Boundary`, `Tools` and `Pitfalls` are memory directories this skill may update by topic routing; `Documents` bodies are read-only by default and are not modified by this skill.
+- When a topic is created, deleted, renamed, moved, split or merged, the corresponding `MEMORY.md` must be synced in the same round; when only body content is corrected and responsibilities are unchanged, there is no need to mechanically update the index.
 
-## 触发条件
+## Trigger Conditions
 
-在对话或执行中确认了以下任一内容时立即使用：已经生效的用户偏好/约束、已实施的设计或边界、长期阶段的实际变化、环境事实、可复用命令/工具、可复用执行经验，或发现记忆与现状冲突。临时推测和单次结果不写入。
+Use it immediately when any of the following is confirmed in conversation or execution: user preferences/constraints already in effect, implemented design or boundary, an actual change in a long-term stage, environment facts, reusable commands/tools, reusable execution lessons, or discovered conflicts between memory and the current state. Temporary speculation and single results are not written.
 
-## 更新流程
+## Update Process
 
-1. 触发条件满足后立即执行；先确认内容是当前事实或可复用执行经验。若不是事实/经验，停止本 skill。
-2. 判断事实所属的 `Commands`、`Environment`、`Target`、`Design`、`Boundary`、`Tools` 或 `Pitfalls` 主题。
-3. 读取该主题的 `MEMORY.md` 索引，只按索引读取相关正文；不要读取无关主题。
-4. **在首次写入或结构变化前**读取 [project-memory-format.md](references/project-memory-format.md)，按其中的事实归属、索引和分流规则执行。
-   若参考文件暂不可见，至少保持：`MEMORY.md` 只含索引、正文与索引一一对应、事实只保留一个权威位置；按当前已有格式继续并在结果中说明风险。
-5. 以当前代码、配置、脚本、diff 和验证结果为准：优先更新已有语义明确的正文；只有形成独立读取单元才新建正文，并在同一轮更新索引。
-6. 如果移动、拆分、合并或删除正文，原子更新对应 `MEMORY.md`；内容修正且职责不变时无需机械改索引。
-7. 收尾检查本次涉及主题的索引/正文一一对应、链接有效、无过时重复内容；没有需要写入的事实就不改文件。
+1. Execute immediately once a trigger condition is met; first confirm the content is a current fact or reusable execution lesson. If it is neither, stop this skill.
+2. Decide which topic the fact belongs to: `Commands`, `Environment`, `Target`, `Design`, `Boundary`, `Tools` or `Pitfalls`.
+3. Read that topic's `MEMORY.md` index and read only the relevant bodies per the index; do not read unrelated topics.
+4. **Before the first write or any structural change**, read [project-memory-format.md](references/project-memory-format.md) and follow its fact ownership, indexing and split rules.
+   If the reference file is temporarily not visible, at minimum keep this: `MEMORY.md` contains only indexes, bodies and indexes are one-to-one, and each fact keeps a single authoritative location; continue with the existing format and state the risk in the result.
+5. Base everything on the current code, configuration, scripts, diffs and verification results: prefer updating existing bodies with clear semantics; create a new body only when it forms an independent read unit, and update the index in the same round.
+6. If a body is moved, split, merged or deleted, atomically update the corresponding `MEMORY.md`; when only content is corrected and responsibilities are unchanged, there is no need to mechanically update the index.
+7. At the end, check that the topics touched this round have index/body one-to-one correspondence, valid links, and no outdated duplicates; if there is no fact to write, do not modify files.
 
-## 记忆主题路由
+## Memory Topic Routing
 
-- `Commands`：安装、运行、构建、测试、评估、部署和恢复。
-- `Environment`：工具/版本、硬件、路径、变量、外部服务和平台限制。
-- `Target`：当前已经生效的项目目的、范围和验收标准。
-- `Design`：当前架构、模块职责、协作方式和设计理由。
-- `Boundary`：必须保持的行为、范围外事项、限制和质量底线。
-- `Tools`：可复用的辅助脚本、可视化、统计或数据转换工具。
-- `Pitfalls`：已确认可能重复出现的执行经验、适用场景、识别信号、根因和规避方式；不记录一次性报错或原始日志。
+- `Commands`: install, run, build, test, evaluate, deploy and recover.
+- `Environment`: tools/versions, hardware, paths, variables, external services and platform limits.
+- `Target`: currently effective project purpose, scope and acceptance criteria.
+- `Design`: current architecture, module responsibilities, collaboration model and design rationale.
+- `Boundary`: behavior that must be preserved, out-of-scope items, limits and quality floor.
+- `Tools`: reusable helper scripts, visualizations, statistics or data conversion tools.
+- `Pitfalls`: confirmed execution lessons that may recur, applicable scenarios, detection signals, root cause and avoidance steps; do not record one-off errors or raw logs.
 
-详细格式、拆分/合并条件、初始化规则和主题归属见 `references/project-memory-format.md`。
+Detailed format, split/merge conditions, initialization rules and topic ownership are in `references/project-memory-format.md`.

@@ -166,7 +166,7 @@ persistent-coding-memory/
 
 **AGENTS.md / CLAUDE.md**
 
-- The upstream `AGENTS.md` wins, but **everything below the `# 自定义提示词说明` divider in the target project is preserved** (everything above the divider is replaced)
+- The upstream `AGENTS.md` wins, but **everything below the `<!-- sync-project-config:custom-prompts -->` marker in the target project is preserved** (everything above the marker is replaced)
 - Tool names in the synchronized controlled section are rewritten per platform:
 
   | Source name | Claude Code | ZCode | CodeBuddy / WorkBuddy | OpenCode |
@@ -176,7 +176,7 @@ persistent-coding-memory/
 
   Claude Code's `TaskCreate`/`TaskUpdate`/`TaskList`/`TaskGet` tools are a separate task system; this prompt uses `TodoWrite`. ZCode may additionally expose the read-only `TodoRead`, and WorkBuddy's implementation class is `TodoWriteTool`, while the prompt-facing name is `TodoWrite`. OpenCode uses the lowercase built-ins `todowrite` and `question` (with `todoread` available as its read-only todo counterpart).
 
-- If that divider is absent from `AGENTS.md`, the whole file is overwritten
+- If that marker is absent from `AGENTS.md`, the whole file is overwritten
 
 ---
 
@@ -189,7 +189,7 @@ Every launch **self-updates first**: clone the remote template repo → overwrit
 | bootstrap | Clone the remote source and overwrite the local `sync-project-config/` | Full overwrite |
 | global skill | Install/refresh the global skill directory | Delete then copy |
 | `[1/7]` | Use the already-updated remote config source | — |
-| `[2/7]` | Sync `AGENTS.md` (+ `CLAUDE.md`) and the global skill | Replace above the divider, keep below |
+| `[2/7]` | Sync `AGENTS.md` (+ `CLAUDE.md`) and the global skill | Replace above the marker, keep below |
 | `[3/7]` | Generate platform agents and skills | Full regeneration |
 | `[4/7]` | Sync `.project-memory/` templates | **Only add missing files, never overwrite** |
 | `[5/7]` | Sync `.project-script/` templates | **Only add missing files, never overwrite** |
@@ -426,7 +426,7 @@ CLAUDE.md
 
 What the script **will not** do:
 
-- It does not replace the target project's custom section below the divider; the controlled portion of the root `AGENTS.md` is refreshed from the upstream source and adapts the tool names for Claude Code, ZCode, CodeBuddy, WorkBuddy, and OpenCode. The derived `CLAUDE.md` receives the same Claude mapping.
+- It does not replace the target project's custom section below the marker; the controlled portion of the root `AGENTS.md` is refreshed from the upstream source and adapts the tool names for Claude Code, ZCode, CodeBuddy, WorkBuddy, and OpenCode. The derived `CLAUDE.md` receives the same Claude mapping.
 - It does not treat generated directories as sources, and never syncs back from `.claude/`, `.zcode/`, `.codebuddy/` or `.opencode/`
 - It does not overwrite existing `.project-memory/` or `.project-script/` content in the target project
 - It does not copy credentials, local caches, `settings.local.json`, `CODEBUDDY.local.md`, or the Codex-UI-only `agents/openai.yaml`
@@ -462,7 +462,7 @@ What memory writes **will not** do:
 
 ### Editing `AGENTS.md`
 
-Everything **above** the `# 自定义提示词说明` divider is managed (replaced by the remote version); everything **below** it is each project's custom area (preserved). Put common rules above the divider.
+Everything **above** the `<!-- sync-project-config:custom-prompts -->` marker is managed (replaced by the remote version); everything **below** it is each project's custom area (preserved). Put common rules above the marker.
 
 ---
 
@@ -470,7 +470,7 @@ Everything **above** the `# 自定义提示词说明` divider is managed (replac
 
 **Q: Will a sync wipe the memory I have accumulated in my project?**
 
-No. `.project-memory/` and `.project-script/` use an "add missing only" policy and skip any file that already exists. Only the agent/skill generated directories and the part of `AGENTS.md` above the divider are overwritten.
+No. `.project-memory/` and `.project-script/` use an "add missing only" policy and skip any file that already exists. Only the agent/skill generated directories and the part of `AGENTS.md` above the marker are overwritten.
 
 **Q: Why does the script need network access to clone the repo on first run?**
 

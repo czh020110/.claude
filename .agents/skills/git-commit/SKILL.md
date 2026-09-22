@@ -1,70 +1,70 @@
 ---
 name: git-commit
-description: 用户明确要求提交、commit 或保存更改时，按项目规范分组、验证并创建 git commit。
+description: When the user explicitly asks to commit or save changes, groups them per project convention, verifies, and creates the git commit.
 ---
 
-# 触发条件
+# Trigger Conditions
 
-- 用户明确要求创建 git commit（提交代码、保存更改）时使用。
+- Use when the user explicitly asks to create a git commit (commit code, save changes).
 
-# 提交流程
+# Commit Flow
 
-1. 执行 `git status --short`，查看 `git diff` 和 `git diff --staged`（用户指定范围时按指定范围）。
-2. **按修改目的分组**：不要求全部提交在一个 commit 里。根据代码变更判断修改目的，若明显不属于单次修改（目的不一致，如一个是功能实现、另一个是无关的配置修正），拆成多个 commit 分别提交；每个 commit 的简短描述与详细描述只覆盖自己分组的变更。目的相同的变更保持在一个 commit 内，不强行拆分。
-3. 对每个分组判断变更类型，生成 commit 简短描述：`<类型前缀>: 动词 + 对象 + 目的`。前缀：`feat:` 新增功能或文件；`fix:` 修复 bug 或错误行为；`docs:` 仅文档/说明更新；`test:` 补充或修改测试；`build:` 影响构建系统或外部依赖；`refactor:` 重构不改外部行为。只要涉及任何代码文件（源码、脚本）的修改或删除就不算 `docs:`，只有完全没有代码变更时才用 `docs:`。
-4. 基于真实变更生成每个 commit 的详细描述（commit body）。
-5. 运行验证；无法运行时说明原因。
-6. 按分组依次创建 git commit；**全部提交完成后工作区（未 ignore 部分）必须干净**。最终没有正常执行提交或验证时，必须明确说明具体原因，不要只写"未提交/未执行"。
+1. Run `git status --short` and review `git diff` and `git diff --staged` (when the user specifies a scope, use that scope).
+2. **Group by modification purpose**: it is not required to put everything into one commit. Judge the purpose from the code changes; if the changes clearly do not belong to a single modification (inconsistent purposes, e.g. one is a feature implementation and another is an unrelated config fix), split them into multiple commits and commit each separately; each commit's short and detailed description covers only its own group. Changes with the same purpose stay in one commit and are not split forcibly.
+3. For each group, judge the change type and generate the short commit description: `<type-prefix>: verb + object + purpose`. Prefixes: `feat:` new feature or file; `fix:` bug or incorrect behavior fix; `docs:` only docs/description updates; `test:` add or modify tests; `build:` affects the build system or external dependencies; `refactor:` refactoring that does not change external behavior. Any modification or deletion of code files (source, scripts) disqualifies `docs:`; use `docs:` only when there is no code change at all.
+4. Generate each commit's detailed description (commit body) from the real changes.
+5. Run verification; if it cannot be run, explain why.
+6. Create the git commits group by group; **once all commits are done, the working tree (unignored parts) must be clean**. If the commit or verification did not actually run successfully, state the specific reason; do not just write "not committed / not executed".
 
-# 提交范围与行为
+# Commit Scope and Behavior
 
-- 用户本次指定/排除范围时严格按指定范围提交，不允许回退到"全部已更改"；用户本次要求优先于默认。
-- 工作区（未 ignore）出现明显不该提交的部分（本地临时文件、个人配置、密钥类文件等）时，不自行提交也不自行删除，使用 AskUserQuestion 让用户选择：**加入 `.gitignore`** 还是 **直接提交**；按用户选择处理后再继续提交流程。
-- 仓库里存在明显不属于本次任务的改动时，先在结果中报告冲突，不要自行提交。
-- 提交后不做任何分支变更操作，当前分支保持不变。
-- 提交前必须检查不要提交密钥、账号、本地私有路径、临时文件。
+- When the user specifies or excludes a scope this time, commit strictly within that scope and do not fall back to "all changed files"; the user's current request takes priority over the default.
+- When the working tree (unignored) contains parts that clearly should not be committed (local temp files, personal config, credential files, etc.), do not commit or delete them yourself; use AskUserQuestion to let the user choose: **add to `.gitignore`** or **commit directly**; continue the commit flow after handling it per the user's choice.
+- When the repo contains changes clearly unrelated to this task, report the conflict in the result first and do not commit them yourself.
+- After committing, perform no branch operations; the current branch stays unchanged.
+- Before committing, always check that no keys, accounts, local private paths or temp files are being committed.
 
-# 详细 commit 格式
+# Detailed Commit Format
 
 ```text
-<类型前缀>: <commit-description>
+<type-prefix>: <commit-description>
 
-## 变更目标
+## Change Goal
 
-[为什么做本次修改，解决什么问题]
+[Why this change was made, what problem it solves]
 
-## 修改前
+## Before
 
-[修改前的状态、问题、缺口或限制]
+[State, problem, gap or limitation before the change]
 
-## 修改后
+## After
 
-[修改后的状态、能力或行为变化]
+[State, capability or behavior change after the change]
 
-## 关键改动
+## Key Changes
 
-- `[文件路径]`
-  - 修改原因：[为什么改]
-  - 修改内容：[详细说明具体改了什么，必须包含关键函数/接口/文档项；描述行为变化，不复制代码]
-  - 修改影响：[影响哪些行为、规则、模块、接口或文档]
+- `[file path]`
+  - Reason for change: [why it changed]
+  - Change content: [detailed description of what specifically changed; must include the key function/interface/doc item; describe the behavior change, do not copy code]
+  - Change impact: [which behaviors, rules, modules, interfaces or docs are affected]
 
-## 验证结果
+## Verification Result
 
-- [命令或人工检查]：[结果]
+- [command or manual check]: [result]
 
-## 后续事项
+## Follow-ups
 
-- [仍需跟进的风险或任务]
+- [Risks or tasks still needing follow-up]
 ```
 
-# 提交规则
+# Commit Rules
 
-- 每个 git commit 必须同时包含：
-  1. 简短描述：第一行，建议使用“动词 + 对象 + 目的”格式。
-  2. 详细描述：commit body，说明变更目标、修改前后、关键文件、验证结果与后续事项，需与本次真实变更一致。
-- 详细描述必须覆盖：变更目标、涉及文件、修改原因、修改前后差异、关键函数/接口/文档项、验证结果、后续影响。
-- 未验证的内容必须标注未验证原因，不得写"已验证通过"。
-- git 提交详细描述只写解释性总结，不复制代码 diff，不粘贴大段源码。
-- git commit 不得写入 AI 联合作者行（如 `Co-Authored-By: Claude ...`），commit 中不应包含任何 AI 署名。
-- commit 描述（简短描述与详细描述）不得暴露平台内部配置目录或项目记忆目录的维护细节。
-- 需要回顾历史代码版本时，优先读取对应 commit 的详细描述。
+- Every git commit must contain both:
+  1. Short description: the first line, preferably in "verb + object + purpose" form.
+  2. Detailed description: the commit body, explaining the change goal, before/after, key files, verification result and follow-ups, consistent with the real changes this time.
+- The detailed description must cover: change goal, files involved, reason for change, before/after differences, key function/interface/doc items, verification result and follow-on impact.
+- Unverified content must be marked with the reason it was not verified; never write "verification passed".
+- The detailed git commit description is explanatory summary only; do not copy code diffs or paste large source blocks.
+- A git commit must not include an AI co-author line (such as `Co-Authored-By: Claude ...`); the commit must not contain any AI attribution.
+- The commit description (short and detailed) must not expose platform-internal config directories or project memory directory maintenance details.
+- To review a historical code version, prefer reading that commit's detailed description.

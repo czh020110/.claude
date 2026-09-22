@@ -1,16 +1,16 @@
-# Codex 项目级配置
+# Codex project-level config
 tools.update_plan.enabled = true
 
-# AGENTS.md 已包含项目记忆、协作规则与全部项目规则，默认 32 KiB 上限偏紧
+# AGENTS.md already contains project memory, collaboration rules and all project rules; the default 32 KiB cap is too tight
 project_doc_max_bytes = 65536
 
-# 子代理并发上限（max_threads 为兼容别名，0.144.x 与更新版本均可用）
+# Sub-agent concurrency cap (max_threads is a compatible alias, usable on 0.144.x and newer)
 [agents]
 max_concurrent_threads_per_session = 4
 
 [features]
-default_mode_request_user_input = false    # 向用户交互提问工具（request_user_input）；用户可按需开启
-undo = true                               # 改动撤销与回滚
+default_mode_request_user_input = false    # Interactive question tool (request_user_input); the user can enable it as needed
+undo = true                               # Change undo and rollback
 
 [features.multi_agent_v2]
 enabled = true

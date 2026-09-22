@@ -1,80 +1,80 @@
-# 项目记忆与工作流约束
+# Project Memory and Workflow Constraints
 
-本仓库的长期项目记忆位于 `.project-memory/`。记忆采用“索引 + 分块正文”：各主题的 `MEMORY.md` 只做路由，事实正文按需读取。
+This repository's long-term project memory lives in `.project-memory/`. Memory uses an "index + chunked body" layout: each topic's `MEMORY.md` only routes, and fact bodies are read on demand.
 
-## 任务路由
+## Task Routing
 
-- 每个新任务先使用 `read-index-memory` 读取全部主题索引，再按索引只读取与任务相关的正文。
-- 纯咨询、代码审查或外部调研不进入修改闭环；仍须遵守相关的记忆读取、文档查询和输出约束。
-- 新增、修复、重构、配置、测试、文档或提示词同步属于“修改类任务”，按下文完成闭环。
-- `.project-memory/TODO/TODO.md` 是用户维护的待办表；只有用户明确要求写入或更新 TODO 时，才读取并修改对应条目。用户只说“继续处理待办”但未指明写入要求时先询问；普通任务不新增或更新 TODO。
-- 讨论尚未实施的方案、架构、边界或实现决策时，主模型直接登记 `.project-memory/TODO/Pending.md`，不调用 `update-memory`；这类内容在落地并验证前不得写入项目事实记忆。
+- Every new task first uses `read-index-memory` to read all topic indexes, then reads only the bodies relevant to the task.
+- Pure consultation, code review, or external research does not enter the modification loop; the memory-reading, documentation-lookup and output constraints still apply.
+- Adding, fixing, refactoring, configuration, tests, docs or prompt syncs are "modification tasks" and follow the loop below.
+- `.project-memory/TODO/TODO.md` is the user-maintained todo list; read and modify its entries only when the user explicitly asks to write or update TODO. If the user only says "continue with the todos" without specifying what to write, ask first; ordinary tasks must not add or update TODO.
+- When discussing not-yet-implemented plans, architecture, boundaries or implementation decisions, the main model records them directly in `.project-memory/TODO/Pending.md` and does not call `update-memory`; such content must not be written into project fact memory until it is implemented and verified.
 
-## 修改类任务闭环（MUST）
+## Modification Task Loop (MUST)
 
-### 1. 修改前
+### 1. Before modifying
 
-- 读取与当前任务相关的项目记忆正文，确认项目边界、目标、设计和有效约束。
-- 查清修改入口、调用方/被调用方、影响的数据或状态流，以及可用的验证方式。
+- Read the project memory bodies relevant to the current task and confirm the project boundary, target, design and effective constraints.
+- Identify the modification entry point, callers/callees, the affected data or state flow, and the available verification methods.
 
-### 2. 执行
+### 2. Execution
 
-- 仅在任务确实包含三个以上相互依赖的步骤、多个独立决策或其他复杂拆解时使用 `update_plan`；按实际进度更新并立即标记已完成步骤，计划不替代 TODO/Pending。
-- 涉及外部库、框架、SDK、CLI、API、云服务或版本行为时先查官方文档：一两个接口直接查；三个及以上或复杂迁移使用 `docs-research` skill。
-- 复用现有实现和项目约定，做达到目标所需的最小变更；优先标准库/已有依赖，不顺手重构无关内容，也不要为了简洁省掉需求或改变未要求的行为。
-- 复杂任务要持续到“实现、检查结果、修复发现的问题并完成验证”都结束；没有明确需要用户决策的安全边界时，不因第一版实现完成就提前停下。
+- Use `update_plan` only when the task really has more than three interdependent steps, multiple independent decisions, or otherwise complex decomposition; update it with actual progress and mark completed steps immediately. A plan does not replace TODO/Pending.
+- When external libraries, frameworks, SDKs, CLIs, APIs, cloud services or version behavior are involved, check the official documentation first: one or two interfaces can be looked up directly; three or more, or a complex migration, uses the `docs-research` skill.
+- Reuse existing implementations and project conventions; make the smallest change that achieves the goal; prefer the standard library or existing dependencies; do not refactor unrelated code along the way, and do not drop requirements or change unrequested behavior for the sake of brevity.
+- Keep going on complex tasks until "implemented, results checked, found problems fixed, verification complete" are all done; do not stop early just because the first version is implemented, unless a safety boundary genuinely needs a user decision.
 
-### 3. 验证
+### 3. Verification
 
-- 所有完成的修改类任务（包括配置、模板、文档和提示词）都必须执行 `post-verify` skill。
-- 优先复用 `.project-script/MEMORY.md` 中的验证入口；没有匹配脚本时做针对性静态检查、类型/API 检查或测试。新增可复用验证脚本时放在 `.project-script/<验证类型>/` 并同步索引。
-- 发现问题就修复并重跑受影响验证；无法运行时说明原因和替代证据，不把未验证内容写成已通过。
+- Every completed modification task (including configuration, templates, docs and prompts) must run the `post-verify` skill.
+- Prefer reusing the verification entry points in `.project-script/MEMORY.md`; when no script matches, do targeted static checks, type/API checks or tests. When adding a reusable verification script, put it in `.project-script/<verification-type>/` and sync the index.
+- Fix problems found and re-run the affected verification; if it cannot be run, state the reason and the alternative evidence, and never write unverified content as passed.
 
-### 4. 记忆沉淀
-- 记忆沉淀从任务执行过程中确认信息具有长期复用价值时开始，不等到阶段性同步、提交或任务结束。
-- 满足以下任一条件后，主模型必须立即使用 `update-memory` skill：
-  - 当前行为、配置、设计、边界、环境、命令或用户偏好已经实施/生效，并有代码、配置或验证证据；
-  - 执行中确认了可能在后续任务重复出现、能够抽象出适用场景、识别信号和规避方式的可复用执行经验；
-  - 发现现有记忆与当前实现或有效约束不一致，需要修正事实。
-- 不满足触发条件时不调用 `update-memory`：单次结果、临时推测、一次性工具报错、短暂环境故障、原始调试细节和未实施方案不沉淀。
+### 4. Memory consolidation
+- Memory consolidation starts when information is confirmed during execution to have long-term reuse value, not at a staged sync, commit, or task end.
+- Once any of the following holds, the main model must immediately use the `update-memory` skill:
+  - Current behavior, configuration, design, boundary, environment, commands or user preferences have been implemented/taken effect, with code, configuration or verification evidence;
+  - A reusable execution lesson was confirmed during execution that may recur in later tasks and can be abstracted into applicable scenarios, detection signals and avoidance steps;
+  - Existing memory is found to conflict with the current implementation or effective constraints and the facts need correcting.
+- Do not call `update-memory` when the trigger conditions are not met: single results, temporary speculation, one-off tool errors, transient environment failures, raw debug details and unimplemented plans are not consolidated.
 
-## 计划与完成边界
+## Plan and Completion Boundaries
 
-- `update_plan` 只记录当前任务的拆解和状态，不写入项目记忆或 TODO。
-- 完成标准由用户请求决定；默认交付“结果已实现、关键路径已检查、验证证据已记录、剩余风险已说明”。
-- 任务跨越一个长期阶段时，先拆成可验证阶段并更新 `.project-memory/TODO/STEP.md`；空模板不主动设计完整历程表，临时任务不写入 STEP。若同时改变长期方向，先按下条完成用户确认。
-- 需要长期设计、边界或阶段方向变化时，先分析与现状的冲突和风险，再使用 `request_user_input`（必要时多轮）请用户确认；确认前不改对应设计记忆。若当前环境无法交互，采用最小安全假设并在结果中明确说明。
+- `update_plan` only records the decomposition and status of the current task; it does not write project memory or TODO.
+- The completion standard is decided by the user's request; the default delivery is "result implemented, critical path checked, verification evidence recorded, remaining risks stated".
+- When a task spans a long-term stage, first split it into verifiable stages and update `.project-memory/TODO/STEP.md`; do not proactively design a full history table for an empty template, and one-off tasks are not written into STEP. If the long-term direction changes at the same time, complete user confirmation as described in the next item.
+- When long-term design, boundary or stage direction changes are needed, first analyze the conflicts and risks against the current state, then use `request_user_input` (multiple rounds if needed) to ask the user to confirm; do not change the corresponding design memory before confirmation. If the current environment cannot interact, adopt the minimum safe assumption and state it explicitly in the result.
 
-## 代码与配置更新规则
+## Code and Configuration Update Rules
 
-- 先定位根因；能复用就不新增抽象。非 trivial 逻辑必须有可运行检查。
-- 不省略错误处理、安全、可访问性、数据丢失防护或必要的文档；UI 不因“简洁”而牺牲完成度。
-- 修改公共接口、数据模型、配置或状态流前检查全部引用和调用方；共用函数先查所有调用方，在共同路由处一次修好；共享结构的字段含义必须清楚，新增字段说明来源、使用方和默认行为，删除/改名先确认无遗漏。
-- 注释解释原因而非重复代码；迁移、移除或重构后只保留最终状态所需的说明，不留下旧版本叙事或 `*_no_foo` 之类命名。
-- 涉及权限、支付、删除、发布、外部服务写入或其他高风险动作时先确认；任何示例不得写入密钥、token、账号或 Cookie。
-- 不一次性实现未要求的长期目标；每次推进都形成可验证的阶段结果。
+- Locate the root cause first; reuse rather than add new abstractions. Non-trivial logic must have a runnable check.
+- Do not omit error handling, security, accessibility, data-loss protection or necessary documentation; UI must not sacrifice completeness for "conciseness".
+- Before changing a public interface, data model, configuration or state flow, check all references and callers; for shared functions, find all callers first and fix them once at the common route; field meaning in shared structures must be clear, new fields must state their source, consumer and default behavior, and deleting/renaming must first confirm nothing is missed.
+- Comments explain why, not repeat the code; after a migration, removal or refactor, keep only the explanation the final state needs, leaving no old-version narrative or names like `*_no_foo`.
+- Confirm first for permissions, payments, deletion, publishing, external service writes or other high-risk actions; no example may contain keys, tokens, accounts or cookies.
+- Do not implement unrequested long-term goals in one shot; every step forward must produce a verifiable stage result.
 
-## 文档查询边界（MUST）
+## Documentation Lookup Boundary (MUST)
 
-以下情况不得凭记忆实现：接口不确定或疑似过时、版本升级/迁移/弃用、API/SDK 初始化或工具调用变更、用户要求搜索或核实。优先 `context7`，没有该工具或结果不足时再查官方网页；将不确定项明确标出。
+Never implement from memory in these cases: an interface is uncertain or suspected outdated, version upgrade/migration/deprecation, API/SDK initialization or tool invocation changes, or the user asks to search or verify. Prefer `context7`; if that tool is unavailable or the results are insufficient, check the official web page; mark uncertain items explicitly.
 
-## Git 提交
+## Git Commits
 
-只有用户明确要求 commit/提交/保存更改时才提交，并使用 `git-commit` skill。未获明确要求时不创建 commit。
+Commit only when the user explicitly asks to commit/save changes, and use the `git-commit` skill. Do not create a commit without an explicit request.
 
-## TODO 与 Pending
+## TODO and Pending
 
-- `TODO.md` 是用户维护的待办表；只有用户明确要求写入或更新时才允许主模型修改，不得主动新增待办。
-- 讨论尚未实施的方案、架构、边界或实现决策时，主模型立即直接写入 `Pending.md`，不调用 `update-memory`；这类内容在落地并验证前不得写入项目事实记忆。只由主模型维护。
-- Pending 项目完成实现并通过验证后，移除对应条目，再按记忆沉淀触发条件使用 `update-memory` 写入最终事实；方案取消时只移除条目。
-- 被否决的 Pending 也需移除对应条目。
-- 两个文件均只使用复选框记录：`[ ]` 未开始，`[-]` 处理中，`[x]` 已完成。
-- 用户说“继续处理待办/方案”但未指明条目时，根据两个文件内容先询问要处理哪一项并给出推荐。
+- `TODO.md` is the user-maintained todo list; the main model may modify it only when the user explicitly asks to write or update it, and must not add todos proactively.
+- When discussing not-yet-implemented plans, architecture, boundaries or implementation decisions, the main model writes them directly into `Pending.md` and does not call `update-memory`; such content must not be written into project fact memory until it is implemented and verified. Maintained by the main model only.
+- After a Pending item is implemented and verified, remove its entry, then use `update-memory` per the consolidation trigger conditions to write the final fact; if a plan is cancelled, only remove the entry.
+- Rejected Pending items must also have their entries removed.
+- Both files use only checkboxes: `[ ]` not started, `[-]` in progress, `[x]` done.
+- If the user says "continue with the todos/plans" without specifying an item, ask which one to work on first based on the contents of both files and give a recommendation.
 
 ---
 
-# 自定义提示词说明
+<!-- sync-project-config:custom-prompts -->
 
-⬇︎**下列分割线请勿删除**，如需添加项目专属提示词，请在本分隔线下追加。
+**Do not remove the marker above.** Everything above it is managed and replaced on every sync; append project-specific prompts below it.
 
 ---

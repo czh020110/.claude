@@ -1,71 +1,71 @@
 ---
 name: post-verify
-description: 完成代码、配置、模板、文档或提示词修改后，做最终针对性验证并留下证据。
+description: After finishing code, configuration, template, doc or prompt changes, run the final targeted verification and leave evidence.
 ---
 
 # post-verify
 
-修改类任务完成后的最终验证入口，包括验证脚本的复用、创建、索引同步与修复循环。
+The final verification entry point after a modification task completes, covering reuse, creation, index sync and the fix loop for verification scripts.
 
-## 触发时机（MUST）
+## Trigger Timing (MUST)
 
-所有开发、修改类任务（新增/修复/重构/配置/测试/文档/提示词同步）在本轮主体修改完成、准备交付前，必须执行本 skill。
+All development and modification tasks (add/fix/refactor/config/test/docs/prompt sync) must run this skill after the main modifications of this round are done and before delivery.
 
-- 纯咨询、审查、调研请求不需要执行。
-- 未产生任何实际文件变更的任务不需要执行；文档、提示词和 agent/skill 配置变更同样需要做针对性验证。
-- 任务尚未完成的阶段性中间状态不必执行；仅在完成本轮交付的修改后执行。
+- Pure consultation, review and research requests do not need it.
+- Tasks that produced no actual file changes do not need it; doc, prompt and agent/skill configuration changes still need targeted verification.
+- Intermediate states of an unfinished task do not need it; run it only after the modifications for this round's delivery are complete.
 
-## 执行流程（MUST）
+## Execution Flow (MUST)
 
-### 1. 先读验证脚本索引
+### 1. Read the verification script index first
 
-先查看 `.project-script/MEMORY.md`；不存在时按后续步骤建立（见第 4 步）。
+Check `.project-script/MEMORY.md` first; if it does not exist, create it per the later steps (see step 4).
 
-### 2. 确定验证范围
+### 2. Determine the verification scope
 
-以本次任务实际修改的文件为准，覆盖：
+Base it on the files actually modified this time, covering:
 
-- 新增/修改/删除的源码、脚本、配置、模板、文档（涉及替换规则或路径引用时必须检查）。
-- 修改影响的调用方、接口、数据流、页面等下游对象。
+- Added/modified/deleted source code, scripts, configuration, templates and docs (must be checked when replacement rules or path references are involved).
+- Downstream objects affected by the change: callers, interfaces, data flows, pages, etc.
 
-不要只验证“最近一条命令”，要验证任务需求本身的完成度：功能是否符合用户需求、是否满足项目约束、是否存在遗漏或错误。
+Do not verify only "the last command"; verify the completeness of the task requirement itself: whether the functionality matches the user's need, whether project constraints are met, and whether anything is missing or wrong.
 
-### 3. 执行或复用验证
+### 3. Execute or reuse verification
 
-按验证优先级依次选择：
+Choose in order of priority:
 
-1. **复用已有验证脚本**：`MEMORY.md` 中有匹配本次修改的脚本时，按索引记录的入口命令运行。
-2. **已有命令验证**：无专用脚本时，使用静态检查、差异检查、类型检查、导入检查、测试命令等已有命令验证。
-3. **创建可复用脚本**：非 trivial 的逻辑、接口、配置、数据流、页面或安全相关修改，没有合适现有脚本时，创建可复用脚本到 `.project-script/<验证类型>/`。
+1. **Reuse an existing verification script**: when `MEMORY.md` has a script matching this change, run it with the entry command recorded in the index.
+2. **Verify with existing commands**: with no dedicated script, verify using existing commands such as static checks, diff checks, type checks, import checks or test commands.
+3. **Create a reusable script**: for non-trivial logic, interface, configuration, data flow, page or security-related changes with no suitable existing script, create a reusable script in `.project-script/<verification-type>/`.
 
-验证脚本需验证的内容包括但不限于：
+What verification scripts need to cover includes but is not limited to:
 
-1. 代码逻辑：运行相关测试脚本或最小复现命令。
-2. 类型/API：运行类型检查、接口测试或导入检查。
-3. 前端页面：启动并实际查看关键路径；无法查看时说明原因。
-4. 配置变更：验证配置被正确读取。
-5. 文档模板变更：搜索旧项目绑定词，检查引用路径存在。
+1. Code logic: run the relevant test script or a minimal reproduction command.
+2. Type/API: run type checks, interface tests or import checks.
+3. Frontend pages: start them and actually view the critical path; if it cannot be viewed, explain why.
+4. Configuration changes: verify the configuration is read correctly.
+5. Doc/template changes: search for old project-bound words and check that referenced paths exist.
 
-### 4. 管理验证脚本索引
+### 4. Manage the verification script index
 
-新增、删除、移动或重命名可复用脚本时，必须在同一轮同步 `.project-script/MEMORY.md`。
+When adding, deleting, moving or renaming a reusable script, `.project-script/MEMORY.md` must be synced in the same round.
 
-- `.project-script/MEMORY.md` 只记录脚本路径、用途、适用场景、入口命令和必要前置条件，不复制脚本正文。
-- 可复用脚本放在 `.project-script/<验证类型>/`，不要堆在根目录。
-- 没有可复用脚本时不创建空的脚本子目录或虚假索引项。
-- 验证脚本只能通过环境变量或其他安全配置读取凭证，不得保存 API key、token、Cookie。
+- `.project-script/MEMORY.md` records only the script path, purpose, applicable scenarios, entry command and necessary prerequisites; it does not copy the script body.
+- Reusable scripts go in `.project-script/<verification-type>/`; do not pile them at the root.
+- When there is no reusable script, do not create an empty script subdirectory or a fake index entry.
+- Verification scripts may read credentials only from environment variables or other secure configuration, and must never store API keys, tokens or cookies.
 
-### 5. 修复循环
+### 5. Fix loop
 
-验证发现问题时，修复代码后重新验证，直到通过或明确确认剩余问题不影响交付。不得在验证未完成或未说明情况下结束任务。
+When verification finds problems, fix the code and re-verify until it passes or the remaining problems are confirmed not to block delivery. Do not end the task with verification incomplete or unexplained.
 
-### 6. 报告验证结果
+### 6. Report the verification result
 
-向用户报告：
+Report to the user:
 
-- 执行了哪些验证、结果如何。
-- 是否新建/更新了验证脚本及索引。
-- 若无法运行验证，说明原因和替代检查结果。
+- Which verifications were run and what the results were.
+- Whether a verification script and its index were created or updated.
+- If verification could not be run, explain the reason and the alternative check results.
 
-## 边界
-- 简单、低风险的一行修改可以使用静态检查、差异检查或已有命令验证，不强制新建验证脚本；“无需测试”仅表示无需专门新建测试脚本，不表示可以不验证。
+## Boundaries
+- A simple, low-risk one-line change may use static checks, diff checks or existing commands and is not forced to create a new verification script; "no tests needed" only means no dedicated new test script is needed, not that verification can be skipped.

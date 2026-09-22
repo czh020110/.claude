@@ -167,7 +167,7 @@ persistent-coding-memory/
 
 **AGENTS.md / CLAUDE.md**
 
-- 以源码仓库的 `AGENTS.md` 为准，**保留目标项目 `# 自定义提示词说明` 分割线以下的自定义内容**（分割线以上整体替换）
+- 以源码仓库的 `AGENTS.md` 为准，**保留目标项目 `<!-- sync-project-config:custom-prompts -->` 标记以下的自定义内容**（标记以上整体替换）
 - 同步后的受控区工具名按平台改写：
 
   | 源写法 | Claude Code | ZCode | CodeBuddy / WorkBuddy | OpenCode |
@@ -177,7 +177,7 @@ persistent-coding-memory/
 
   Claude Code 的 `TaskCreate`/`TaskUpdate`/`TaskList`/`TaskGet` 是另一套任务系统；这里的提示词统一使用 `TodoWrite`。ZCode 还可以使用只读的 `TodoRead`，WorkBuddy 的实现类名虽然是 `TodoWriteTool`，但提示词面向的工具名是 `TodoWrite`。OpenCode 使用小写内置工具 `todowrite` 和 `question`，并提供只读的 `todoread` 作为 todo 对应工具。
 
-- 若 `AGENTS.md` 中不存在该分割线，则整体覆盖
+- 若 `AGENTS.md` 中不存在该标记，则整体覆盖
 
 ---
 
@@ -190,7 +190,7 @@ persistent-coding-memory/
 | bootstrap | 克隆远程源，覆盖本地 `sync-project-config/` | 全覆盖 |
 | global skill | 安装/刷新全局 Skill 目录 | 先删后拷 |
 | `[1/7]` | 使用已更新的远程配置源 | — |
-| `[2/7]` | 同步 `AGENTS.md`（+ `CLAUDE.md`）与全局 Skill | 分割线以上替换，以下保留 |
+| `[2/7]` | 同步 `AGENTS.md`（+ `CLAUDE.md`）与全局 Skill | 标记以上替换，以下保留 |
 | `[3/7]` | 生成平台 Agent / Skill | 全覆盖生成 |
 | `[4/7]` | 同步 `.project-memory/` 模板 | **只新增缺失文件，不覆盖已有** |
 | `[5/7]` | 同步 `.project-script/` 模板 | **只新增缺失文件，不覆盖已有** |
@@ -428,7 +428,7 @@ CLAUDE.md
 
 脚本**不会**做的事：
 
-- 不覆盖目标项目分割线以下的自定义区；根 `AGENTS.md` 的受控区由源码刷新，并按平台为 Claude Code、ZCode、CodeBuddy、WorkBuddy、OpenCode 适配工具名；派生的 `CLAUDE.md` 使用同一套 Claude 映射。
+- 不覆盖目标项目标记以下的自定义区；根 `AGENTS.md` 的受控区由源码刷新，并按平台为 Claude Code、ZCode、CodeBuddy、WorkBuddy、OpenCode 适配工具名；派生的 `CLAUDE.md` 使用同一套 Claude 映射。
 - 不把生成目录当源，不从 `.claude/`、`.zcode/`、`.codebuddy/`、`.opencode/` 反向同步
 - 不覆盖目标项目已有的 `.project-memory/` 与 `.project-script/` 内容
 - 不复制凭证、本地缓存、`settings.local.json`、`CODEBUDDY.local.md`、Codex UI 专用的 `agents/openai.yaml`
@@ -464,7 +464,7 @@ CLAUDE.md
 
 ### 修改 `AGENTS.md`
 
-`# 自定义提示词说明` 分割线**以上**是受控区（会被远程版本替换），**以下**是各项目的自定义区（会被保留）。公共规则改分割线以上的部分。
+`<!-- sync-project-config:custom-prompts -->` 标记**以上**是受控区（会被远程版本替换），**以下**是各项目的自定义区（会被保留）。公共规则改标记以上的部分。
 
 ---
 
@@ -472,7 +472,7 @@ CLAUDE.md
 
 **Q：同步会不会冲掉我在项目里积累的记忆？**
 
-不会。`.project-memory/` 和 `.project-script/` 用的是"只新增缺失"策略，已有文件一律跳过。只有 Agent/Skill 生成目录和 `AGENTS.md` 分割线以上会被覆盖。
+不会。`.project-memory/` 和 `.project-script/` 用的是"只新增缺失"策略，已有文件一律跳过。只有 Agent/Skill 生成目录和 `AGENTS.md` 标记以上会被覆盖。
 
 **Q：为什么脚本第一次运行要联网克隆仓库？**
 

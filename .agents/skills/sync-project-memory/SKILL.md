@@ -1,61 +1,61 @@
 ---
 name: sync-project-memory
-description: 用户要求 push、pull 或查看项目记忆同步状态时，使用独立远程 git 仓库及其 docs 分支处理 `.project-memory/`。
+description: When the user asks to push, pull or check project memory sync status, handles `.project-memory/` through a standalone remote git repository and its docs branch.
 ---
 
 # sync-project-memory
 
-把 `.project-memory/` 作为独立 git 仓库同步到远程项目记忆仓库。分支由主代码仓库的 `origin` 远程 URL 唯一确定：同一个代码仓库在远程记忆仓库里对应同一个 `docs/<origin-url-slug>` 分支。
+Syncs `.project-memory/` to a remote project memory repository as a standalone git repository. The branch is uniquely determined by the main code repo's `origin` remote URL: the same code repo always maps to the same `docs/<origin-url-slug>` branch in the remote memory repo.
 
-## 项目标识
+## Project Identity
 
-- 唯一标识是主代码仓库 `git remote get-url origin` 返回的 URL。
-- 脚本会把这个 URL 转换成稳定的 `docs/<slug>` 分支名；不要再使用目录名或 `.agents/project-id`。
-- 主代码仓库未配置 origin 时，脚本会直接报错，而不是回退到本地名称。
+- The unique identity is the URL returned by `git remote get-url origin` in the main code repo.
+- The script converts that URL into a stable `docs/<slug>` branch name; do not use a directory name or `.agents/project-id` anymore.
+- When the main code repo has no `origin` configured, the script errors out instead of falling back to a local name.
 
-## 用法
+## Usage
 
-入口脚本是当前 `sync-project-memory` Skill 目录下的 `scripts/sync-memory.sh`，参数为 `pull`、`push` 或 `info`。
+The entry script is `scripts/sync-memory.sh` under the current `sync-project-memory` Skill directory, with the argument `pull`, `push` or `info`.
 
-## 按输出处理
+## Handling by Output
 
-脚本输出后，根据结果向用户汇报：
+After the script outputs, report to the user based on the result:
 
-脚本输出为英文，按下表的关键字匹配向用户汇报：
+The script outputs in English; match the keywords in the table below when reporting to the user:
 
-| 输出关键字 | 要做 |
+| Output keyword | What to do |
 |---|---|
-| `push complete` / `pull complete` / `checked out remote branch` / `merged local content` | 告诉用户成功并简要说明变化 |
-| `has no changes, nothing to push` | 告诉用户无变更 |
-| `[SYNC_ERROR] Argument validation failed` | 转告正确用法；若显示 `URL configured: no`，先配置 URL |
-| `Uncommitted local changes` / `Ahead of remote: N` | 提示用户可用 push |
-| `Behind remote: N` | 提示用户可用 pull |
-| `Remote memory repository URL is not configured` | 见下方「配置 URL」 |
-| `git user identity is not configured` | 让用户先 `git config --global user.name/email` |
-| `push failed, the remote has newer commits` | 让用户先 pull 再 push |
-| `hit a merge conflict` / `hit a content conflict while merging` | 引导手动解决（见「冲突处理」） |
-| `Remote memory repository is not reachable` | 检查 URL、GitHub 仓库是否存在、SSH key / token |
+| `push complete` / `pull complete` / `checked out remote branch` / `merged local content` | Tell the user it succeeded and briefly describe the change |
+| `has no changes, nothing to push` | Tell the user there are no changes |
+| `[SYNC_ERROR] Argument validation failed` | Relay the correct usage; if it shows `URL configured: no`, configure the URL first |
+| `Uncommitted local changes` / `Ahead of remote: N` | Tell the user push is available |
+| `Behind remote: N` | Tell the user pull is available |
+| `Remote memory repository URL is not configured` | See "Configure URL" below |
+| `git user identity is not configured` | Ask the user to run `git config --global user.name/email` first |
+| `push failed, the remote has newer commits` | Ask the user to pull first, then push |
+| `hit a merge conflict` / `hit a content conflict while merging` | Guide manual resolution (see "Conflict Handling") |
+| `Remote memory repository is not reachable` | Check the URL, whether the GitHub repo exists, and the SSH key / token |
 
-> 若 `.project-memory/` 已有文件但还不是 git 仓库（例如刚被 `sync-project-config` 填充模板），脚本会自动纳入版本管理并合并，无需手动处理。
+> If `.project-memory/` already has files but is not yet a git repo (for example it was just populated with templates by `sync-project-config`), the script brings it under version control and merges automatically; no manual action is needed.
 
-## 配置 URL
+## Configure URL
 
-当输出 `Remote memory repository URL is not configured` 时，让用户提供一个 GitHub/GitLab 空仓库 URL（专门存放项目记忆，不是主项目仓库）：
+When the output is `Remote memory repository URL is not configured`, ask the user for a GitHub/GitLab empty repository URL (dedicated to project memory, not the main project repo):
 
-配置入口是当前 `sync-project-memory` Skill 目录下的 `scripts/sync-memory.sh config <URL>`。
+The configuration entry is `scripts/sync-memory.sh config <URL>` under the current `sync-project-memory` Skill directory.
 
-配置后重新执行 pull 或 push。
+After configuring, run pull or push again.
 
-## 冲突处理
+## Conflict Handling
 
-有冲突时脚本会中止，文件中留下 `<<<<<<<` / `=======` / `>>>>>>>` 标记。引导用户：
+On conflict the script aborts and leaves `<<<<<<<` / `=======` / `>>>>>>>` markers in the files. Guide the user:
 
-进入 `.project-memory/` 解决冲突后提交，再运行当前 `sync-project-memory` Skill 目录下的 `scripts/sync-memory.sh push`。
+Enter `.project-memory/`, resolve the conflict and commit, then run `scripts/sync-memory.sh push` under the current `sync-project-memory` Skill directory.
 
-放弃合并：`cd .project-memory && git merge --abort`
+To abandon the merge: `cd .project-memory && git merge --abort`
 
-## 其他命令
+## Other Commands
 
-配置 URL 使用当前 `sync-project-memory` Skill 目录下的 `scripts/sync-memory.sh config <URL>`；查看详细状态使用同一脚本的 `status` 参数。
+Use `scripts/sync-memory.sh config <URL>` under the current `sync-project-memory` Skill directory to configure the URL; use the same script's `status` argument to view detailed status.
 
-跨设备：Skill 随当前平台配置同步；项目标识来自主仓库 origin remote，换设备无需额外配置。远程项目记忆仓库 URL 需跨设备重新配置。
+Across devices: the Skill comes along with the current platform config; the project identity comes from the main repo's origin remote, so switching devices needs no extra configuration. The remote project memory repo URL must be reconfigured on each device.

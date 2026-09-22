@@ -1,44 +1,44 @@
 ---
 name: docs-research
-description: 需要同时核实三个以上外部库/接口，或单个技术问题涉及复杂版本/迁移细节时，委托 docs_research agent 查官方资料。
+description: When three or more external libraries/interfaces need to be verified at once, or a single technical question involves complex version/migration details, delegate to the docs_research agent to check official sources.
 ---
 
 # docs-research
 
-批量查询外部技术文档的入口。由主模型调用 `docs_research` agent 完成查询；本 skill 只负责组织问题、调用和整理结果。
+Entry point for batched external technical documentation lookups. The main model calls the `docs_research` agent to do the lookup; this skill only organizes the questions, invokes, and assembles the results.
 
-## 触发场景（MUST）
+## Trigger Scenarios (MUST)
 
-- 需要查询 3 个及以上技术文档/接口/库/框架/SDK。
-- 单个接口查询但涉及多个版本、迁移、认证或构建细节，直接查询效率低的复杂场景。
-- 当前任务里多个外部依赖的用法需要同时确认。
+- Three or more technical docs/interfaces/libraries/frameworks/SDKs need to be looked up.
+- A single interface lookup that involves multiple versions, migration, authentication or build details — a complex scenario where a direct lookup is inefficient.
+- Usage of multiple external dependencies in the current task needs to be confirmed at the same time.
 
-少于 3 个接口时不用本 skill，主模型直接使用 `context7` 或网络搜索工具查询。
+Do not use this skill for fewer than three interfaces; the main model queries directly with `context7` or web search tools.
 
-## 调用方式（MUST）
+## Invocation (MUST)
 
-1. **把问题拆成几个独立问题**：每个待查询的库/接口/场景对应一个 `### 问题 N：...`。问题必须是可被独立答复的：
-   - `GLM-5.3 的 Anthropic Messages 接口 client 初始化参数有哪些`
-   - `context7 在 Codex config.toml 里的 MCP 配置格式`
-   - `当前版本是否已弃用某接口，推荐替换方式`
-2. **调用 `docs_research` agent**：通过平台对应的 subagent 调用机制，prompt 传 `### 问题 N：<具体问题>` 列表。
-3. **agent 返回后整理结果**：每个问题都要有 `结论 / 依据 / 建议用法 / 风险与不确定项`；如果某问题没有结论，向用户说明未确认，不能靠猜补全。
+1. **Split the questions into several independent ones**: each library/interface/scenario to look up becomes one `### Question N: ...`. Questions must be independently answerable:
+   - `What client initialization parameters does GLM-5.3's Anthropic Messages interface have`
+   - `The MCP configuration format for context7 in Codex config.toml`
+   - `Whether a certain interface is deprecated in the current version, and the recommended replacement`
+2. **Call the `docs_research` agent**: through the platform's corresponding subagent invocation mechanism, passing the `### Question N: <specific question>` list in the prompt.
+3. **Assemble the results after the agent returns**: every question needs `Conclusion / Evidence / Suggested usage / Risks and uncertainties`; if a question has no conclusion, tell the user it is unconfirmed and do not guess to fill it in.
 
-## 纯文档查询助手（MUST）
+## Pure Documentation Lookup Assistant (MUST)
 
-`docs_research` 是纯文档查询助手，**不需要也不应该查看本地项目代码、文件、配置或仓库结构**。调用时只传需要查询的技术问题本身，不要附带本地代码片段、文件路径、diff 或项目上下文；它只基于 `context7` 和网络搜索工具返回外部技术资料。
+`docs_research` is a pure documentation lookup assistant and **does not need to and should not inspect local project code, files, configuration or repo structure**. When invoking it, pass only the technical questions themselves; do not attach local code snippets, file paths, diffs or project context; it returns external technical material based only on `context7` and web search tools.
 
-## 问题组织模板
+## Question Template
 
 ```md
-### 问题 1：<库/接口 A> 的官方推荐用法是什么？
+### Question 1: What is the officially recommended usage of <library/interface A>?
 
-### 问题 2：<库/接口 B> 当前版本是否已弃用旧接口？替换方式是什么？
+### Question 2: Is the old interface of <library/interface B> deprecated in the current version? What replaces it?
 
-### 问题 3：<库/接口 C> 在 <平台> 的配置/调用格式？
+### Question 3: What is the configuration/invocation format of <library/interface C> on <platform>?
 ```
 
-## 边界
+## Boundaries
 
-- 只查询外部技术资料，不查询 `.project-memory/` 项目内部文档。
-- 收到结果后，如需补充细节，主模型可根据 agent 给出的来源自行使用 `context7` / 搜索工具查询。
+- Look up only external technical material; do not look up internal project docs in `.project-memory/`.
+- After receiving results, if more detail is needed, the main model can use `context7` / search tools itself against the sources the agent provided.
