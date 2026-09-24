@@ -151,7 +151,42 @@ copy_tree() {
     if cmp -s "$src_file" "$dest_file" 2>/dev/null; then
       continue
     fi
-    cp -f "$src_file" "$dest_file"
+    if [ "$(basename "$src")" = ".codex" ] && [[ "$rel_path" == agents/*.toml ]] && [ -f "$dest_file" ]; then
+      python3 - "$src_file" "$dest_file" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+source, target = (Path(path) for path in sys.argv[1:3])
+source_text = source.read_text(encoding="utf-8")
+target_text = target.read_text(encoding="utf-8")
+
+def split_agent_header(text):
+    match = re.search(r"(?m)^developer_instructions\s*=\s*\"\"\"", text)
+    if match is None:
+        return text, ""
+    return text[:match.start()], text[match.start():]
+
+source_header, source_body = split_agent_header(source_text)
+target_header, _ = split_agent_header(target_text)
+target_effort = re.search(r"(?m)^model_reasoning_effort\s*=\s*.*$", target_header)
+if target_effort is not None:
+    source_effort = re.search(r"(?m)^model_reasoning_effort\s*=\s*.*$", source_header)
+    if source_effort is not None:
+        source_header = source_header[:source_effort.start()] + target_effort.group(0) + source_header[source_effort.end():]
+    else:
+        model_line = re.search(r"(?m)^model\s*=\s*.*$", source_header)
+        if model_line is not None:
+            insert_at = model_line.end()
+            source_header = source_header[:insert_at] + "\n" + target_effort.group(0) + source_header[insert_at:]
+        else:
+            source_header = source_header.rstrip("\n") + "\n" + target_effort.group(0) + "\n\n"
+    print(f"  ✓ preserved reasoning effort: {target}")
+target.write_text(source_header + source_body, encoding="utf-8")
+PY
+    else
+      cp -f "$src_file" "$dest_file"
+    fi
     echo "  ✓ synced: ${dest_file#"$PROJECT_DIR/"}"
   done < <(cd "$src" && find . -type f -print0)
 }
@@ -330,6 +365,9 @@ for source in sorted(source_dir.glob("*.toml")):
     target_name = source_name.replace("_", "-")
     description = desc_match.group(1)
     body = body_match.group(1)
+    source_header = text[:body_match.start()]
+    effort_match = re.search(r'^model_reasoning_effort\s*=\s*"([^"]+)"\s*$', source_header, re.MULTILINE)
+    source_effort = effort_match.group(1) if effort_match else None
     lines = ["---"]
     # OpenCode derives the agent name from the file name, so no `name:` key is emitted.
     if platform != "opencode":
@@ -347,8 +385,61 @@ for source in sorted(source_dir.glob("*.toml")):
             lines.append(f"disallowedTools: {disallowed}")
     elif platform == "opencode":
         lines.append("mode: subagent")
+
+    effort_fields = {
+        "claude": ("effort", {"low", "medium", "high", "xhigh", "max"}, ("effort",)),
+        "zcode": ("thoughtLevel", {"low", "high", "max"}, ("thoughtLevel",)),
+        "codebuddy": ("effort", {"minimal", "low", "medium", "high", "xhigh", "max"}, ("effort",)),
+        # WorkBuddy has no documented per-subagent effort key. Preserve existing
+        # user-authored effort metadata, but do not synthesize an undocumented key.
+        "workbuddy": (None, set(), ("effort", "thoughtLevel", "reasoningEffort", "reasoning_effort", "model_reasoning_effort", "reasoningLevel", "reasoning_level", "thinking", "thinkingLevel", "thinking_level")),
+        # OpenCode passes provider-specific options through; reasoningEffort is
+        # supported by OpenAI reasoning models. A pre-existing variant is also a
+        # user setting and takes precedence over the source default.
+        "opencode": ("reasoningEffort", {"none", "minimal", "low", "medium", "high", "xhigh"}, ("reasoningEffort", "variant")),
+    }
+    default_effort_field, accepted_efforts, preserved_effort_keys = effort_fields[platform]
+    target_file = target_dir / f"{target_name}.md"
+    existing_effort_lines = []
+    if target_file.is_file():
+        old_text = target_file.read_text(encoding="utf-8")
+        if old_text.startswith("---\n"):
+            old_end = old_text.find("\n---\n", 4)
+            if old_end >= 0:
+                old_frontmatter = old_text[4:old_end].splitlines()
+                old_index = 0
+                while old_index < len(old_frontmatter):
+                    old_line = old_frontmatter[old_index]
+                    key, separator, value = old_line.partition(":")
+                    preserve_line = separator and key in preserved_effort_keys
+                    preserve_model_variant = platform == "opencode" and separator and key == "model" and "#" in value
+                    if preserve_line or preserve_model_variant:
+                        existing_effort_lines.append(old_line)
+                        old_index += 1
+                        while old_index < len(old_frontmatter) and (old_frontmatter[old_index].startswith((" ", "\t")) or not old_frontmatter[old_index].strip()):
+                            existing_effort_lines.append(old_frontmatter[old_index])
+                            old_index += 1
+                        continue
+                    old_index += 1
+
+    if existing_effort_lines:
+        # Retain the target agent's own setting instead of replacing it with the
+        # generated source default. Preserve model#variant where it carries effort.
+        lines.extend(existing_effort_lines)
+        print(f"  ✓ preserved reasoning effort: {target_file}")
+    elif platform == "claude" and source_name in claude_models and source_effort:
+        # Effort availability depends on the pinned Claude model; don't guess.
+        print(f"  ! skipped reasoning effort for {target_name}: availability is unconfirmed for model {claude_models[source_name]}")
+    elif default_effort_field and source_effort:
+        if source_effort in accepted_efforts:
+            lines.append(f"{default_effort_field}: {json.dumps(source_effort)}")
+        else:
+            print(f"  ! skipped unsupported {platform} reasoning effort '{source_effort}' for {target_name}")
+    elif platform == "workbuddy" and source_effort:
+        print(f"  ! skipped reasoning effort for {target_name}: no documented WorkBuddy subagent field")
+
     lines += ["---", body, ""]
-    (target_dir / f"{target_name}.md").write_text("\n".join(lines), encoding="utf-8")
+    target_file.write_text("\n".join(lines), encoding="utf-8")
 PY
 
   echo "  ✓ Agent: $dest"

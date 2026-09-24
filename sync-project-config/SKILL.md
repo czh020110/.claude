@@ -76,11 +76,15 @@ If the global configuration is not writable or the current client does not suppo
 - `workbuddy-cn`: same as `workbuddy`, for the domestic build.
 - `opencode`: generates `.opencode/agents/` and `.opencode/skills/` from the Codex source; the global skill uses the canonical directory directly (OpenCode reads `~/.agents/skills/` natively) and no symlink is created — OpenCode requires skill names to be unique across locations, and duplicates cause conflicts.
 
+## Subagent Reasoning Effort
+
+When syncing same-named agents, preserve an existing target-side reasoning setting instead of replacing it with the source default. Codex uses `model_reasoning_effort`; generated files use Claude `effort`, ZCode `thoughtLevel`, CodeBuddy `effort`, and OpenCode `reasoningEffort` (provider/model-specific). OpenCode's existing `variant` or `model` value with a `#variant` is also preserved because it may encode reasoning effort. WorkBuddy has no confirmed per-subagent effort field in the official documentation, so preserve existing effort metadata but do not generate an undocumented field. If the source level is unsupported or compatibility with the selected model/provider cannot be confirmed, keep any target-side setting and report that the source default was skipped.
+
 All platforms add missing `.project-memory/` and `.project-script/` templates and never overwrite content a project has accumulated. For `.project-memory/`, the first-line title of each file is refreshed from the template on every sync while everything below that title is left untouched. The sync script does not generate or copy project-level MCP configuration files.
 
 ## Boundaries
 
-- `sync.sh` enforces the marker split (replace above, preserve below), the adoption of a marker-less prompt file, the per-platform tool renaming and the credential/cache exclusions. The agent asks for authorization only when it is not already present; after a successful sync it reports the result without reviewing or migrating custom prompts. Migration into `.project-memory/` happens only when the user explicitly requests it.
+- `sync.sh` enforces the marker split (replace above, preserve below), the adoption of a marker-less prompt file, the per-platform tool renaming and the credential/cache exclusions. It also keeps a target agent's existing reasoning setting for the same-named agent; source defaults are translated only when the target platform has a documented compatible field and value. The agent asks for authorization only when it is not already present; after a successful sync it reports the result without reviewing or migrating custom prompts. Migration into `.project-memory/` happens only when the user explicitly requests it.
 - Never hand-edit a generated platform directory, and never sync back from `.claude/`, `.zcode/`, `.codebuddy/` or `.opencode/` into `.codex/` / `.agents/skills/`.
 - Never copy credentials, local caches, `settings.local.json`, `CODEBUDDY.local.md` or the Codex-UI-only `agents/openai.yaml` to another platform.
 - After the script succeeds, report only the sync scope, file changes and verification results.
