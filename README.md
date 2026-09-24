@@ -1,5 +1,9 @@
 # Morrowmark: Vibe Coding - Project Persistence and Memory Management
 
+<p align="center">
+  <img src="assets/morrowmark-logo.png" alt="Morrowmark project icon" width="520">
+</p>
+
 **Project memory and coding-agent workflows for Codex, ZCode, Claude Code, CodeBuddy, WorkBuddy, and OpenCode.**
 
 <p align="center">

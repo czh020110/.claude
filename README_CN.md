@@ -1,5 +1,9 @@
 # Morrowmark: Vibe Coding 项目持久化与记忆管理
 
+<p align="center">
+  <img src="assets/morrowmark-logo.png" alt="Morrowmark 项目图标" width="520">
+</p>
+
 **面向 Codex、ZCode、Claude Code、CodeBuddy、WorkBuddy 和 OpenCode 的项目记忆与编码 Agent 工作流。**
 
 <p align="center">
