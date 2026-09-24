@@ -1,6 +1,6 @@
 ---
 name: handoff
-description: Consolidate confirmed, reusable long-term facts when permitted, then turn the current session's active work into a concise, copyable continuation prompt. Use when the user asks for a handoff, session transfer, or prompt to continue work elsewhere.
+description: Review current-session candidates for eligible memory updates, then create a concise continuation prompt. Use for handoffs or session transfers.
 ---
 
 # handoff
@@ -11,8 +11,8 @@ First consolidate any confirmed, reusable long-term facts that belong in memory.
 
 ### 1. Review and Consolidate Memory
 
-- Review only the current conversation to identify candidate memories. Persist only confirmed, reusable, long-term project facts, settled design decisions, or explicitly stated project-scoped preferences and constraints.
-- Do not persist temporary task context, current progress, immediate next steps, one-off debugging details, unapproved proposals, assumptions, or unverified claims. Do not investigate or infer facts to make them appear durable. If an item is unverified, leave it out of memory and consider including it in the handoff as unverified when it matters to the next step.
+- Review only the current conversation to identify candidate memories. Persist confirmed, reusable, long-term project facts, settled design decisions, explicit project-scoped preferences and constraints, and qualifying repeated preferences or boundaries marked as inferred under the `update-memory` rules.
+- Do not persist temporary task context, current progress, immediate next steps, one-off debugging details, unapproved proposals, speculative assumptions, or unverified implementation claims. Repeated preference or boundary signals may be included only under the `update-memory` evidence rule and must be marked as inferred. If a technical claim is unverified, leave it out of memory and consider including it in the handoff as unverified when it matters to the next step.
 - Only pass facts to `update-memory` when their confirmation or supporting evidence is already present in the current conversation; do not inspect source code, run new verification, or use external information to prove a candidate.
 - If eligible facts exist and memory updates are allowed, use the `update-memory` skill and follow its rules. Respect any user instruction or project boundary that prohibits memory writes. If no eligible facts exist, writes are prohibited, or the skill is unavailable, skip memory writing and continue to the handoff.
 - If memory writing fails or only partially completes, do not claim all candidate facts were stored. Continue to the handoff and exclude only facts confirmed as successfully persisted.

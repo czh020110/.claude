@@ -1,16 +1,16 @@
 ---
 name: update-memory
-description: Write a confirmed project fact — implemented, or declared by the user — into project memory.
+description: Write project memory candidates passed by the current workflow according to the shared evidence and topic rules.
 ---
 
 # update-memory
 
-Write only confirmed facts and reusable execution lessons into project memory.
+Process memory candidates passed by the calling workflow and write eligible entries into project memory.
 
 ## Write Scope
 
-- Count as project facts, and write into the matching topic: implemented behavior, configuration, environment, commands, tools and design, resting on code, configuration, diffs or verification results; and project purpose, scope, boundaries, constraints and project-scoped preferences, resting on the user's explicit statement or approval. A preference that would hold in every project is not a project fact — it belongs in the user-level memory. `Design` describes code that exists; a design decision that is not implemented yet is not a fact and goes to `.project-memory/Plan/`.
-- Execution lessons confirmed during the task that may recur and can be generalized into applicable scenarios, detection signals and avoidance steps may be written into `Pitfalls`.
+- Do not scan the conversation to discover when this skill should trigger; process only candidate items passed to it. Use the shared format reference for eligibility, evidence, topic ownership and placement.
+- Execution-lesson candidates passed by the caller may be written into `Pitfalls` only when execution confirms recurrence risk and reusable scenarios, detection signals or avoidance steps.
 
 ## Boundaries
 
@@ -26,12 +26,12 @@ Write only confirmed facts and reusable execution lessons into project memory.
 
 ## Update Process
 
-1. Execute once a trigger condition is met — inside a modification task, after that task's verification has passed; first confirm the content is a current fact or reusable execution lesson. If it is neither, stop this skill.
+1. Process the candidate supplied by the current workflow. Check it against the shared memory format's evidence and exclusion rules; if it does not qualify, stop without writing.
 2. Decide which topic the fact belongs to: `Commands`, `Environment`, `Target`, `Design`, `Boundary`, `Preferences`, `Tools` or `Pitfalls`.
 3. Read that topic's `MEMORY.md` index and read only the relevant bodies per the index; do not read unrelated topics.
 4. **Before the first write or any structural change**, read [project-memory-format.md](references/project-memory-format.md) and follow its fact ownership, indexing and split rules.
    If the reference file is temporarily not visible, at minimum keep this: `MEMORY.md` contains only indexes, bodies and indexes are one-to-one, and each fact keeps a single authoritative location; continue with the existing format and state the risk in the result.
-5. Base implemented facts on the current code, configuration, scripts, diffs and verification results; base declared facts on the user's explicit statement. Prefer updating an existing body; create a new one only when a reader would fetch it on its own rather than as part of an existing body, and update the index in the same change. Name each child body more narrowly than its parent topic; do not repeat the parent name or use a same-granularity synonym (for example, `Target/项目目标` / `Target/Project goals` or `Design/项目设计` / `Design/Project design`). Follow the shared format spec's Sub-topic Naming Granularity rule.
+5. Follow the shared format spec's evidence, placement and naming rules. Prefer updating an existing body; create a new one only when a reader would fetch it on its own rather than as part of an existing body, and update the index in the same change.
 6. If a body is moved, split, merged or deleted, update its `MEMORY.md` in the same change. When only the content changed and responsibilities did not, the index does not need updating.
 7. At the end, check that the topics touched have index/body one-to-one correspondence, valid links, no outdated duplicates, and no child name that merely repeats the parent topic's granularity; if there is no fact to write, do not modify files.
 

@@ -19,9 +19,9 @@ Morrowmark gives each repository durable, project-local context. It records conf
 ## Task Workflow
 
 1. Read the topic indexes and TODO, then only the relevant memory bodies.
-2. Do the requested project work.
-3. Run `post-verify` for every modification before delivery.
-4. After verification, use `update-memory` to save only confirmed, reusable facts. Do not save unverified claims or temporary task progress.
+2. As durable project preferences or boundaries become clear, record them; repeated, consistent signals may be recorded as inferred.
+3. Do the requested project work and run `post-verify` for every modification before delivery.
+4. After `post-verify`, make one final memory pass for implementation facts, conflicts with existing memory, and execution lessons with confirmed recurrence risk and reuse value. Exclude unverified claims and temporary progress.
 
 ## Quick Start
 

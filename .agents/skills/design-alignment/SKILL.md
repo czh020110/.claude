@@ -5,17 +5,7 @@ description: Use when a design is added, changed, or found to conflict: settles 
 
 # design-alignment
 
-Settles a design with the user before any of it is implemented — a new design, a change to an existing one, or a conflict or problem found in the current design. The result is one agreed design recorded in `.project-memory/Plan/`.
-
-## Trigger Boundary
-
-Use this skill when any of these happens:
-
-- the user proposes a new design, or a change to an existing one;
-- the design conflicts with the current implementation, with another design, with an effective constraint, or with what `.project-memory/Plan/` says the project is meant to be;
-- the design looks wrong, risky or infeasible.
-
-Do not use it for a mechanical decision (naming, formatting, file layout) or when the user has already settled the design and only wants it implemented.
+Use the following process to settle the design with the user before implementation and record the agreed result in `.project-memory/Plan/`.
 
 ## Process
 

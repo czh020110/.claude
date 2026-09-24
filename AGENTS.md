@@ -8,6 +8,13 @@ This repository's long-term project memory lives in `.project-memory/`. Memory u
 - Pure consultation, code review, or external research does not enter the modification loop; the memory-reading, documentation-lookup and output constraints still apply.
 - Adding, fixing, refactoring, configuration, tests, docs or prompt syncs are "modification tasks" and follow the loop below.
 
+## Memory Capture
+
+- Across all tasks, trigger `update-memory` when a durable project goal, scope, preference or boundary is explicitly stated; do not wait for task completion or technical verification.
+- Stable implicit project preferences or boundaries may also trigger capture as soon as the signal recurs across separate task contexts without a contrary correction; do not wait for task completion or technical verification. `update-memory` handles their evidence and inference label.
+- Immediately after `post-verify` passes, perform one final memory review before delivery: inspect the completed work for implementation-derived facts, conflicts with existing memory, and execution lessons with confirmed recurrence risk and reusable conditions; pass eligible candidates to `update-memory`.
+- This final review does not delay eligible explicit or inferred preferences and boundaries; record them when they become clear. Do not record temporary progress, unresolved proposals or unsupported technical claims.
+
 ## Modification Task Loop (MUST)
 
 ### 1. Before modifying
@@ -28,14 +35,13 @@ This repository's long-term project memory lives in `.project-memory/`. Memory u
 
 ### 4. Memory consolidation
 
-- Memory consolidation is the last step of a task: once verification passes and before delivery, write the facts this task confirmed. Do not defer it to a later staged sync or commit.
-- After verification, invoke `update-memory` only when a current fact is confirmed from code, configuration, diffs, verification or an explicit user statement, a reusable execution lesson is confirmed, or existing memory conflicts with the current implementation. Do not record speculation, transient failures or unimplemented plans; follow the skill for topic ownership, index/body consistency and writing procedure.
+- After verification passes, complete the final memory review described in `Memory Capture` before delivery.
 
 ## Plan and Completion Boundaries
 
 - `update_plan` only records the decomposition and status of the current task; it does not write project memory or TODO, nor replace them. The project's design plan is `.project-memory/Plan/` — always write that path in full, never a bare `Plan`.
 - The completion standard is decided by the user's request; the default delivery is "result implemented, critical path checked, verification evidence recorded, remaining risks stated".
-- When a design is added or changed, or a design conflict or problem is found, use the `design-alignment` skill: it settles the design with the user and records the agreed design in `.project-memory/Plan/` before any of it is implemented.
+- Trigger `design-alignment` before implementation when a new design or design change still needs user agreement; when an existing design conflicts with the current implementation, another design, an effective constraint or `.project-memory/Plan/`; or when a design appears wrong, risky or infeasible and needs a decision. A boundary or preference being recorded as memory alone, a mechanical choice, or implementing an already settled design does not trigger it.
 
 ## Code and Configuration Update Rules
 
@@ -61,7 +67,7 @@ Commit only when the user explicitly asks to commit/save changes, and use the `g
 ## TODO and Plan
 
 - TODO is user-maintained; do not add or change entries unless the user explicitly asks. If the user asks to continue TODOs without naming an item, ask which item to take based on TODO and Plan, and make a recommendation.
-- Plan records only settled intended designs, including parts not yet implemented; do not record candidates or unresolved decisions. Use `draft-long-term-plan` only on explicit request; use `design-alignment` for new, changed or conflicting designs; use `collect-update-memory` only on explicit request for a full or staged memory sync. `update-memory` does not edit Plan; `collect-update-memory` may repair its structure only, never its designs.
+- Plan records only settled intended designs, including parts not yet implemented; do not record candidates or unresolved decisions. Use `draft-long-term-plan` only on explicit request; use `collect-update-memory` only on explicit request for a full or staged memory sync. `update-memory` does not edit Plan; `collect-update-memory` may repair its structure only, never its designs.
 - Mark each Plan item `[ ]` (not implemented), `[-]` (in progress), or `[x]` (implemented and verified). Keep implemented entries and write the resulting fact to the matching topic (`Design` for code design) after verification. Remove rejected or cancelled designs without writing a fact.
 
 ---

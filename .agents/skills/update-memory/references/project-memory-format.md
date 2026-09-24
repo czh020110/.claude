@@ -18,6 +18,14 @@ Project memory consists of nine topics: `Commands`, `Environment`, `Documents`, 
 
 Each fact keeps a single authoritative home and other topics reference it by link. New facts go into the matching topic, are not appended to `Target` by time, and never include unsettled plans, still-open decisions, design decisions that are not implemented, modification requests the user has not approved, tutorials, candidate options or change history. Execution-lesson bodies hold only reusable lessons and do not replace normative facts in other topics.
 
+## Evidence for Memory Entries
+
+- User-stated project purpose, scope, boundaries and preferences may be recorded from the explicit statement or approval; no technical verification is required. Keep these project-scoped. Cross-project preferences belong in user-level memory.
+- A project-scoped preference or boundary that the user did not state directly may be recorded as **inferred** when the same signal appears consistently across separate task contexts, with no contrary correction. Record that it is inferred and its brief conversational basis; do not infer it from a single task-specific request, silence or an unresolved option.
+- Implementation facts require evidence from the current code, configuration, diffs or verification. For a modification, wait for `post-verify` before recording them.
+- An intended design belongs in `Plan/` only after the user agrees to it; it may be recorded before implementation. Reusable execution lessons require a confirmed recurrence basis.
+- Never store temporary task progress, unverified implementation claims or speculation. If evidence is unclear, omit the entry or ask only when the ambiguity blocks a decision.
+
 ## Index Rules
 
 `MEMORY.md` may contain only index lines. If a body exists it must have an index, and an index must not point at a missing file. Index descriptions must state coverage, key objects and the task scenarios in which the file should be read, and must avoid restating volatile implementation details.
@@ -32,7 +40,7 @@ Structural changes (create, delete, rename, move, split, merge) must land in the
 
 ## Sub-topic Naming Granularity
 
-A topic directory names a broad ownership area; each child body must name a strictly narrower, independently retrievable subject within it. Do not name a child with the parent topic's name, a same-granularity synonym, or a broad catch-all label. For example, under `Target`, `项目目标` / `project-goals` merely repeats the parent topic's broad scope; under `Design`, `项目设计` / `project-design` does the same. These are invalid child names. Prefer a name that identifies the actual narrower scope, such as `Target/supported-repositories-and-acceptance.md` or `Design/sync-orchestration-and-agent-boundaries.md`, only when that scope is truly covered by the body.
+A topic directory names a broad ownership area; each child body must name a strictly narrower, independently retrievable subject within it. Do not name a child with the parent topic's name, a same-granularity synonym, or a broad catch-all label. For example, `Target/Project goals`, `Design/Project design` and `Commands/Project commands` merely repeat their parent topics' broad scopes; these are invalid child names. Prefer a name that identifies the actual narrower scope, such as `Target/supported-repositories-and-acceptance.md` or `Design/sync-orchestration-and-agent-boundaries.md`, only when that scope is truly covered by the body.
 
 Do not invent narrower scope just to satisfy naming. If a body covers the parent topic as a whole, organize its facts into genuine subtopics only when the split criteria support them; otherwise report that no valid narrower division is evident instead of creating a redundant child. File names and index labels, plus headings used only as structural titles, may be narrowed to reflect the body's actual scope. Do not rewrite fact statements or settled design content to make a title fit; report a conflict when a compliant name would require changing that content.
 
@@ -54,7 +62,7 @@ Do not invent narrower scope just to satisfy naming. If a body covers the parent
 ## Write Decisions
 
 1. First read the target topic's `MEMORY.md`, then read only the relevant bodies per the index; do not scan unrelated topics.
-2. Prefer updating an existing body for the same object/workflow; create a new topic only when there is genuinely an independent read scenario, a complete workflow, or a different code path. Give every child a name narrower than its parent topic, following "Sub-topic Naming Granularity"; never use a same-level restatement such as `Target/Project goals` or `Design/Project design`.
+2. Prefer updating an existing body for the same object/workflow; create a new topic only when there is genuinely an independent read scenario, a complete workflow, or a different code path. Follow "Sub-topic Naming Granularity" when naming each child body.
 3. When judging whether to split, look at semantic boundaries first: different read conditions, entry/output/verification methods, independent evolution, or a merged file that is clearly too long (about 250–300 lines or more) can be split; short documents that are always read and modified together should be merged.
 4. Bodies record only current facts, each stating its basis: code, configuration, diffs or verification results for implemented facts, the user's explicit statement for declared ones. Never write passwords, tokens, private keys, cookies or other directly usable credentials; record only variable names and secure configuration methods.
 5. Do not change the language that existing memory documents are written in (English, Chinese, etc.).
