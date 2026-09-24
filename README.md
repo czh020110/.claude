@@ -2,9 +2,13 @@
 
 **Project memory and coding-agent workflows for Codex, ZCode, Claude Code, CodeBuddy, WorkBuddy, and OpenCode.**
 
-[简体中文](README_CN.md) | **English**
+<p align="center">
+  <a href="README_CN.md">简体中文</a> | <strong>English</strong>
+</p>
 
-[![platforms](https://img.shields.io/badge/platforms-Codex%20%7C%20ZCode%20%7C%20Claude%20Code%20%7C%20CodeBuddy%20%7C%20WorkBuddy%20%7C%20OpenCode-blue)](https://github.com/czh020110/.claude)
+<p align="center">
+  <a href="https://github.com/czh020110/Morrowmark"><img alt="platforms" src="https://img.shields.io/badge/platforms-Codex%20%7C%20ZCode%20%7C%20Claude%20Code%20%7C%20CodeBuddy%20%7C%20WorkBuddy%20%7C%20OpenCode-blue"></a>
+</p>
 
 **A codebase that remembers—and an agent that can pick up the thread.**
 
