@@ -18,25 +18,18 @@ This repository's long-term project memory lives in `.project-memory/`. Memory u
 ### 2. Execution
 
 - Use `update_plan` only when the task really has more than three interdependent steps, multiple independent decisions, or otherwise complex decomposition; update it with actual progress and mark completed steps immediately.
-- When external libraries, frameworks, SDKs, CLIs, APIs, cloud services or version behavior are involved, follow the Documentation Lookup Boundary below.
+- For external documentation and version-sensitive changes, follow the Documentation Lookup Boundary below.
 - Reuse existing implementations and conventions; make the smallest change that works; prefer the standard library or existing dependencies; do not refactor unrelated code, drop requirements, or change behavior that was not asked for.
 - Keep going on complex tasks until "implemented, results checked, found problems fixed, verification complete" are all done; do not stop early just because the first version is implemented, unless a safety boundary genuinely needs a user decision.
 
 ### 3. Verification
 
 - Every completed modification task (including configuration, templates, docs and prompts) must run the `post-verify` skill.
-- Prefer reusing the verification entry points in `.project-script/MEMORY.md`; when no script matches, do targeted static checks, type/API checks or tests. When adding a reusable verification script, put it in `.project-script/<verification-type>/` and sync the index.
-- Fix problems found and re-run the affected verification; if it cannot be run, state the reason and the alternative evidence, and never write unverified content as passed.
 
 ### 4. Memory consolidation
 
 - Memory consolidation is the last step of a task: once verification passes and before delivery, write the facts this task confirmed. Do not defer it to a later staged sync or commit.
-- Use the `update-memory` skill when any of the following holds:
-  - A current fact is confirmed with a basis you can point at: implemented behavior, configuration, environment, commands, tools and design rest on code, configuration, diffs or verification results; purpose, scope, boundaries, constraints and preferences rest on the user's explicit statement or approval. The body must say which basis it rests on;
-  - A reusable execution lesson confirmed during the task may recur in later tasks and can be abstracted into applicable scenarios, detection signals and avoidance steps;
-  - Existing memory is found to conflict with the current implementation or effective constraints and the facts need correcting.
-- Memory writes are checked by `update-memory`'s own final index/body check, not by `post-verify`; writes to `.project-memory/Plan/` are checked the same way.
-- Do not call `update-memory` when the trigger conditions are not met: single results, temporary speculation, one-off tool errors, transient environment failures, raw debug details and unimplemented plans are not consolidated.
+- After verification, invoke `update-memory` only when a current fact is confirmed from code, configuration, diffs, verification or an explicit user statement, a reusable execution lesson is confirmed, or existing memory conflicts with the current implementation. Do not record speculation, transient failures or unimplemented plans; follow the skill for topic ownership, index/body consistency and writing procedure.
 
 ## Plan and Completion Boundaries
 
@@ -59,9 +52,7 @@ This repository's long-term project memory lives in `.project-memory/`. Memory u
 
 ## Documentation Lookup Boundary (MUST)
 
-Never implement from memory in these cases: an interface is uncertain or suspected outdated, version upgrade/migration/deprecation, API/SDK initialization or tool invocation changes, or the user asks to search or verify.
-
-When external libraries, frameworks, SDKs, CLIs, APIs, cloud services or version behavior are involved, check the official documentation first: one or two interfaces can be looked up directly; three or more, or a complex migration, uses the `docs-research` skill. Prefer `context7`; if that tool is unavailable or the results are insufficient, check the official web page; mark uncertain items explicitly.
+For external libraries, frameworks, SDKs, CLIs, APIs, cloud services or version behavior, never implement from memory when details are uncertain or possibly outdated, an upgrade/migration/deprecation or initialization/tool-invocation change is involved, or the user asks to search or verify. Check official documentation first; look up one or two interfaces directly, and use the `docs-research` skill for three or more or a complex migration.
 
 ## Git Commits
 

@@ -18,7 +18,9 @@ Entry point for batched external technical documentation lookups. The main model
 
 ## Pure Documentation Lookup Assistant (MUST)
 
-`docs_research` is a pure documentation lookup assistant and **does not need to and should not inspect local project code, files, configuration or repo structure**. When invoking it, pass only the technical questions themselves; do not attach local code snippets, file paths, diffs or project context; it returns external technical material based only on `context7` and web search tools.
+`docs_research` is a pure documentation lookup assistant and **does not need to and should not inspect local project code, files, configuration or repo structure**. When invoking it, pass only the technical questions themselves; do not attach local code snippets, file paths, diffs or project context; it returns external technical material based only on `context7` and other search tools.
+
+Prefer `context7`; if that tool is unavailable or its results are insufficient, use other search tools to determine the details.
 
 ## Question Template
 
