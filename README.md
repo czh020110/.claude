@@ -10,6 +10,19 @@
 
 Morrowmark gives each repository durable, project-local context. It records confirmed current facts separately from settled future designs, and guides agents to load relevant topics as work changes. Shared skills and subagents make planning, documentation research, verification, and memory updates reusable across six coding clients. Memory stays in the project repository, not the client's global memory.
 
+## What It Remembers
+
+- **Project facts:** purpose and scope (`Target`), current implementation (`Design`), boundaries and project-specific preferences (`Boundary`, `Preferences`).
+- **Working knowledge:** commands, environment, project documents, reusable tools, and recurring lessons (`Commands`, `Environment`, `Documents`, `Tools`, `Pitfalls`).
+- **Future design:** settled plans, including work not yet implemented (`Plan/`). `TODO/TODO.md` remains the user's backlog.
+
+## Task Workflow
+
+1. Read the topic indexes and TODO, then only the relevant memory bodies.
+2. Do the requested project work.
+3. Run `post-verify` for every modification before delivery.
+4. After verification, use `update-memory` to save only confirmed, reusable facts. Do not save unverified claims or temporary task progress.
+
 ## Quick Start
 
 1. Install this repository's `sync-morrowmark/` directory into the current client's global skill directory:
@@ -42,13 +55,9 @@ The sync generates the platform's agent and skill configuration and adds project
 
 ## Project Memory
 
-Memory lives in `.project-memory/` and uses an index-and-body layout. The nine fact topics are `Commands`, `Environment`, `Documents`, `Target`, `Design`, `Boundary`, `Preferences`, `Tools`, and `Pitfalls`.
+Memory lives in `.project-memory/` and uses an index-and-body layout. Each topic's `MEMORY.md` is an index, with facts in separate topic bodies.
 
-- Each topic's `MEMORY.md` is an index. Agents read the indexes first and then only the relevant topic bodies.
-- `Design` records what the code does now. `Plan/` records settled intended designs, including work not yet implemented.
-- `TODO/TODO.md` is the user's backlog; agents edit it only when asked.
-
-For a normal task, the agent reads memory indexes, works on the task, verifies changes, then records only confirmed reusable facts. A full `collect-update-memory` run has two phases: restructure topics without changing facts, then sync facts from commits and local changes.
+`Design` describes what the code does now; `Plan/` holds the settled design the project intends to build. `TODO/TODO.md` is maintained by the user.
 
 ## Skills
 

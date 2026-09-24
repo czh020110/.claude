@@ -10,6 +10,19 @@
 
 Morrowmark 为每个仓库维护长期的项目上下文：把已确认的当前事实与已确定的预期设计分开，并让 Agent 按任务读取相关主题。配套的 skills 和 subagents 将计划、文档查询、验证和记忆更新等工作流程带到六种编码客户端。记忆保存在项目仓库中，不写入客户端的全局记忆。
 
+## 记忆记录什么
+
+- **项目事实：** 项目目的与范围（`Target`）、当前实现（`Design`）、必须遵守的边界与项目偏好（`Boundary`、`Preferences`）。
+- **工作知识：** 命令、环境、项目文档、可复用工具和反复出现的问题经验（`Commands`、`Environment`、`Documents`、`Tools`、`Pitfalls`）。
+- **未来设计：** 已确定但尚未实现的设计（`Plan/`）。`TODO/TODO.md` 则由用户维护。
+
+## 任务流程
+
+1. 先读各主题索引和 TODO，再按需读取相关记忆正文。
+2. 执行用户要求的项目工作。
+3. 每次修改交付前都必须运行 `post-verify`。
+4. 验证通过后，使用 `update-memory` 仅记录已确认、可复用的事实；不记录未验证说法或临时任务进度。
+
 ## 快速开始
 
 1. 将本仓库的 `sync-morrowmark/` 安装到当前客户端的全局 Skill 目录：
@@ -42,13 +55,9 @@ Morrowmark 为每个仓库维护长期的项目上下文：把已确认的当前
 
 ## 项目记忆
 
-记忆保存在 `.project-memory/`，采用“索引 + 正文”的结构。九个事实主题是 `Commands`、`Environment`、`Documents`、`Target`、`Design`、`Boundary`、`Preferences`、`Tools` 和 `Pitfalls`。
+记忆保存在 `.project-memory/`，采用“索引 + 正文”的结构。每个主题的 `MEMORY.md` 都是索引，事实保存在单独的主题正文中。
 
-- 每个主题的 `MEMORY.md` 都是索引。Agent 先读索引，再按需读取相关正文。
-- `Design` 记录当前代码的实际设计；`Plan/` 记录已经确定的预期设计，包括尚未实现的部分。
-- `TODO/TODO.md` 由用户维护，只有用户提出要求时 Agent 才会修改。
-
-普通任务的流程是：读取记忆索引、执行任务、验证改动，再记录已确认且可复用的事实。完整的 `collect-update-memory` 分两阶段：先重构主题且不改事实，再根据提交和本地改动同步事实。
+`Design` 描述代码当前的实际情况；`Plan/` 保存项目已确定、准备实现的设计。`TODO/TODO.md` 由用户维护。
 
 ## Skills
 
