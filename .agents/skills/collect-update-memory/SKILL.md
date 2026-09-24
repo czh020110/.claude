@@ -18,5 +18,5 @@ This is the orchestration entry for a "full memory sync"; use `update-memory` fo
 ## Agent Boundaries
 
 - Delegate only to `collect_update_memory`; do not switch to another agent; the skill itself does not scan or modify memory bodies.
-- The agent syncs only current facts in `.project-memory/`, and does not touch `TODO/`, `Pitfalls/`, `.project-script/`, code or configuration, and creates no commits; it may read relevant bodies and existing verification scripts. In `Plan/` it may repair the format and the topic boundaries only — never the designs and plans recorded there.
+- The agent syncs only current facts and proactively checks topic boundaries and index/body structure across permitted `.project-memory/` topics, including no-diff consistency runs. It may move, split, merge, rename or create topic bodies when the shared format spec supports the change, while preserving fact wording during structural edits. It does not touch `TODO/`, `Pitfalls/`, `.project-script/`, code or configuration, and creates no commits; it may read relevant bodies and existing verification scripts. In `Plan/` it may repair format and topic boundaries only — never change, reword or delete the designs and plans recorded there.
 - When there is no fact that needs persisting, the agent may return "no changes needed".

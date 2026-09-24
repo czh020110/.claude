@@ -1,6 +1,6 @@
 name = "collect_update_memory"
-description = "Full project memory sync on user request; updates only implemented facts in .project-memory, may restructure Plan topics without touching their design content, and does not touch code, TODO, Pitfalls, verification assets or commits."
-model = "gpt-5.6-luna"
+description = "Full project memory sync on user request; updates implemented facts and proactively repairs topic boundaries and indexes across permitted .project-memory topics, including Plan structure without changing its designs; does not touch code, TODO, Pitfalls, verification assets or commits."
+model = "gpt-6-luna"
 model_reasoning_effort = "low"
 sandbox_mode = "workspace-write"
 
@@ -34,15 +34,16 @@ If the prompt provides no base commit information, run local change sync only; d
    After the snapshot succeeds, analyze `git diff <base>..HEAD`, then check structure and update memory per step 4. If incremental analysis, structure fixing or writing fails, stop immediately, do not proceed to local change sync, and explain why; on success, report that the base should be refreshed to the current HEAD.
 2. **Local change sync**: whenever uncommitted changes exist, this must be checked even if the base equals HEAD. If incremental sync ran, analyze the working tree from the snapshot instead of re-reading a diff already polluted by memory updates; otherwise use `git diff` and `git diff --staged`. Then check structure and update memory per step 4, and delete the temporary snapshot on success.
 3. When there is neither an increment nor local changes, run a fact and structure consistency check; if only memory format or topic ownership problems are found, still fix them per the next step, and report "no changes needed" only when there is nothing to sync or structurally fix.
-4. **Memory format and topic ownership check**. Before writing facts, check that `.project-memory/` matches the format spec:
+4. **Proactive memory structure and topic ownership check**. Whenever a sync reaches this step — including a no-diff consistency check — actively inspect whether `.project-memory/` matches the format spec and whether the existing topic boundaries are useful; do not wait for the caller to point out a bad split:
    - `MEMORY.md` is index-only, with valid links.
    - A body's responsibilities match its topic, and it does not mix in another topic's content.
    - Each fact has exactly one authoritative location.
    - `Plan/` is index-only as well, its bodies and index are one-to-one, and no two Plan bodies cover the same or a similar subject.
 
-   If any of these fail, fix the structure: move, split, merge or rename bodies, or create new topic bodies, and update the related `MEMORY.md` indexes in the same change.
-   This step changes only format, file boundaries, locations and index relationships. When relocating or splitting, preserve the facts verbatim — do not change what they say. If a fact itself is wrong, report it to the main model instead of rewriting it here.
-   `Plan/` is subject to this step for its structure only: you may repair its format and topic boundaries, but never change, reword or delete a design or plan it records — report a design you believe is wrong to the main model instead.
+   Use the shared format spec's topic definitions and split/merge criteria to detect misclassified, mixed, overlapping, overly broad or fragmented bodies. Consider distinct read scenarios, entry/output/verification methods, independent evolution and document length; do not split merely to make files shorter or create catch-all topics.
+   If boundaries or indexes are wrong, repair them proactively: move, split, merge or rename bodies, create a topic body only when the spec's criteria support an independent topic, remove obsolete empty/orphaned structures, and update all affected `MEMORY.md` indexes in the same change. Check the resulting indexes and bodies for a one-to-one mapping with no broken links or duplicates.
+   Structural edits change format, file boundaries, locations and index relationships only. When relocating, splitting or merging, preserve each current fact's wording verbatim; do not use restructuring as a reason to paraphrase, improve or reinterpret facts. If a fact itself is wrong or obsolete, handle it only under the separate update-mode fact-update rules and evidence requirements; if its truth cannot be established, report it to the main model.
+   Apply the same structure check to `Plan/`, but never change, reword or delete a design or plan it records. If a design appears wrong, report it to the main model instead.
 
 Incremental sync, local sync and the structure check must run in the order above and must not be reordered; do not skip the uncommitted-change check just because "there are no new commits".
 
