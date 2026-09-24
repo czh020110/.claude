@@ -1,16 +1,15 @@
 ---
 name: update-memory
-description: Write project memory candidates passed by the current workflow according to the shared evidence and topic rules.
+description: Process current-task memory candidates using the shared evidence and topic rules.
 ---
 
 # update-memory
 
-Process memory candidates passed by the calling workflow and write eligible entries into project memory.
+Process eligible memory candidates identified in the current task under the rules in `AGENTS.md`, then write them into project memory.
 
 ## Write Scope
 
-- Do not scan the conversation to discover when this skill should trigger; process only candidate items passed to it. Use the shared format reference for eligibility, evidence, topic ownership and placement.
-- Execution-lesson candidates passed by the caller may be written into `Pitfalls` only when execution confirms recurrence risk and reusable scenarios, detection signals or avoidance steps.
+- Process only candidates identified by the applicable `AGENTS.md` trigger or final review. Use the shared format reference for eligibility, evidence, topic ownership and placement; do not search unrelated conversation history for more candidates.
 
 ## Boundaries
 
@@ -26,7 +25,7 @@ Process memory candidates passed by the calling workflow and write eligible entr
 
 ## Update Process
 
-1. Process the candidate supplied by the current workflow. Check it against the shared memory format's evidence and exclusion rules; if it does not qualify, stop without writing.
+1. Process the candidate identified by the applicable `AGENTS.md` trigger or final review. Check it against the shared memory format's evidence and exclusion rules; if it does not qualify, stop without writing.
 2. Decide which topic the fact belongs to: `Commands`, `Environment`, `Target`, `Design`, `Boundary`, `Preferences`, `Tools` or `Pitfalls`.
 3. Read that topic's `MEMORY.md` index and read only the relevant bodies per the index; do not read unrelated topics.
 4. **Before the first write or any structural change**, read [project-memory-format.md](references/project-memory-format.md) and follow its fact ownership, indexing and split rules.

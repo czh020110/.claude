@@ -12,7 +12,7 @@ This repository's long-term project memory lives in `.project-memory/`. Memory u
 
 - Across all tasks, trigger `update-memory` when a durable project goal, scope, preference or boundary is explicitly stated; do not wait for task completion or technical verification.
 - Stable implicit project preferences or boundaries may also trigger capture as soon as the signal recurs across separate task contexts without a contrary correction; do not wait for task completion or technical verification. `update-memory` handles their evidence and inference label.
-- Immediately after `post-verify` passes, perform one final memory review before delivery: inspect the completed work for implementation-derived facts, conflicts with existing memory, and execution lessons with confirmed recurrence risk and reusable conditions; pass eligible candidates to `update-memory`.
+- Immediately after `post-verify` passes, perform one final memory review before delivery: inspect the completed work for implementation-derived facts, conflicts with existing memory, and execution lessons with confirmed recurrence risk and reusable conditions; record eligible findings with `update-memory`.
 - This final review does not delay eligible explicit or inferred preferences and boundaries; record them when they become clear. Do not record temporary progress, unresolved proposals or unsupported technical claims.
 
 ## Modification Task Loop (MUST)
