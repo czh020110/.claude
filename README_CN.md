@@ -19,10 +19,12 @@
 | `Documents` | 用户维护的项目文档（正文默认只读） |
 | `Target` | 已生效的项目目的、范围、验收标准 |
 | `Design` | **已实现代码**的设计：架构、模块职责、协作方式与设计理由 |
-| `Boundary` | 必须保持的行为、范围外事项、限制、质量底线 |
+| `Boundary` | 必须保持的行为、范围外事项、限制、质量底线，以及明确不能做的事——包括用户说了不要做的 |
 | `Preferences` | 项目范围内的偏好——agent 在本项目里的写法、注释与回复风格、命名习惯；不记全局偏好 |
 | `Tools` | 可复用的辅助脚本、可视化、统计、数据转换工具 |
 | `Pitfalls` | 可复用的执行经验：适用场景、识别信号、根因、规避方式 |
+
+除了这九个事实主题，`.project-memory/Plan/` 记录项目**已经确定**的所期望的方案与设计，包括还没实现的部分。它不是事实主题：`Plan` 是设计，`Design` 是代码实际的样子，每个设计单元带 `[ ]` / `[-]` / `[x]` 状态标记。
 
 在这里维护唯一源，通过 `sync-project-config` 全局 Skill 生成并分发到 **Codex / ZCode / Claude Code / CodeBuddy / WorkBuddy / OpenCode** 六个平台。
 
@@ -89,20 +91,18 @@ bash ~/.agents/skills/sync-project-config/scripts/sync.sh codex   # 或你客户
 
 ```
 .project-memory/
+├── Plan/MEMORY.md          ← 期望设计，只有索引
+├── Plan/<主题>.md          ← 每个主题一份完整设计
 ├── Commands/MEMORY.md      ← 只有索引
 ├── Commands/<主题>.md      ← 事实正文
 ├── Environment/  Documents/  Target/  Design/
 ├── Boundary/  Preferences/  Tools/  Pitfalls/
-└── TODO/{TODO.md, Pending.md, STEP.md}
+└── TODO/TODO.md
 ```
 
-`TODO/` 下三个文件由不同的人维护：
+`Plan/` 记录项目**已经确定**的所期望的方案与设计，包括还没实现的部分。它和其他主题一样是"索引 + 正文"，每个设计单元的标题上带状态标记：`[ ]` 未实现、`[-]` 进行中、`[x]` 已实现并验证。条目实现后保留，所以 `Plan/` 是完整设计，`Design/` 是代码实际的样子。`draft-long-term-plan` 和你一起写它，`design-alignment` 把方案变更记进去。
 
-| 文件 | 谁维护 | 记什么 |
-| --- | --- | --- |
-| `TODO.md` | **用户** | 你自己的待办；只有你明确要求时 Agent 才写 |
-| `Pending.md` | Agent | 尚未定下或尚未实现的方案与决策 |
-| `STEP.md` | Agent | 长期阶段拆分，用于跨阶段的任务 |
+`TODO/TODO.md` 是唯一留给你的文件：你自己的待办，只有你明确要求时 Agent 才写。
 
 记忆不保存任何凭证。同步会补齐缺失的模板文件，并刷新每个文件的**标题行**——标题以下的内容是你积累的，永远不会被覆盖。
 
@@ -116,13 +116,13 @@ bash ~/.agents/skills/sync-project-config/scripts/sync.sh codex   # 或你客户
 
 `AGENTS.md` 让每个任务走同一条闭环：
 
-1. **读记忆索引** —— `read-index-memory` 读取每个主题的 `MEMORY.md`，以及 `TODO/Pending.md`、`TODO/TODO.md`、`TODO/STEP.md`。
+1. **读记忆索引** —— `read-index-memory` 读取每个主题的 `MEMORY.md`（含 `Plan/`）以及 `TODO/TODO.md`。
 2. **只读索引指向的正文** —— 由索引决定哪些相关，其余不扫描。
 3. **执行修改。**
 4. **交付前验证** —— `post-verify` 做最终针对性检查并留下证据。
 5. **记录本次任务确认的事实** —— 验证通过后，`update-memory` 把本次任务确立的事实写进对应主题。
 
-**记忆只记录当前项目的事实，不记录以后的方案设计。** 尚未定下或尚未实现的方案与决策写进 `.project-memory/TODO/Pending.md`，你自己的待办写进 `.project-memory/TODO/TODO.md`。Agent 会在每个任务开始时读取这两个文件，所以停在这里的想法不会丢。
+**记忆只记录当前项目的事实；`.project-memory/Plan/` 记录项目已经确定的所期望的方案与设计。** 用户确认过的设计写进 `Plan/`，包括还没实现的部分；你自己的待办写进 `.project-memory/TODO/TODO.md`。Agent 会在每个任务开始时读取这两处，所以停在这里的想法不会丢。
 
 ---
 
@@ -133,7 +133,8 @@ bash ~/.agents/skills/sync-project-config/scripts/sync.sh codex   # 或你客户
 | `read-index-memory` | 读取各主题索引，路由到相关正文 | Agent |
 | `update-memory` | 把本轮确认的事实写入对应主题 | Agent |
 | `post-verify` | 交付前的收口验证闸门 | Agent |
-| `design-alignment` | 通过多轮选项与用户把方案变更/冲突定下来，再把确认的方案写进 `Pending.md` | Agent |
+| `design-alignment` | 通过多轮选项与用户把方案变更/冲突定下来，再把确认的设计写进 `Plan/` | Agent |
+| `draft-long-term-plan` | 和用户一起从零设计到项目最终形态，写进 `Plan/` | 用户 |
 | `docs-research` | 批量外部文档查询，委托给 `docs_research` agent | Agent |
 | `git-commit` | 创建 git commit：按目的分组、生成结构化描述、验证 | 用户 |
 | `collect-update-memory` | 全量记忆同步编排，委托给 `collect_update_memory` agent | 用户 |

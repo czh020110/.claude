@@ -19,10 +19,12 @@ Memory is organized by topic, in nine of them:
 | `Documents` | User-maintained project docs (bodies are read-only by default) |
 | `Target` | Currently effective project purpose, scope and acceptance criteria |
 | `Design` | The design of the code as it exists now: architecture, module responsibilities, collaboration model, rationale |
-| `Boundary` | Behavior that must be preserved, out-of-scope items, limits and quality floor |
+| `Boundary` | Behavior that must be preserved, out-of-scope items, limits, quality floor, and what must not be done — including what the user said not to do |
 | `Preferences` | Project-scoped preferences for how the agent works here: writing and reply style, comment and naming conventions — never global preferences |
 | `Tools` | Reusable helper scripts, visualizations, statistics or data conversion tools |
 | `Pitfalls` | Reusable lessons: applicable scenarios, detection signals, root cause, avoidance |
+
+Alongside those nine fact topics, `.project-memory/Plan/` holds the designs and plans the project has settled on — the design it is meant to have, including the parts that are not built yet. It is not a fact topic: `Plan` is the design, `Design` is what the code actually does, and each design unit is marked `[ ]` / `[-]` / `[x]`.
 
 One source is maintained here, and the `sync-project-config` global skill generates and distributes it to six platforms: **Codex / ZCode / Claude Code / CodeBuddy / WorkBuddy / OpenCode**.
 
@@ -89,20 +91,18 @@ When it finishes, the target repo should contain the platform's `agents/` and `s
 
 ```
 .project-memory/
+├── Plan/MEMORY.md          ← the expected design, index only
+├── Plan/<topic>.md         ← one complete design per topic
 ├── Commands/MEMORY.md      ← index only
 ├── Commands/<topic>.md     ← the facts
 ├── Environment/  Documents/  Target/  Design/
 ├── Boundary/  Preferences/  Tools/  Pitfalls/
-└── TODO/{TODO.md, Pending.md, STEP.md}
+└── TODO/TODO.md
 ```
 
-The three files under `TODO/` are kept by different people:
+`Plan/` holds the designs and plans the project has settled on — the design it is meant to have, including the parts that are not built yet. It uses the same index-and-body layout as the topics, and each design unit carries a status marker on its heading: `[ ]` not implemented, `[-]` in progress, `[x]` implemented and verified. Entries stay after they are built, so `Plan/` holds the full design while `Design/` holds what the code actually does. `draft-long-term-plan` writes it with you; `design-alignment` records a design change in it.
 
-| File | Maintained by | Contents |
-| --- | --- | --- |
-| `TODO.md` | **The user** | Your own backlog; the agent writes to it only when you ask |
-| `Pending.md` | The agent | Designs and decisions that are not settled or not implemented yet |
-| `STEP.md` | The agent | Long-term stage breakdown, for work that spans stages |
+`TODO/TODO.md` is the one file the agent leaves to you: your own backlog, written to only when you ask.
 
 Memory never stores credentials. A sync adds missing template files and refreshes the **title line** of each one — everything below the title is what you have accumulated and is never overwritten.
 
@@ -116,13 +116,13 @@ Memory never stores credentials. A sync adds missing template files and refreshe
 
 `AGENTS.md` drives every task through one loop:
 
-1. **Read the memory indexes** — `read-index-memory` reads every topic's `MEMORY.md`, plus `TODO/Pending.md`, `TODO/TODO.md` and `TODO/STEP.md`.
+1. **Read the memory indexes** — `read-index-memory` reads every topic's `MEMORY.md` (including `Plan/`) plus `TODO/TODO.md`.
 2. **Read only the bodies the index points to** — the index decides what is relevant; nothing else is scanned.
 3. **Make the change.**
 4. **Verify before delivery** — `post-verify` runs the final targeted checks and leaves evidence.
 5. **Write down what the task confirmed** — once verification passes, `update-memory` records the facts the task established.
 
-**Memory records facts about the current project, never future plans.** Designs and decisions that are not settled or not implemented yet go into `.project-memory/TODO/Pending.md`, and your own backlog goes into `.project-memory/TODO/TODO.md`. The agent reads them at the start of every task, so an idea parked there is not lost.
+**Memory records facts about the current project; `.project-memory/Plan/` records the design it is meant to have.** A design the user has agreed to goes into `Plan/`, including the parts that are not built yet, and your own backlog goes into `.project-memory/TODO/TODO.md`. The agent reads both at the start of every task, so an idea parked there is not lost.
 
 ---
 
@@ -133,7 +133,8 @@ Memory never stores credentials. A sync adds missing template files and refreshe
 | `read-index-memory` | Reads the topic indexes and routes to the relevant bodies | agent |
 | `update-memory` | Writes the facts this round confirmed into the matching topic | agent |
 | `post-verify` | Final verification gate before delivery | agent |
-| `design-alignment` | Settles a design change or conflict with the user through multi-round options, then records the agreed plan in `Pending.md` | agent |
+| `design-alignment` | Settles a design change or conflict with the user through multi-round options, then records the agreed design in `Plan/` | agent |
+| `draft-long-term-plan` | Designs the project with the user from zero to its final form and writes it into `Plan/` | user |
 | `docs-research` | Batched external documentation lookup, delegated to the `docs_research` agent | agent |
 | `git-commit` | Creates a git commit: groups by purpose, writes the structured message, verifies | user |
 | `collect-update-memory` | Orchestrates a full memory sync, delegated to the `collect_update_memory` agent | user |

@@ -1,17 +1,17 @@
 # Project Memory Format and Maintenance Spec
 
-This file is on-demand reference shared by `update-memory` and `collect_update_memory`. Read it only when writing to or restructuring `.project-memory/`; it is not a must-read prompt for every task. Plans and decisions that are not settled yet, and design decisions that are not implemented yet, are recorded uniformly in `.project-memory/TODO/Pending.md` and are not facts managed by this file.
+This file is on-demand reference shared by `update-memory`, `collect_update_memory` and `draft-long-term-plan`. Read it only when writing to or restructuring `.project-memory/`; it is not a must-read prompt for every task. The design the project is meant to have, including the parts that are not built yet, lives in `.project-memory/Plan/`; it is not a fact topic and is not managed as one by this file.
 
 ## Directory and Fact Ownership
 
-Project memory consists of nine topics: `Commands`, `Environment`, `Documents`, `Target`, `Design`, `Boundary`, `Preferences`, `Tools`, `Pitfalls`. Each topic directory contains an index-only `MEMORY.md` plus sub-topic body files, each scoped to one topic; do not create catch-all bodies like "other/misc/basic operations".
+Project memory consists of nine topics: `Commands`, `Environment`, `Documents`, `Target`, `Design`, `Boundary`, `Preferences`, `Tools`, `Pitfalls`. Each topic directory contains an index-only `MEMORY.md` plus sub-topic body files, each scoped to one topic; do not create catch-all bodies like "other/misc/basic operations". `Plan/` is not one of these topics: it follows the same index-and-body layout but holds the expected design rather than facts, and is specified under "Plan vs. Fact Split" below.
 
 - `Commands`: install, run, build, test, evaluate, deploy and failure-recovery workflows.
 - `Environment`: tools/versions, hardware, paths, environment variables, external services and platform limits.
 - `Documents`: user-maintained project docs; bodies are read-only by default, indexes are maintained by the full memory agent.
-- `Target`: currently effective project purpose, scope and acceptance criteria — intent, not implementation (that is `Design`); stage plans and options that are not settled yet go into TODO/STEP/Pending.
-- `Design`: the architecture, module responsibilities, collaboration model and design rationale of the code as it exists now; design decisions that are not implemented yet go into TODO/Pending.
-- `Boundary`: behavior that must be preserved, explicitly excluded scope, limits and quality floor.
+- `Target`: currently effective project purpose, scope and acceptance criteria — intent, not implementation (that is `Design`); the design the project is meant to have, including what is not built yet, is `Plan`.
+- `Design`: the architecture, module responsibilities, collaboration model and design rationale of the code as it exists now; the expected design, including design decisions that are not implemented yet, is `Plan`.
+- `Boundary`: behavior that must be preserved, explicitly excluded scope, limits and quality floor, plus everything the project must not do — what the user has said not to do, designs the user has explicitly rejected, and what the agent has confirmed during execution must not be done.
 - `Preferences`: project-scoped preferences for how the agent works in this repository — writing and reply style, comment and naming conventions, commit-message habits and similar. Only preferences specific to this project or its code belong here; a preference that would hold in every project is not a project fact and belongs in the user-level memory instead.
 - `Tools`: reusable helper scripts, visualizations, statistics or data conversion tools.
 - `Pitfalls`: reusable execution lessons confirmed during execution that may recur, with applicable scenarios, detection signals, root cause and avoidance steps; do not record one-off tool errors, transient failures, raw logs or details that cannot be transferred.
@@ -30,13 +30,14 @@ Each fact keeps a single authoritative home and other topics reference it by lin
 
 Structural changes (create, delete, rename, move, split, merge) must land in the same change as the index and be verified; if only the content changed and responsibilities did not, the index does not need updating. At the end, check that indexes and bodies are one-to-one, with no broken links, orphans or outdated duplicates.
 
-## Pending vs. Fact Split
+## Plan vs. Fact Split
 
-- `TODO/Pending.md` uses the same checkbox format as `TODO.md` and records specifically plans and decisions that are not settled yet, design decisions that are settled but not implemented yet, and project plan changes requested by the user.
+- `.project-memory/Plan/` holds the designs and plans the project has settled on — the design it is meant to have, including the parts that are not built yet. It uses the same layout as the fact topics: `Plan/MEMORY.md` is an index only, each body is one complete design topic, and the index and topic-similarity rules above apply to it unchanged.
+- Only a design the user has agreed to is written there. A candidate option, an unapproved request and a still-open decision are not recorded: the discussion is settled first, then the design is written.
+- Every design unit carries a status marker on its heading: `[ ]` not implemented, `[-]` in progress, `[x]` implemented and verified. The marker changes as the work lands, and an entry is never deleted for being implemented.
+- `Plan/` is not a source of facts. Once a design is implemented and verified, the fact it produced is written into the matching fact topic with `update-memory` — `Design` for the code's design — and the `Plan/` entry stays where it is. A design that is rejected or cancelled has its entry removed and writes no fact.
 - `TODO/TODO.md` is the user-maintained ordinary todo list; the main model may modify it only when the user explicitly asks to write or update it, and must not add todos on its own while working.
-- When such content first appears in a discussion, the main model writes it into Pending immediately; a Pending entry must contain background, the decision pending confirmation, completion criteria and related scope.
-- A Pending entry is removed once it is no longer pending, and the final fact is then written into the matching body: a decision that needs no code change is written as soon as the user settles it, while a design decision is written only once it is implemented and verified. If a plan is rejected or cancelled, only the Pending entry is removed and nothing is written into facts.
-- `update-memory` and `collect-update-memory` do not create, modify or clean up Pending, and must not treat Pending content as a source of facts.
+- `update-memory` does not create, modify or clean up `Plan/`. `collect-update-memory` may repair `Plan/`'s format and topic boundaries — split, merge, rename, re-index — but must never change, reword or delete the designs and plans recorded there. Neither may treat `Plan/` content as a source of facts.
 
 ## Pitfalls Write Boundary (Reusable Execution Lessons)
 
@@ -58,7 +59,8 @@ Bodies must follow the fact ownership, indexing and topic boundaries defined in 
 
 ## Initialization and Update
 
-- Initialization: while the core planning files are still empty templates, create the topic bodies and indexes needed from the current code, configuration, scripts and commands; do not create empty files.
+- Initialization: while `Boundary` and `Target` are still empty templates, create the topic bodies and indexes needed from the current code, configuration, scripts and commands; do not create empty files.
 - When the project has no source code at all and only has project memory templates, initialize only `Boundary` and `Target` where facts genuinely exist; once code exists, initialize topics such as `Environment` and `Commands` from the actual content, and initialize `Tools` only if reusable scripts exist.
+- `Plan/` is never initialized from code: it starts empty and is filled by `draft-long-term-plan` when the user asks for it.
 - Update: when memory already exists, replace outdated facts based on the current code, configuration, commit diffs and verification results; do not guess from file names, old documents or conversation alone.
-- `TODO/STEP.md`, `TODO/TODO.md` and `TODO/Pending.md` are not maintained by this spec's real-time memory update flow; among them TODO.md may be written by the main model only after explicit user authorization, and Pending.md is recorded directly by the main model; `.project-script/` is likewise not part of project memory bodies or indexes.
+- `TODO/TODO.md` and `.project-memory/Plan/` are not maintained by this spec's real-time memory update flow: TODO.md may be written by the main model only after explicit user authorization, and `Plan/` is written by the main model, `draft-long-term-plan` and `design-alignment`; `.project-script/` is likewise not part of project memory bodies or indexes.

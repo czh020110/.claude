@@ -9,14 +9,14 @@ Write only confirmed facts and reusable execution lessons into project memory.
 
 ## Write Scope
 
-- Count as project facts, and write into the matching topic: implemented behavior, configuration, environment, commands, tools and design, resting on code, configuration, diffs or verification results; and project purpose, scope, boundaries, constraints and project-scoped preferences, resting on the user's explicit statement or approval. A preference that would hold in every project is not a project fact — it belongs in the user-level memory. `Design` describes code that exists; a design decision that is not implemented yet is not a fact and goes to `TODO/Pending.md`.
+- Count as project facts, and write into the matching topic: implemented behavior, configuration, environment, commands, tools and design, resting on code, configuration, diffs or verification results; and project purpose, scope, boundaries, constraints and project-scoped preferences, resting on the user's explicit statement or approval. A preference that would hold in every project is not a project fact — it belongs in the user-level memory. `Design` describes code that exists; a design decision that is not implemented yet is not a fact and goes to `.project-memory/Plan/`.
 - Execution lessons confirmed during the task that may recur and can be generalized into applicable scenarios, detection signals and avoidance steps may be written into `Pitfalls`.
 
 ## Boundaries
 
 - Executed by the main model personally; do not call a subagent, and do not create a git commit.
 - Do local updates only; do not scan the whole project or read unrelated topics.
-- Do not maintain `.project-script/` or `.project-memory/Documents/`; verification scripts are managed by `post-verify`, and user document indexes are synced by `collect-update-memory`.
+- Do not maintain `.project-memory/Plan/`, `.project-script/` or `.project-memory/Documents/`; the design the project is meant to have belongs to `draft-long-term-plan` and `design-alignment`, verification scripts to `post-verify`, and user document indexes to `collect-update-memory`.
 - Write only current facts and reusable execution lessons; do not write passwords, tokens, private keys, cookies, candidate options, one-off tool errors, transient failures or change logs.
 
 ## `.project-memory/` File Responsibilities

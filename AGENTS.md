@@ -4,7 +4,7 @@ This repository's long-term project memory lives in `.project-memory/`. Memory u
 
 ## Task Routing
 
-- Every new task first uses `read-index-memory` to read all topic indexes, then reads only the bodies relevant to the task.
+- Every new task first uses `read-index-memory` to read all topic indexes, then reads only the bodies relevant to the task; a task that touches an area designed but not built yet also reads that `Plan/` body.
 - Pure consultation, code review, or external research does not enter the modification loop; the memory-reading, documentation-lookup and output constraints still apply.
 - Adding, fixing, refactoring, configuration, tests, docs or prompt syncs are "modification tasks" and follow the loop below.
 
@@ -35,15 +35,14 @@ This repository's long-term project memory lives in `.project-memory/`. Memory u
   - A current fact is confirmed with a basis you can point at: implemented behavior, configuration, environment, commands, tools and design rest on code, configuration, diffs or verification results; purpose, scope, boundaries, constraints and preferences rest on the user's explicit statement or approval. The body must say which basis it rests on;
   - A reusable execution lesson confirmed during the task may recur in later tasks and can be abstracted into applicable scenarios, detection signals and avoidance steps;
   - Existing memory is found to conflict with the current implementation or effective constraints and the facts need correcting.
-- Memory writes are checked by `update-memory`'s own final index/body check, not by `post-verify`.
+- Memory writes are checked by `update-memory`'s own final index/body check, not by `post-verify`; writes to `.project-memory/Plan/` are checked the same way.
 - Do not call `update-memory` when the trigger conditions are not met: single results, temporary speculation, one-off tool errors, transient environment failures, raw debug details and unimplemented plans are not consolidated.
 
 ## Plan and Completion Boundaries
 
-- `update_plan` only records the decomposition and status of the current task; it does not write project memory or TODO, nor replace them.
+- `update_plan` only records the decomposition and status of the current task; it does not write project memory or TODO, nor replace them. The project's design plan is `.project-memory/Plan/` — always write that path in full, never a bare `Plan`.
 - The completion standard is decided by the user's request; the default delivery is "result implemented, critical path checked, verification evidence recorded, remaining risks stated".
-- When a task spans a long-term stage, split it into verifiable stages and update `.project-memory/TODO/STEP.md`; do not design a full history table for an empty template, and one-off tasks are not written into STEP.
-- When a design is added or changed, or a design conflict or problem is found, use the `design-alignment` skill: it settles the design with the user and records the agreed plan in `.project-memory/TODO/Pending.md` before any of it is implemented.
+- When a design is added or changed, or a design conflict or problem is found, use the `design-alignment` skill: it settles the design with the user and records the agreed design in `.project-memory/Plan/` before any of it is implemented.
 
 ## Code and Configuration Update Rules
 
@@ -68,13 +67,13 @@ When external libraries, frameworks, SDKs, CLIs, APIs, cloud services or version
 
 Commit only when the user explicitly asks to commit/save changes, and use the `git-commit` skill.
 
-## TODO and Pending
+## TODO and Plan
 
 - `.project-memory/TODO/TODO.md` is the user-maintained todo list; read and modify its entries only when the user explicitly asks to write or update TODO. Ordinary tasks must not add or update TODO.
-- Open items go straight into `.project-memory/TODO/Pending.md`: plans and decisions that are not settled yet, and design decisions that are settled but not implemented yet. The main model writes them there and does not call `update-memory`. Pending is not a source of facts: candidate options, unapproved requests and still-open decisions must never be written into fact memory. Maintained by the main model only.
-- Once a Pending item is settled — the user has decided it, or it is implemented and verified — remove its entry and write the final fact with `update-memory`; if a plan is rejected or cancelled, only remove the entry.
-- Both files use only checkboxes: `[ ]` not started, `[-]` in progress, `[x]` done.
-- If the user says "continue with the todos/plans" without specifying an item, ask which one to work on first based on the contents of both files and give a recommendation.
+- `.project-memory/Plan/` records the designs and plans the project has settled on — the design it is meant to have, including what is not implemented yet. Only a design the user has agreed to is written there: never a candidate option, an unapproved request or a still-open decision. The main model, `draft-long-term-plan` and `design-alignment` write it; `update-memory` does not, and `collect-update-memory` may only repair its format and topic boundaries, never the designs it records.
+- Every design unit in `Plan/` carries a status marker on its heading: `[ ]` not implemented, `[-]` in progress, `[x]` implemented and verified. Flip the marker as the work lands, and never delete an entry because it was implemented.
+- Once a design is implemented and verified, write the fact it produced with `update-memory` into the matching fact topic — `Design` for the code's design — and leave the `Plan/` entry in place. A design that is rejected or cancelled has its `Plan/` entry removed and writes no fact.
+- If the user says "continue with the todos" without naming an item, ask which one to work on first based on `TODO/TODO.md` and the `Plan/` index, and give a recommendation.
 
 ---
 

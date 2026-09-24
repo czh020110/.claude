@@ -1,0 +1,4 @@
+interface:
+  display_name: "Draft Long-Term Plan"
+  short_description: "Design the project end to end with the user"
+  default_prompt: "Use $draft-long-term-plan only when the user asks to design or extend the project's long-term plan."

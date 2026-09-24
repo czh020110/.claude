@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Read the MEMORY.md index of every topic under .project-memory/.
 
-Also reads the three planning files under .project-memory/TODO/ (Pending, TODO,
-STEP) so unsettled plans and the user's own backlog are visible at the start of
-a task instead of being lost.
+Also reads .project-memory/TODO/TODO.md so the user's own backlog is visible at
+the start of a task instead of being lost. The Plan topic is read like any other
+index: Plan/MEMORY.md routes to the design bodies, which are read on demand.
 
 Cross-platform: uses only the Python standard library. Accepts an optional
 positional argument as the project root directory, defaults to the current
@@ -18,9 +18,7 @@ from pathlib import Path
 
 # Planning files read after the topic indexes, in this order.
 PLANNING_FILES = (
-    "TODO/Pending.md",
     "TODO/TODO.md",
-    "TODO/STEP.md",
 )
 
 
@@ -37,9 +35,10 @@ def find_memory_roots(root: Path) -> list[Path]:
         "Boundary",
         "Preferences",
         "Target",
+        "Plan",
+        "Design",
         "Environment",
         "Commands",
-        "Design",
         "Tools",
         "Pitfalls",
     ]
@@ -100,7 +99,7 @@ def main() -> int:
     output = render(project_dir)
     if not output:
         print(
-            "read-index-memory: no MEMORY.md index or planning file found under .project-memory/.",
+            "read-index-memory: no MEMORY.md index or TODO file found under .project-memory/.",
             file=sys.stderr,
         )
         return 0
