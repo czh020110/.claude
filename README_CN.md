@@ -44,7 +44,7 @@ Morrowmark 为每个仓库维护长期的项目上下文：把已确认的当前
    也可以把下面这段提示词复制给 Agent：
 
    ```text
-   请从 https://github.com/czh020110/.claude/tree/main/sync-morrowmark 安装 `sync-morrowmark` Skill 到当前客户端的全局 Skill 目录。该链接中的仓库仅作为 Skill 来源，当前会话打开的仓库才是目标项目。安装完成后，先询问我是否要立即初始化或更新该仓库；得到确认前不要执行同步。
+   请从 https://github.com/czh020110/Morrowmark/tree/main/sync-morrowmark 安装 `sync-morrowmark` Skill 到当前客户端的全局 Skill 目录。该链接中的仓库仅作为 Skill 来源，当前会话打开的仓库才是目标项目。安装完成后，先询问我是否要立即初始化或更新该仓库；得到确认前不要执行同步。
    ```
 
 2. 首次同步时运行刚安装的全局脚本；它会在目标仓库创建项目副本。后续更新时，在目标仓库根目录运行：
@@ -62,6 +62,12 @@ Morrowmark 为每个仓库维护长期的项目上下文：把已确认的当前
 记忆保存在 `.project-memory/`，采用“索引 + 正文”的结构。每个主题的 `MEMORY.md` 都是索引，事实保存在单独的主题正文中。
 
 `Design` 描述代码当前的实际情况；`Plan/` 保存项目已确定、准备实现的设计。`TODO/TODO.md` 由用户维护。
+
+## 团队项目记忆协作
+
+`sync-project-memory` 通过独立的远程 Git 仓库共享 `.project-memory/`。脚本根据主代码仓库的 `origin` URL 生成 `docs/<slug>` 分支；使用相同 `origin` 的克隆会对应到同一记忆分支。所有克隆应保持相同的 `origin`；代码仓库 URL 改变时，对应的记忆分支名也会改变。团队成员需在各自设备上使用 Skill 的 `config <URL>` 操作，配置同一个记忆仓库地址。
+
+不指定方向运行 Skill 时，它会检查本地与远端状态，建议拉取、推送或先拉取再推送，并在执行更改前询问。也可直接指定 `pull`、`push` 或 `info`。`pull` 会将远端更新合并到本地记忆，`push` 会发布本地更新。发生冲突时会停止并交由人工处理；脚本不会丢弃本地或远端内容，也不会强制推送。
 
 ## Skills
 

@@ -44,7 +44,7 @@ Morrowmark gives each repository durable, project-local context. It records conf
    Or copy this prompt to your agent:
 
    ```text
-   Install the `sync-morrowmark` skill from https://github.com/czh020110/.claude/tree/main/sync-morrowmark into the global skills directory for the current client. The linked repository is only the skill source; the target is the repository open in this session. After installation, ask whether I want to initialize or update that repository now. Do not run a sync until I confirm.
+   Install the `sync-morrowmark` skill from https://github.com/czh020110/Morrowmark/tree/main/sync-morrowmark into the global skills directory for the current client. The linked repository is only the skill source; the target is the repository open in this session. After installation, ask whether I want to initialize or update that repository now. Do not run a sync until I confirm.
    ```
 
 2. For the first sync, run the global copy you installed. It creates a project-local copy. For later updates, run this from the target repository root:
@@ -62,6 +62,12 @@ The sync generates the platform's agent and skill configuration and adds project
 Memory lives in `.project-memory/` and uses an index-and-body layout. Each topic's `MEMORY.md` is an index, with facts in separate topic bodies.
 
 `Design` describes what the code does now; `Plan/` holds the settled design the project intends to build. `TODO/TODO.md` is maintained by the user.
+
+## Team Memory Collaboration
+
+`sync-project-memory` shares `.project-memory/` through a dedicated remote Git repository. The script derives a `docs/<slug>` branch from the code repository's `origin` URL; clones using the same `origin` use the same memory branch. Keep `origin` identical across clones—changing the code repository URL changes the derived branch. Configure the same memory repository URL on each device with the skill's `config <URL>` operation.
+
+With no direction, the skill checks local and remote state, recommends `pull`, `push`, or pull-then-push, and asks before making changes. Specify `pull`, `push`, or `info` to run that operation directly. Pull merges remote updates into local memory; push publishes local updates. Conflicts stop for manual resolution; the script never discards local or remote content or force-pushes.
 
 ## Skills
 
