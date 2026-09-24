@@ -31,9 +31,9 @@ Write only confirmed facts and reusable execution lessons into project memory.
 3. Read that topic's `MEMORY.md` index and read only the relevant bodies per the index; do not read unrelated topics.
 4. **Before the first write or any structural change**, read [project-memory-format.md](references/project-memory-format.md) and follow its fact ownership, indexing and split rules.
    If the reference file is temporarily not visible, at minimum keep this: `MEMORY.md` contains only indexes, bodies and indexes are one-to-one, and each fact keeps a single authoritative location; continue with the existing format and state the risk in the result.
-5. Base implemented facts on the current code, configuration, scripts, diffs and verification results; base declared facts on the user's explicit statement. Prefer updating an existing body; create a new one only when a reader would fetch it on its own rather than as part of an existing body, and update the index in the same change.
+5. Base implemented facts on the current code, configuration, scripts, diffs and verification results; base declared facts on the user's explicit statement. Prefer updating an existing body; create a new one only when a reader would fetch it on its own rather than as part of an existing body, and update the index in the same change. Name each child body more narrowly than its parent topic; do not repeat the parent name or use a same-granularity synonym (for example, `Target/项目目标` / `Target/Project goals` or `Design/项目设计` / `Design/Project design`). Follow the shared format spec's Sub-topic Naming Granularity rule.
 6. If a body is moved, split, merged or deleted, update its `MEMORY.md` in the same change. When only the content changed and responsibilities did not, the index does not need updating.
-7. At the end, check that the topics touched have index/body one-to-one correspondence, valid links, and no outdated duplicates; if there is no fact to write, do not modify files.
+7. At the end, check that the topics touched have index/body one-to-one correspondence, valid links, no outdated duplicates, and no child name that merely repeats the parent topic's granularity; if there is no fact to write, do not modify files.
 
 ## Memory Topic Routing
 

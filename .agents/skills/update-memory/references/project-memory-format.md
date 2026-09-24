@@ -30,6 +30,12 @@ Each fact keeps a single authoritative home and other topics reference it by lin
 
 Structural changes (create, delete, rename, move, split, merge) must land in the same change as the index and be verified; if only the content changed and responsibilities did not, the index does not need updating. At the end, check that indexes and bodies are one-to-one, with no broken links, orphans or outdated duplicates.
 
+## Sub-topic Naming Granularity
+
+A topic directory names a broad ownership area; each child body must name a strictly narrower, independently retrievable subject within it. Do not name a child with the parent topic's name, a same-granularity synonym, or a broad catch-all label. For example, under `Target`, `项目目标` / `project-goals` merely repeats the parent topic's broad scope; under `Design`, `项目设计` / `project-design` does the same. These are invalid child names. Prefer a name that identifies the actual narrower scope, such as `Target/supported-repositories-and-acceptance.md` or `Design/sync-orchestration-and-agent-boundaries.md`, only when that scope is truly covered by the body.
+
+Do not invent narrower scope just to satisfy naming. If a body covers the parent topic as a whole, organize its facts into genuine subtopics only when the split criteria support them; otherwise report that no valid narrower division is evident instead of creating a redundant child. File names and index labels, plus headings used only as structural titles, may be narrowed to reflect the body's actual scope. Do not rewrite fact statements or settled design content to make a title fit; report a conflict when a compliant name would require changing that content.
+
 ## Plan vs. Fact Split
 
 - `.project-memory/Plan/` holds the designs and plans the project has settled on — the design it is meant to have, including the parts that are not built yet. It uses the same layout as the fact topics: `Plan/MEMORY.md` is an index only, each body is one complete design topic, and the index and topic-similarity rules above apply to it unchanged.
@@ -48,7 +54,7 @@ Structural changes (create, delete, rename, move, split, merge) must land in the
 ## Write Decisions
 
 1. First read the target topic's `MEMORY.md`, then read only the relevant bodies per the index; do not scan unrelated topics.
-2. Prefer updating an existing body for the same object/workflow; create a new topic only when there is genuinely an independent read scenario, a complete workflow, or a different code path.
+2. Prefer updating an existing body for the same object/workflow; create a new topic only when there is genuinely an independent read scenario, a complete workflow, or a different code path. Give every child a name narrower than its parent topic, following "Sub-topic Naming Granularity"; never use a same-level restatement such as `Target/Project goals` or `Design/Project design`.
 3. When judging whether to split, look at semantic boundaries first: different read conditions, entry/output/verification methods, independent evolution, or a merged file that is clearly too long (about 250–300 lines or more) can be split; short documents that are always read and modified together should be merged.
 4. Bodies record only current facts, each stating its basis: code, configuration, diffs or verification results for implemented facts, the user's explicit statement for declared ones. Never write passwords, tokens, private keys, cookies or other directly usable credentials; record only variable names and secure configuration methods.
 5. Do not change the language that existing memory documents are written in (English, Chinese, etc.).
