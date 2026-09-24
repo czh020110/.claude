@@ -77,7 +77,7 @@ bash ~/.agents/skills/sync-project-config/scripts/sync.sh codex   # 或你客户
 
 之后项目副本就是入口，同步会把 `sync-project-config/` 连同其他生成路径一起写进 `.gitignore`。
 
-在某个仓库首次同步前，Skill 会先询问是否要在这里使用它——你答否，它就不执行脚本。如果该仓库已有自己的 `AGENTS.md`（Claude 平台还可能是 `CLAUDE.md`）且**没有** `<!-- sync-project-config:custom-prompts -->` 标记，那么什么都不会被覆盖：整个文件被认定为你自己写的提示词，原样挪到标记以下。同步完成后 Skill 会读取该自定义区，如果里面确实有项目提示词，就询问你是否要迁移——命令与规则留在 `AGENTS.md`，项目事实类内容迁入 `.project-memory/`。
+在仓库中使用全局 Skill 前，如果你还没有授权它管理该仓库，Skill 只会询问一次；你答否，它就不执行脚本。正常同步成功后不再要求 agent 检查自定义提示词：已有但**没有** `<!-- sync-project-config:custom-prompts -->` 标记的 `AGENTS.md`（Claude 平台还可能有 `CLAUDE.md`）会完整保留在模板提示词和标记之后。Skill 不会在同步后询问是否迁移自定义内容；只有你单独提出时，才会把项目事实迁入 `.project-memory/`。如果同步无法安全保留现有内容，agent 会停下来，只针对该冲突询问。
 
 ### 第三步：确认结果
 

@@ -372,15 +372,35 @@ Path(path).write_text(rule + "".join(lines[rule_end:]), encoding="utf-8")
 PY
 }
 
+append_custom_marker() {
+  local file="$1"
+  if [ -s "$file" ] && [ -n "$(tail -c 1 "$file")" ]; then
+    printf '\n' >> "$file"
+  fi
+  printf '%s\n' "$CUSTOM_MARKER" >> "$file"
+}
+
 sync_agents_md() {
   local remote="$TMP_DIR/AGENTS.md"
   local local_file="$PROJECT_DIR/AGENTS.md"
   [ -f "$remote" ] || return 0
 
-  # A source without a marker cannot be split, and a project with no AGENTS.md yet
-  # has nothing to preserve, so both are copied whole.
-  if ! grep -qxF "$CUSTOM_MARKER" "$remote" || [ ! -f "$local_file" ]; then
+  if [ ! -f "$local_file" ]; then
     cp "$remote" "$local_file"
+  elif ! grep -qxF "$CUSTOM_MARKER" "$remote"; then
+    # Treat the whole source as managed prompts. Add the delimiter after it, then
+    # retain the existing project's custom region (or adopt the whole file).
+    cat "$remote" > "$local_file.tmp"
+    append_custom_marker "$local_file.tmp"
+    if has_custom_marker "$local_file"; then
+      local local_start
+      local_start=$(grep -n -xF "$CUSTOM_MARKER" "$local_file" | head -1 | cut -d: -f1)
+      tail -n +"$((local_start + 1))" "$local_file" >> "$local_file.tmp"
+    else
+      cat "$local_file" >> "$local_file.tmp"
+      echo "  + adopted: AGENTS.md had no marker, its content was moved below the marker"
+    fi
+    mv "$local_file.tmp" "$local_file"
   elif has_custom_marker "$local_file"; then
     local remote_end local_start
     remote_end=$(grep -n -xF "$CUSTOM_MARKER" "$remote" | head -1 | cut -d: -f1)
@@ -416,7 +436,22 @@ sync_claude_md() {
   local target="$PROJECT_DIR/CLAUDE.md"
   local tmp="$PROJECT_DIR/CLAUDE.md.tmp"
   if ! grep -qxF "$CUSTOM_MARKER" "$remote"; then
-    cp "$remote" "$target"
+    if [ ! -f "$target" ]; then
+      cp "$remote" "$target"
+    else
+      cat "$remote" > "$tmp"
+      append_custom_marker "$tmp"
+      if has_custom_marker "$target"; then
+        local custom_start
+        custom_start=$(grep -n -xF "$CUSTOM_MARKER" "$target" | head -1 | cut -d: -f1)
+        tail -n +"$((custom_start + 1))" "$target" >> "$tmp"
+      else
+        cat "$target" >> "$tmp"
+        echo "  + adopted: CLAUDE.md had no marker, its content was moved below the marker"
+      fi
+      mv "$tmp" "$target"
+    fi
+    adapt_agent_tools "$target" "$CUSTOM_MARKER" update_plan "$PLAN_TOOL" request_user_input "$QUESTION_TOOL"
     return 0
   fi
   local remote_end

@@ -77,7 +77,7 @@ bash ~/.agents/skills/sync-project-config/scripts/sync.sh codex   # or your clie
 
 After that, the project copy is the entry point, and the sync adds `sync-project-config/` to `.gitignore` along with the other generated paths.
 
-Before the first sync in a repo, the skill asks whether to use it there — if you say no, it does not run the script. If the repo already has its own `AGENTS.md` (or `CLAUDE.md` on Claude) **without** the `<!-- sync-project-config:custom-prompts -->` marker, nothing is overwritten: the whole file is taken to be your own prompts and moved below the marker. Afterwards the skill reads that custom region and, if it holds project prompts, asks whether to migrate them — commands and rules stay in `AGENTS.md`, project facts move into `.project-memory/`.
+Before using the global skill in a repo, it asks once for authorization if you have not already authorized it there — if you say no, it does not run the script. A normal successful sync needs no follow-up review: an existing `AGENTS.md` (or `CLAUDE.md` on Claude) without the `<!-- sync-project-config:custom-prompts -->` marker is preserved in full after the template prompts and marker. The skill does not inspect custom prompts or ask to migrate them after syncing; migrate project facts into `.project-memory/` only when you explicitly request that as a separate task. If a sync cannot safely preserve existing content, the agent stops and asks about that specific conflict.
 
 ### Step 3: Confirm the result
 

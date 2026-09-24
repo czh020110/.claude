@@ -26,15 +26,15 @@ This is the global config migration entry point, not a project-level skill that 
    Prefer letting the script install it (see "Unified install strategy" below), which keeps one real copy plus symlinks. A hand copy is a second real copy that the script will never replace — if you copied by hand, delete that copy before switching to script-managed install, otherwise the two drift apart.
 2. Or just prompt the agent: **"Install sync-project-config from the current project root into the current client's global skill directory, then use it to initialize the current project."**
 3. Determine the client and pass the platform argument: `codex`, `zcode`, `claude`, `codebuddy`, `workbuddy`, `workbuddy-cn` or `opencode`. Capitalized and `--`-prefixed spellings are also accepted, as are `workbuddy-ai` (international) and `workbuddy-domestic` (domestic).
-4. **Confirm, sync, then offer to migrate.**
-   1. Ask the user whether to use this Skill in the current repo to load the memory templates and generate the platform config. **If the answer is no, stop here and do not run the script.**
+4. **Confirm once, sync, then report.**
+   1. If the user has not already authorized this global Skill for the current repo, ask once whether to use it there. **If the answer is no, stop here and do not run the script.**
    2. Run the sync. The script handles the prompt file by itself — `AGENTS.md` on every platform, plus `CLAUDE.md` on `claude`:
       - no such file yet → the template is written whole;
       - a file that already carries `<!-- sync-project-config:custom-prompts -->` → everything strictly above the marker is replaced from the source, and the marker with everything below it is kept;
       - a file with **no** marker → the whole file is taken to be the project's own prompts and is moved below the marker, under the template's custom-prompt note, so none of it is overwritten. The script reports this as `adopted`.
-   3. After the sync, read the custom region: everything below the marker in `AGENTS.md`, and in `CLAUDE.md` on `claude`. If it holds nothing beyond the template's own note, say nothing. If it holds project prompts, **ask the user whether to migrate them** — never migrate on your own initiative.
-   4. If the user wants the migration: **commands and rules stay where they are**, because the custom region of `AGENTS.md` is loaded on every task. Everything that is a project fact — environment, versions, paths, architecture, constraints, reusable lessons — moves into `.project-memory/` through the `update-memory` skill, following `.agents/skills/update-memory/references/project-memory-format.md`; a design or plan the user wants kept belongs in `.project-memory/Plan/` and is written there with `draft-long-term-plan`.
-   5. Report the sync scope, what was adopted, and, if a migration ran, what moved and into which topic.
+   3. A successful sync is routine: do not re-read the custom prompt region, offer memory migration, or ask for another decision. A marker-less file is adopted automatically because the script preserves its full content.
+   4. If the script fails or a target presents an overwrite risk outside these deterministic rules, inspect only the affected path and stop before any unsafe write. Ask the user only when no safe automatic handling is available.
+   5. Report the sync scope, changed files and any adoption or failure result. Move project facts into `.project-memory/` only in a separate task when the user explicitly requests it.
 
 **Unified install strategy (single copy + symlink)**: the script installs the real directory at `~/.agents/skills/sync-project-config/` and, for clients that do not read `~/.agents/skills`, symlinks it into their own skill directory — so there is only one copy on disk. An existing symlink is replaced; a real directory is left untouched and reported.
 
@@ -76,7 +76,7 @@ All platforms add missing `.project-memory/` and `.project-script/` templates an
 
 ## Boundaries
 
-- `sync.sh` enforces the marker split (replace above, preserve below), the adoption of a marker-less prompt file, the per-platform tool renaming and the credential/cache exclusions. The confirmation step and the optional migration into `.project-memory/` are the agent's responsibility — the script does not do them.
+- `sync.sh` enforces the marker split (replace above, preserve below), the adoption of a marker-less prompt file, the per-platform tool renaming and the credential/cache exclusions. The agent asks for authorization only when it is not already present; after a successful sync it reports the result without reviewing or migrating custom prompts. Migration into `.project-memory/` happens only when the user explicitly requests it.
 - Never hand-edit a generated platform directory, and never sync back from `.claude/`, `.zcode/`, `.codebuddy/` or `.opencode/` into `.codex/` / `.agents/skills/`.
 - Never copy credentials, local caches, `settings.local.json`, `CODEBUDDY.local.md` or the Codex-UI-only `agents/openai.yaml` to another platform.
 - After the script succeeds, report only the sync scope, file changes and verification results.
