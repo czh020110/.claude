@@ -1,7 +1,7 @@
 name = "docs_research"
 description = "Read-only external technical documentation lookup; prefers context7, supplements with other search tools when needed, returns concise evidence-backed conclusions."
 model = "gpt-6-luna"
-model_reasoning_effort = "low"
+model_reasoning_effort = "medium"
 sandbox_mode = "read-only"
 
 developer_instructions = """

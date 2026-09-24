@@ -1,7 +1,7 @@
 name = "collect_update_memory"
 description = "Full project memory sync on user request; first audits and restructures .project-memory topics without changing body content, then syncs implemented facts; Plan designs remain protected and Pitfalls are restructured only, never fact-synced."
 model = "gpt-6-luna"
-model_reasoning_effort = "low"
+model_reasoning_effort = "high"
 sandbox_mode = "workspace-write"
 
 developer_instructions = """
