@@ -60,11 +60,9 @@ Commit only when the user explicitly asks to commit/save changes, and use the `g
 
 ## TODO and Plan
 
-- `.project-memory/TODO/TODO.md` is the user-maintained todo list; read and modify its entries only when the user explicitly asks to write or update TODO. Ordinary tasks must not add or update TODO.
-- `.project-memory/Plan/` records the designs and plans the project has settled on — the design it is meant to have, including what is not implemented yet. Only a design the user has agreed to is written there: never a candidate option, an unapproved request or a still-open decision. The main model, `draft-long-term-plan` and `design-alignment` write it; `update-memory` does not, and `collect-update-memory` may only repair its format and topic boundaries, never the designs it records.
-- Every design unit in `Plan/` carries a status marker on its heading: `[ ]` not implemented, `[-]` in progress, `[x]` implemented and verified. Flip the marker as the work lands, and never delete an entry because it was implemented.
-- Once a design is implemented and verified, write the fact it produced with `update-memory` into the matching fact topic — `Design` for the code's design — and leave the `Plan/` entry in place. A design that is rejected or cancelled has its `Plan/` entry removed and writes no fact.
-- If the user says "continue with the todos" without naming an item, ask which one to work on first based on `TODO/TODO.md` and the `Plan/` index, and give a recommendation.
+- TODO is user-maintained; do not add or change entries unless the user explicitly asks. If the user asks to continue TODOs without naming an item, ask which item to take based on TODO and Plan, and make a recommendation.
+- Plan records only settled intended designs, including parts not yet implemented; do not record candidates or unresolved decisions. Use `draft-long-term-plan` only on explicit request; use `design-alignment` for new, changed or conflicting designs; use `collect-update-memory` only on explicit request for a full or staged memory sync. `update-memory` does not edit Plan; `collect-update-memory` may repair its structure only, never its designs.
+- Mark each Plan item `[ ]` (not implemented), `[-]` (in progress), or `[x]` (implemented and verified). Keep implemented entries and write the resulting fact to the matching topic (`Design` for code design) after verification. Remove rejected or cancelled designs without writing a fact.
 
 ---
 
