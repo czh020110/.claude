@@ -6,7 +6,9 @@
 
 [![platforms](https://img.shields.io/badge/platforms-Codex%20%7C%20ZCode%20%7C%20Claude%20Code%20%7C%20CodeBuddy%20%7C%20WorkBuddy%20%7C%20OpenCode-blue)](https://github.com/czh020110/.claude)
 
-Morrowmark 会把可复用的 Agent、Skill 和项目记忆安装到开发仓库中。记忆保存在对应仓库里，不写入客户端的全局记忆。
+**让项目记得住，也让 Agent 接得上。**
+
+Morrowmark 为每个仓库维护长期的项目上下文：把已确认的当前事实与已确定的预期设计分开，并让 Agent 按任务读取相关主题。配套的 skills 和 subagents 将计划、文档查询、验证和记忆更新等工作流程带到六种编码客户端。记忆保存在项目仓库中，不写入客户端的全局记忆。
 
 ## 快速开始
 

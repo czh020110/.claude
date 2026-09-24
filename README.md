@@ -6,7 +6,9 @@
 
 [![platforms](https://img.shields.io/badge/platforms-Codex%20%7C%20ZCode%20%7C%20Claude%20Code%20%7C%20CodeBuddy%20%7C%20WorkBuddy%20%7C%20OpenCode-blue)](https://github.com/czh020110/.claude)
 
-Morrowmark installs reusable agents, skills, and project memory into a development repository. Memory stays in that repository; it is not written to the client's global memory.
+**A codebase that remembers—and an agent that can pick up the thread.**
+
+Morrowmark gives each repository durable, project-local context. It records confirmed current facts separately from settled future designs, and guides agents to load relevant topics as work changes. Shared skills and subagents make planning, documentation research, verification, and memory updates reusable across six coding clients. Memory stays in the project repository, not the client's global memory.
 
 ## Quick Start
 
