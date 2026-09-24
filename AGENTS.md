@@ -66,7 +66,7 @@ Commit only when the user explicitly asks to commit/save changes, and use the `g
 
 ---
 
-<!-- sync-project-config:custom-prompts -->
+<!-- sync-morrowmark:custom-prompts -->
 
 **Add custom prompts below this note.** Everything above it is managed and replaced on every sync — do not edit or delete it.
 

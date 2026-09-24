@@ -34,7 +34,7 @@ The script outputs in English; match the keywords in the table below when report
 | `hit a merge conflict` / `hit a content conflict while merging` | Guide manual resolution (see "Conflict Handling") |
 | `Remote memory repository is not reachable` | Check the URL, whether the GitHub repo exists, and the SSH key / token |
 
-> If `.project-memory/` already has files but is not yet a git repo (for example it was just populated with templates by `sync-project-config`), the script brings it under version control and merges automatically; no manual action is needed.
+> If `.project-memory/` already has files but is not yet a git repo (for example it was just populated with templates by `sync-morrowmark`), the script brings it under version control and merges automatically; no manual action is needed.
 
 ## Configure URL
 

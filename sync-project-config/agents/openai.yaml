@@ -1,6 +1,0 @@
-interface:
-  display_name: "Sync Project Config"
-  short_description: "Generate platform agent and skill config from the Codex source"
-  default_prompt: "Use $sync-project-config to initialize or update this repo: ask once for authorization only if it is not already present, then sync and report. Do not review or offer to migrate custom prompts after a successful sync; inspect only an overwrite risk the script cannot handle safely. Pass the client platform (codex, zcode, claude, codebuddy, workbuddy, workbuddy-cn, opencode)."
-policy:
-  allow_implicit_invocation: false

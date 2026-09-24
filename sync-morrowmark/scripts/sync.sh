@@ -48,32 +48,32 @@ fi
 PROJECT_DIR="$(pwd)"
 
 # Self-update of the global skill: on first launch, clone the remote template,
-# overwrite sync-project-config in the project root, then exec the fresh script.
+# overwrite sync-morrowmark in the project root, then exec the fresh script.
 # The temporary clone directory is handed to the second run via an environment
 # variable so the repository is not cloned twice.
-if [ "${SYNC_PROJECT_CONFIG_BOOTSTRAPPED:-0}" != "1" ]; then
+if [ "${SYNC_MORROWMARK_BOOTSTRAPPED:-0}" != "1" ]; then
   BOOTSTRAP_TMP="$(mktemp -d)"
   trap 'rm -rf "$BOOTSTRAP_TMP"' EXIT
-  echo "[bootstrap] Fetching the latest remote sync-project-config..."
+  echo "[bootstrap] Fetching the latest remote sync-morrowmark..."
   if ! git clone --depth 1 "$REPO_URL" "$BOOTSTRAP_TMP" 2>&1; then
     echo "Error: unable to clone the config source, project sync aborted" >&2
     exit 1
   fi
-  if [ ! -d "$BOOTSTRAP_TMP/sync-project-config" ]; then
-    echo "Error: remote template is missing sync-project-config/ at the repo root" >&2
+  if [ ! -d "$BOOTSTRAP_TMP/sync-morrowmark" ]; then
+    echo "Error: remote template is missing sync-morrowmark/ at the repo root" >&2
     exit 1
   fi
-  rm -rf "$PROJECT_DIR/sync-project-config"
-  cp -R "$BOOTSTRAP_TMP/sync-project-config" "$PROJECT_DIR/sync-project-config"
-  echo "[bootstrap] Updated sync-project-config in the project root, re-running the latest script"
-  exec env SYNC_PROJECT_CONFIG_BOOTSTRAPPED=1 SYNC_PROJECT_CONFIG_REMOTE_DIR="$BOOTSTRAP_TMP" \
-    bash "$PROJECT_DIR/sync-project-config/scripts/sync.sh" "$@"
+  rm -rf "$PROJECT_DIR/sync-morrowmark"
+  cp -R "$BOOTSTRAP_TMP/sync-morrowmark" "$PROJECT_DIR/sync-morrowmark"
+  echo "[bootstrap] Updated sync-morrowmark in the project root, re-running the latest script"
+  exec env SYNC_MORROWMARK_BOOTSTRAPPED=1 SYNC_MORROWMARK_REMOTE_DIR="$BOOTSTRAP_TMP" \
+    bash "$PROJECT_DIR/sync-morrowmark/scripts/sync.sh" "$@"
 fi
 
-TMP_DIR="${SYNC_PROJECT_CONFIG_REMOTE_DIR:?}"
+TMP_DIR="${SYNC_MORROWMARK_REMOTE_DIR:?}"
 trap 'rm -rf "$TMP_DIR"' EXIT
 
-SKILL_NAME="sync-project-config"
+SKILL_NAME="sync-morrowmark"
 # Canonical install location: one real copy shared by every platform.
 CANONICAL_SKILL_DIR="${CODEX_GLOBAL_SKILL_DIR:-$HOME/.agents/skills}"
 # Per-platform skill directories are link targets rather than second copies: clients that
@@ -98,16 +98,24 @@ fi
 
 # Protocol marker: splits AGENTS.md into the managed section (everything strictly
 # above the marker) and the project's custom prompts (the marker and everything
-# below). Matched byte for byte, so it is deliberately language-neutral and must
-# never be translated, reworded or edited.
-CUSTOM_MARKER='<!-- sync-project-config:custom-prompts -->'
+# below). Always emit the current marker, but recognize earlier sync-prefixed
+# marker names so existing project prompts survive the rename.
+CUSTOM_MARKER='<!-- sync-morrowmark:custom-prompts -->'
+CUSTOM_MARKER_PATTERN='^<!-- sync-[[:alnum:]-]+:custom-prompts -->$'
 
 # True when a file already carries the custom-prompt marker. A file without one is
 # taken to be the project's own prompts: the sync moves all of it below the marker
 # instead of overwriting it (see sync_agents_md / sync_claude_md).
 has_custom_marker() {
   [ -f "$1" ] || return 1
-  grep -qxF "$CUSTOM_MARKER" "$1"
+  grep -Eq "$CUSTOM_MARKER_PATTERN" "$1"
+}
+
+custom_marker_line() {
+  local line
+  line=$(awk -v pattern="$CUSTOM_MARKER_PATTERN" '$0 ~ pattern { print NR; exit }' "$1")
+  [ -n "$line" ] || return 1
+  printf '%s\n' "$line"
 }
 
 # AGENTS.md is authored against Codex's tool names. Select the equivalent names
@@ -125,7 +133,7 @@ case "$PLATFORM" in
     ;;
 esac
 
-echo "=== sync-project-config ($PLATFORM) ==="
+echo "=== sync-morrowmark ($PLATFORM) ==="
 echo "Project directory: $PROJECT_DIR"
 echo "Remote repository: $REPO_URL"
 echo ""
@@ -478,14 +486,14 @@ sync_agents_md() {
 
   if [ ! -f "$local_file" ]; then
     cp "$remote" "$local_file"
-  elif ! grep -qxF "$CUSTOM_MARKER" "$remote"; then
+  elif ! has_custom_marker "$remote"; then
     # Treat the whole source as managed prompts. Add the delimiter after it, then
     # retain the existing project's custom region (or adopt the whole file).
     cat "$remote" > "$local_file.tmp"
     append_custom_marker "$local_file.tmp"
     if has_custom_marker "$local_file"; then
       local local_start
-      local_start=$(grep -n -xF "$CUSTOM_MARKER" "$local_file" | head -1 | cut -d: -f1)
+      local_start=$(custom_marker_line "$local_file")
       tail -n +"$((local_start + 1))" "$local_file" >> "$local_file.tmp"
     else
       cat "$local_file" >> "$local_file.tmp"
@@ -494,8 +502,8 @@ sync_agents_md() {
     mv "$local_file.tmp" "$local_file"
   elif has_custom_marker "$local_file"; then
     local remote_end local_start
-    remote_end=$(grep -n -xF "$CUSTOM_MARKER" "$remote" | head -1 | cut -d: -f1)
-    local_start=$(grep -n -xF "$CUSTOM_MARKER" "$local_file" | head -1 | cut -d: -f1)
+    remote_end=$(custom_marker_line "$remote")
+    local_start=$(custom_marker_line "$local_file")
     # Everything strictly above the marker is managed and comes from the source;
     # the marker and everything below it come from the local file.
     head -n "$((remote_end - 1))" "$remote" > "$local_file.tmp"
@@ -506,7 +514,7 @@ sync_agents_md() {
     # No marker: the whole file is the project's own prompts. Keep all of it by
     # moving it below the marker, under the source's custom-prompt note.
     local remote_end
-    remote_end=$(grep -n -xF "$CUSTOM_MARKER" "$remote" | head -1 | cut -d: -f1)
+    remote_end=$(custom_marker_line "$remote")
     head -n "$((remote_end - 1))" "$remote" > "$local_file.tmp"
     printf '%s\n' "$CUSTOM_MARKER" >> "$local_file.tmp"
     tail -n +"$((remote_end + 1))" "$remote" >> "$local_file.tmp"
@@ -526,7 +534,7 @@ sync_claude_md() {
   [ -f "$remote" ] || return 0
   local target="$PROJECT_DIR/CLAUDE.md"
   local tmp="$PROJECT_DIR/CLAUDE.md.tmp"
-  if ! grep -qxF "$CUSTOM_MARKER" "$remote"; then
+  if ! has_custom_marker "$remote"; then
     if [ ! -f "$target" ]; then
       cp "$remote" "$target"
     else
@@ -534,7 +542,7 @@ sync_claude_md() {
       append_custom_marker "$tmp"
       if has_custom_marker "$target"; then
         local custom_start
-        custom_start=$(grep -n -xF "$CUSTOM_MARKER" "$target" | head -1 | cut -d: -f1)
+        custom_start=$(custom_marker_line "$target")
         tail -n +"$((custom_start + 1))" "$target" >> "$tmp"
       else
         cat "$target" >> "$tmp"
@@ -546,14 +554,14 @@ sync_claude_md() {
     return 0
   fi
   local remote_end
-  remote_end=$(grep -n -xF "$CUSTOM_MARKER" "$remote" | head -1 | cut -d: -f1)
+  remote_end=$(custom_marker_line "$remote")
   head -n "$((remote_end - 1))" "$remote" > "$tmp"
   adapt_agent_tools "$tmp" "$CUSTOM_MARKER" update_plan "$PLAN_TOOL" request_user_input "$QUESTION_TOOL"
   if [ ! -f "$target" ]; then
     tail -n +"$remote_end" "$remote" >> "$tmp"
   elif has_custom_marker "$target"; then
     local custom_start
-    custom_start=$(grep -n -xF "$CUSTOM_MARKER" "$target" | head -1 | cut -d: -f1)
+    custom_start=$(custom_marker_line "$target")
     printf '%s\n' "$CUSTOM_MARKER" >> "$tmp"
     tail -n +"$((custom_start + 1))" "$target" >> "$tmp"
   else
@@ -679,20 +687,20 @@ echo ""
 echo "[6/7] Checking .gitignore..."
 GITIGNORE="$PROJECT_DIR/.gitignore"
 if [ "$PLATFORM" = "opencode" ]; then
-  ENTRIES=( ".project-memory/" ".project-script/" ".opencode/" "sync-project-config/" )
+  ENTRIES=( ".project-memory/" ".project-script/" ".opencode/" "sync-morrowmark/" )
   HEADER="# OpenCode / project-local config"
   elif [ "$PLATFORM" = "workbuddy" ]; then
-    ENTRIES=( ".project-memory/" ".project-script/" "sync-project-config/" ".codebuddy/" )
+    ENTRIES=( ".project-memory/" ".project-script/" "sync-morrowmark/" ".codebuddy/" )
     if [ "$WORKBUDDY_VARIANT" = "domestic" ]; then
       HEADER="# WorkBuddy domestic / project-local config"
     else
       HEADER="# WorkBuddy international / project-local config"
     fi
   elif [ "$PLATFORM" = "codebuddy" ]; then
-    ENTRIES=( ".project-memory/" ".project-script/" "sync-project-config/" ".codebuddy/" )
+    ENTRIES=( ".project-memory/" ".project-script/" "sync-morrowmark/" ".codebuddy/" )
     HEADER="# CodeBuddy / project-local config"
 else
-  ENTRIES=( ".codex/" ".zcode/" ".claude/" ".agents/" ".project-memory/" ".project-script/" "sync-project-config/" "AGENTS.md" "CLAUDE.md" )
+  ENTRIES=( ".codex/" ".zcode/" ".claude/" ".agents/" ".project-memory/" ".project-script/" "sync-morrowmark/" "AGENTS.md" "CLAUDE.md" )
   HEADER="# Agent / project-local config"
 fi
 if [ ! -f "$GITIGNORE" ]; then

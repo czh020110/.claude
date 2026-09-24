@@ -1,2 +1,2 @@
-prefix_rule(pattern=["bash", ".agents/skills/sync-project-config/scripts/sync.sh"], decision="allow")
+prefix_rule(pattern=["bash", ".agents/skills/sync-morrowmark/scripts/sync.sh"], decision="allow")
 prefix_rule(pattern=["bash", ".agents/skills/sync-project-memory/scripts/sync-memory.sh"], decision="allow")

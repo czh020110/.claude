@@ -1,9 +1,9 @@
 ---
-name: sync-project-config
+name: sync-morrowmark
 description: Use when the user asks to sync base project config or config is found missing; initializes and updates project agents, skills and templates.
 ---
 
-# sync-project-config
+# sync-morrowmark
 
 This is the global config migration entry point, not a project-level skill that any project loads automatically. Install this directory into the current client's global skill directory, then use it to initialize or update a project.
 
@@ -20,31 +20,31 @@ When the task is only to run a sync, do not invoke `read-index-memory`, inspect 
 ## Usage
 
 1. Install it once, into the client's global skill directory:
-   - Codex/ZCode: `~/.agents/skills/sync-project-config/`
-   - Claude Code: `~/.claude/skills/sync-project-config/`
-   - CodeBuddy (domestic build): `~/.codebuddy/skills/sync-project-config/`
-   - WorkBuddy international: `~/.workbuddy-ai/skills/sync-project-config/`
-   - WorkBuddy domestic: `~/.workbuddy/skills/sync-project-config/`
-   - OpenCode: `~/.agents/skills/sync-project-config/` (OpenCode reads that directory natively, no symlink needed)
+   - Codex/ZCode: `~/.agents/skills/sync-morrowmark/`
+   - Claude Code: `~/.claude/skills/sync-morrowmark/`
+   - CodeBuddy (domestic build): `~/.codebuddy/skills/sync-morrowmark/`
+   - WorkBuddy international: `~/.workbuddy-ai/skills/sync-morrowmark/`
+   - WorkBuddy domestic: `~/.workbuddy/skills/sync-morrowmark/`
+   - OpenCode: `~/.agents/skills/sync-morrowmark/` (OpenCode reads that directory natively, no symlink needed)
 
    Prefer letting the script install it (see "Unified install strategy" below), which keeps one real copy plus symlinks. A hand copy is a second real copy that the script will never replace — if you copied by hand, delete that copy before switching to script-managed install, otherwise the two drift apart.
-2. Or just prompt the agent: **"Install sync-project-config from the current project root into the current client's global skill directory, then use it to initialize the current project."**
+2. Or ask the agent to install `sync-morrowmark` from the current project root. After installation, it must ask whether to initialize or update the current project and wait for confirmation before syncing.
 3. Determine the client and pass the platform argument: `codex`, `zcode`, `claude`, `codebuddy`, `workbuddy`, `workbuddy-cn` or `opencode`. Capitalized and `--`-prefixed spellings are also accepted, as are `workbuddy-ai` (international) and `workbuddy-domestic` (domestic).
 4. **Confirm once, sync, then report.**
    1. If the user has not already authorized this global Skill for the current repo, ask once whether to use it there. **If the answer is no, stop here and do not run the script.**
    2. Run the sync. The script handles the prompt file by itself — `AGENTS.md` on every platform, plus `CLAUDE.md` on `claude`:
       - no such file yet → the template is written whole;
-      - a file that already carries `<!-- sync-project-config:custom-prompts -->` → everything strictly above the marker is replaced from the source, and the marker with everything below it is kept;
+      - a file that already carries `<!-- sync-morrowmark:custom-prompts -->` → everything strictly above the marker is replaced from the source, and the marker with everything below it is kept;
       - a file with **no** marker → the whole file is taken to be the project's own prompts and is moved below the marker, under the template's custom-prompt note, so none of it is overwritten. The script reports this as `adopted`.
    3. A successful sync is routine: do not re-read the custom prompt region, offer memory migration, or ask for another decision. A marker-less file is adopted automatically because the script preserves its full content.
    4. If the script fails or a target presents an overwrite risk outside these deterministic rules, inspect only the affected path and stop before any unsafe write. Ask the user only when no safe automatic handling is available.
    5. Report the sync scope, changed files and any adoption or failure result. Move project facts into `.project-memory/` only in a separate task when the user explicitly requests it.
 
-**Unified install strategy (single copy + symlink)**: the script installs the real directory at `~/.agents/skills/sync-project-config/` and, for clients that do not read `~/.agents/skills`, symlinks it into their own skill directory — so there is only one copy on disk. An existing symlink is replaced; a real directory is left untouched and reported.
+**Unified install strategy (single copy + symlink)**: the script installs the real directory at `~/.agents/skills/sync-morrowmark/` and, for clients that do not read `~/.agents/skills`, symlinks it into their own skill directory — so there is only one copy on disk. An existing symlink is replaced; a real directory is left untouched and reported.
 
 `codebuddy`, `workbuddy` and `workbuddy-cn` are three separate targets with different **user-level** skill directories (see the table in step 1). At the **project** level, `workbuddy` and `workbuddy-cn` share CodeBuddy's `.codebuddy/` layout with `codebuddy`. Picking the wrong target fails silently rather than erroring.
 
-On every launch the script fetches the latest `sync-project-config` from the remote template repo, overwrites the directory of the same name in the project root, then re-executes the updated script before running the rest of the sync. That project-root copy is the entry point for later runs, and the sync adds it to `.gitignore`.
+On every launch the script fetches the latest `sync-morrowmark` from the remote template repo, overwrites the directory of the same name in the project root, then re-executes the updated script before running the rest of the sync. That project-root copy is the entry point for later runs, and the sync adds it to `.gitignore`.
 
 ## Context7 MCP
 
