@@ -1,6 +1,6 @@
 interface:
-  display_name: "Morrowmark Sync"
+  display_name: "Sync Morrowmark"
   short_description: "Install and sync Morrowmark project agents and memory"
-  default_prompt: "Use $sync-morrowmark to install the skill for this client. After installation, ask whether to initialize or update the current project; do not sync until the user confirms. When syncing, ask for authorization only if it is not already present, then report the result. Pass the client platform (codex, zcode, claude, codebuddy, workbuddy, workbuddy-cn, opencode)."
+  default_prompt: "Use $sync-morrowmark to install the skill for this client. After installation, ask whether to initialize or update the current project and wait for confirmation before syncing. A direct sync request authorizes that run; do not ask for separate authorization. Pass the client platform (codex, zcode, claude, codebuddy, workbuddy, workbuddy-cn, opencode)."
 policy:
   allow_implicit_invocation: false

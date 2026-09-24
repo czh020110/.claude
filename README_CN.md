@@ -1,4 +1,4 @@
-# Morrowmark
+# Morrowmark: Vibe Coding 项目持久化与记忆管理
 
 **面向 Codex、ZCode、Claude Code、CodeBuddy、WorkBuddy 和 OpenCode 的项目记忆与编码 Agent 工作流。**
 

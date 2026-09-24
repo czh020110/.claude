@@ -1,15 +1,9 @@
 ---
 name: post-verify
-description: Final verification gate: run once, after all edits of a modification task are done and before delivery.
+description: "Final verification gate: run once, after all edits of a modification task are done and before delivery."
 ---
 
 # post-verify
-
-The final verification entry point after a modification task completes, covering reuse, creation, index sync and the fix loop for verification scripts.
-
-## Timing (MUST)
-
-Run this skill after the main edits of a task are done and before delivery, for every development and modification task (add/fix/refactor/config/test/docs/prompt sync). Do not run it on intermediate states — only once the edits for this delivery are complete.
 
 ## Execution Flow (MUST)
 

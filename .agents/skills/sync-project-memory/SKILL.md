@@ -33,7 +33,7 @@ When the user says only "sync" or invokes this Skill without a direction:
    - Local memory is uninitialized or no upstream branch is known: explain that `pull` can initialize/check the remote, while `push` can publish existing local content; ask which direction the user wants.
    - Local uncommitted changes and remote commits are both present: explain that pull may be blocked by overlapping changes; ask whether to attempt the merge or handle local changes first.
 5. If the chosen pull or merge conflicts, stop and guide the user through resolution. Never discard local or remote content or force-push.
-6. If a chosen push is rejected because the remote changed after `info`, explain that pull-and-merge is needed and ask before proceeding with it.
+6. If a chosen operation is rejected or conflicts, follow "Handling by Output" and its linked recovery steps.
 
 ## Handling by Output
 
@@ -44,8 +44,7 @@ The script outputs in English; match the keywords in the table below when report
 | `push complete` / `pull complete` / `checked out remote branch` / `merged local content` | Tell the user it succeeded and briefly describe the change |
 | `has no changes, nothing to push` | Tell the user there are no changes |
 | `[SYNC_ERROR] Argument validation failed` | Relay the correct usage; if it shows `URL configured: no`, configure the URL first |
-| `Uncommitted local changes` / `Ahead of remote: N` | For directionless sync, use these facts to recommend push; ask before running it |
-| `Behind remote: N` | For directionless sync, recommend pull; ask before running it |
+| `Uncommitted local changes` / `Ahead of remote: N` / `Behind remote: N` | For directionless sync, use these counts with the rules above; ask before running the recommended operation |
 | `Remote memory repository URL is not configured` | See "Configure URL" below |
 | `git user identity is not configured` | Ask the user to run `git config --global user.name/email` first |
 | `push failed, the remote has newer commits` | Explain that pull-and-merge is needed; ask before running pull |
@@ -72,6 +71,6 @@ To abandon the merge: `cd .project-memory && git merge --abort`
 
 ## Other Commands
 
-Use `scripts/sync-memory.sh config <URL>` under the current `sync-project-memory` Skill directory to configure the URL; use the same script's `status` argument to view detailed status.
+Use the same script's `status` argument to view detailed status.
 
 Across devices: the Skill comes along with the current platform config; the project identity comes from the main repo's origin remote, so switching devices needs no extra configuration. The remote project memory repo URL must be reconfigured on each device.

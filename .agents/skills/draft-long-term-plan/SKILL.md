@@ -7,10 +7,6 @@ description: Use only when the user explicitly asks to draft or extend the proje
 
 Builds and extends `.project-memory/Plan/` — the design the project is meant to have, from its start to its final form, including the parts that are not built yet.
 
-## Trigger Boundary
-
-Start this skill only when the user asks for it: to design the project, to plan a new part of it, or to write the plan down. Never start it because a task looks large, because the project has no plan yet, or because a design discussion just happened — an existing design that changed belongs to `design-alignment`.
-
 ## Two Modes
 
 - **Greenfield** — the repository has no code yet: design the whole project, from zero to final delivery.
@@ -30,13 +26,11 @@ Start this skill only when the user asks for it: to design the project, to plan 
 - Follow the index and body rules in `references/project-memory-format.md` under the current platform's `update-memory` Skill directory: `Plan/MEMORY.md` is an index only, bodies and index are one-to-one, and two topics must not cover the same or a similar subject. Read that reference before the first write.
 - A body is a design document, not a task list: architecture, module boundaries, interfaces, data shapes, the technology in use and the reasons behind each choice. It may go as fine as per-function or per-interface design.
 - **Every design unit carries a status marker on its heading** — `[ ]` not implemented, `[-]` in progress, `[x]` implemented and verified. Anything written now starts as `[ ]`. Never delete an entry for being implemented; flip the marker instead.
-- Record only what the user has agreed to. A default you chose is written as the design with its reason, not as an open question.
+- Record only what the user has agreed to. A default you chose is written as the design with its reason, not as an open question; do not treat your recommendation as the user's decision.
 - Do not write current facts: `Design/`, `Target/`, `Boundary/`, `Commands/` and the rest belong to `update-memory`.
 - Do not create empty files, and do not write into `TODO/TODO.md`.
 
 ## Boundaries
 
-- User-invoked only. The agent never starts this skill on its own initiative.
-- Never treat your own recommendation as the user's decision, and never write a design the user has not agreed to.
 - This skill designs and records; it does not build the design. Implementing it is a separate task.
 - If the environment cannot interact, stop and report what is still open instead of writing a plan you inferred.

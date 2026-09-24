@@ -1,6 +1,6 @@
 ---
 name: git-commit
-description: Create a git commit: group the changes by purpose, write the structured message, then verify.
+description: "Create a git commit: group the changes by purpose, write the structured message, then verify."
 ---
 
 # Commit Flow
@@ -55,9 +55,7 @@ description: Create a git commit: group the changes by purpose, write the struct
 
 # Commit Rules
 
-- Every git commit must contain both:
-  1. Short description: the first line, preferably in "verb + object + purpose" form.
-  2. Detailed description: the commit body, covering the change goal, files involved, reason for change, before/after differences, key function/interface/doc items, verification result and follow-on impact, consistent with the actual changes.
+- Every commit must have a first-line short description and a detailed body following the template above; both must match the actual changes.
 - Never write "verification passed" for content that was not verified.
 - The detailed git commit description is explanatory summary only; do not copy code diffs or paste large source blocks.
 - A git commit must not include an AI co-author line (such as `Co-Authored-By: Claude ...`); the commit must not contain any AI attribution.

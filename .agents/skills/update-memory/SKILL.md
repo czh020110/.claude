@@ -1,15 +1,13 @@
 ---
 name: update-memory
-description: Process current-task memory candidates using the shared evidence and topic rules.
+description: Write eligible current-task memory entries according to the shared evidence and topic rules.
 ---
 
 # update-memory
 
-Process eligible memory candidates identified in the current task under the rules in `AGENTS.md`, then write them into project memory.
-
 ## Write Scope
 
-- Process only candidates identified by the applicable `AGENTS.md` trigger or final review. Use the shared format reference for eligibility, evidence, topic ownership and placement; do not search unrelated conversation history for more candidates.
+- When invoked under an `AGENTS.md` memory rule, assess the relevant information in the current task and write it in the same pass if eligible. Do not maintain a pending list or search unrelated history. Use the shared format reference for evidence, exclusions, topic ownership and placement.
 
 ## Boundaries
 
@@ -25,7 +23,7 @@ Process eligible memory candidates identified in the current task under the rule
 
 ## Update Process
 
-1. Process the candidate identified by the applicable `AGENTS.md` trigger or final review. Check it against the shared memory format's evidence and exclusion rules; if it does not qualify, stop without writing.
+1. Check the relevant statement or completed-work finding against the shared memory format's evidence and exclusion rules; if it does not qualify, stop without writing.
 2. Decide which topic the fact belongs to: `Commands`, `Environment`, `Target`, `Design`, `Boundary`, `Preferences`, `Tools` or `Pitfalls`.
 3. Read that topic's `MEMORY.md` index and read only the relevant bodies per the index; do not read unrelated topics.
 4. **Before the first write or any structural change**, read [project-memory-format.md](references/project-memory-format.md) and follow its fact ownership, indexing and split rules.

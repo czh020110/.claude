@@ -9,7 +9,7 @@ project_doc_max_bytes = 65536
 max_concurrent_threads_per_session = 4
 
 [features]
-default_mode_request_user_input = false    # Interactive question tool (request_user_input); the user can enable it as needed
+default_mode_request_user_input = true    # Interactive question tool (request_user_input); the user can enable it as needed
 undo = true                               # Change undo and rollback
 
 [features.multi_agent_v2]

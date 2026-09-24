@@ -9,7 +9,7 @@ This is the global config migration entry point, not a project-level skill that 
 
 ## Routine Sync Execution
 
-When the task is only to run a sync, do not invoke `read-index-memory`, inspect project-memory files, or pre-read the sync script. After resolving the platform and any required authorization, run the script directly. Do not invoke `post-verify` or `update-memory` after a successful run; the script's exit status and output are the completion check. If it fails or reports an unsafe overwrite conflict, inspect only the affected path. This exception does not apply when editing or debugging this Skill or its script.
+When the user directly requests a sync or explicitly invokes this Skill to sync, that authorizes the current run. Resolve the platform and run the script directly without asking for separate authorization or whether to sync. If the Skill is used only because missing configuration was discovered during another task, ask before initializing or updating the project. Do not invoke `read-index-memory`, inspect project-memory files, or pre-read the sync script for a routine sync. Do not invoke `post-verify` or `update-memory` after a successful run; the script's exit status and output are the completion check. If it fails or reports an unsafe overwrite conflict, inspect only the affected path. This exception does not apply when editing or debugging this Skill or its script.
 
 ## Single Source
 
@@ -30,15 +30,14 @@ When the task is only to run a sync, do not invoke `read-index-memory`, inspect 
    Prefer letting the script install it (see "Unified install strategy" below), which keeps one real copy plus symlinks. A hand copy is a second real copy that the script will never replace — if you copied by hand, delete that copy before switching to script-managed install, otherwise the two drift apart.
 2. Or ask the agent to install `sync-morrowmark` from the current project root. After installation, it must ask whether to initialize or update the current project and wait for confirmation before syncing.
 3. Determine the client and pass the platform argument: `codex`, `zcode`, `claude`, `codebuddy`, `workbuddy`, `workbuddy-cn` or `opencode`. Capitalized and `--`-prefixed spellings are also accepted, as are `workbuddy-ai` (international) and `workbuddy-domestic` (domestic).
-4. **Confirm once, sync, then report.**
-   1. If the user has not already authorized this global Skill for the current repo, ask once whether to use it there. **If the answer is no, stop here and do not run the script.**
-   2. Run the sync. The script handles the prompt file by itself — `AGENTS.md` on every platform, plus `CLAUDE.md` on `claude`:
+4. **Run the requested sync, then report.**
+   1. Run the sync. The script handles the prompt file by itself — `AGENTS.md` on every platform, plus `CLAUDE.md` on `claude`:
       - no such file yet → the template is written whole;
       - a file that already carries `<!-- sync-morrowmark:custom-prompts -->` → everything strictly above the marker is replaced from the source, and the marker with everything below it is kept;
       - a file with **no** marker → the whole file is taken to be the project's own prompts and is moved below the marker, under the template's custom-prompt note, so none of it is overwritten. The script reports this as `adopted`.
-   3. A successful sync is routine: do not re-read the custom prompt region, offer memory migration, or ask for another decision. A marker-less file is adopted automatically because the script preserves its full content.
-   4. If the script fails or a target presents an overwrite risk outside these deterministic rules, inspect only the affected path and stop before any unsafe write. Ask the user only when no safe automatic handling is available.
-   5. Report the sync scope, changed files and any adoption or failure result. Move project facts into `.project-memory/` only in a separate task when the user explicitly requests it.
+   2. A successful sync is routine: do not re-read the custom prompt region, offer memory migration, or ask for another decision. A marker-less file is adopted automatically because the script preserves its full content.
+   3. If the script fails or a target presents an overwrite risk outside these deterministic rules, inspect only the affected path and stop before any unsafe write. Ask the user only when no safe automatic handling is available.
+   4. Report the sync scope, changed files and any adoption or failure result. Move project facts into `.project-memory/` only in a separate task when the user explicitly requests it.
 
 **Unified install strategy (single copy + symlink)**: the script installs the real directory at `~/.agents/skills/sync-morrowmark/` and, for clients that do not read `~/.agents/skills`, symlinks it into their own skill directory — so there is only one copy on disk. An existing symlink is replaced; a real directory is left untouched and reported.
 
@@ -76,15 +75,10 @@ If the global configuration is not writable or the current client does not suppo
 - `workbuddy-cn`: same as `workbuddy`, for the domestic build.
 - `opencode`: generates `.opencode/agents/` and `.opencode/skills/` from the Codex source; the global skill uses the canonical directory directly (OpenCode reads `~/.agents/skills/` natively) and no symlink is created — OpenCode requires skill names to be unique across locations, and duplicates cause conflicts.
 
-## Subagent Reasoning Effort
-
-When syncing same-named agents, preserve an existing target-side reasoning setting instead of replacing it with the source default. Codex uses `model_reasoning_effort`; generated files use Claude `effort`, ZCode `thoughtLevel`, CodeBuddy `effort`, and OpenCode `reasoningEffort` (provider/model-specific). OpenCode's existing `variant` or `model` value with a `#variant` is also preserved because it may encode reasoning effort. WorkBuddy has no confirmed per-subagent effort field in the official documentation, so preserve existing effort metadata but do not generate an undocumented field. If the source level is unsupported or compatibility with the selected model/provider cannot be confirmed, keep any target-side setting and report that the source default was skipped.
-
 All platforms add missing `.project-memory/` and `.project-script/` templates and never overwrite content a project has accumulated. For `.project-memory/`, the first-line title of each file is refreshed from the template on every sync while everything below that title is left untouched. The sync script does not generate or copy project-level MCP configuration files.
 
 ## Boundaries
 
-- `sync.sh` enforces the marker split (replace above, preserve below), the adoption of a marker-less prompt file, the per-platform tool renaming and the credential/cache exclusions. It also keeps a target agent's existing reasoning setting for the same-named agent; source defaults are translated only when the target platform has a documented compatible field and value. The agent asks for authorization only when it is not already present; after a successful sync it reports the result without reviewing or migrating custom prompts. Migration into `.project-memory/` happens only when the user explicitly requests it.
+- Preserve existing target-side subagent reasoning settings for same-named agents; do not overwrite them.
 - Never hand-edit a generated platform directory, and never sync back from `.claude/`, `.zcode/`, `.codebuddy/` or `.opencode/` into `.codex/` / `.agents/skills/`.
 - Never copy credentials, local caches, `settings.local.json`, `CODEBUDDY.local.md` or the Codex-UI-only `agents/openai.yaml` to another platform.
-- After the script succeeds, report only the sync scope, file changes and verification results.
