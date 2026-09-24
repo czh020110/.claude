@@ -63,9 +63,27 @@ The sync generates the platform's agent and skill configuration and adds project
 
 ## Project Memory
 
-Memory lives in `.project-memory/` and uses an index-and-body layout. Each topic's `MEMORY.md` is an index, with facts in separate topic bodies.
+Memory lives in `.project-memory/` and uses an index-and-body layout. Each topic's `MEMORY.md` routes agents to separate topic bodies; put durable facts in the relevant body.
 
-`Design` describes what the code does now; `Plan/` holds the settled design the project intends to build. `TODO/TODO.md` is maintained by the user.
+| Directory | Purpose |
+| --- | --- |
+| `Target/` | Project purpose, scope, and acceptance criteria. |
+| `Design/` | Current implementation, architecture, and design rationale. |
+| `Plan/` | Settled future designs; mark items complete only after implementation and verification. |
+| `Boundary/` | Behaviors to preserve, exclusions, constraints, and quality requirements. |
+| `Preferences/` | Project-specific working and communication preferences. |
+| `Commands/` | Install, run, build, test, deploy, and recovery commands. |
+| `Environment/` | Tool versions, platform limits, paths, and external services. |
+| `Documents/` | Index of user-maintained project documents; referenced document bodies are read-only. |
+| `Tools/` | Reusable helpers for scripts, visualizations, and data conversion. |
+| `Pitfalls/` | Recurring issues, how to recognize them, and how to avoid them. |
+| `TODO/` | `TODO/TODO.md` is the user's backlog; agents edit it only when explicitly asked. |
+
+**Maintaining memory:** Read all topic indexes and TODO first, then only the bodies relevant to the task. Record confirmed, reusable project facts in the matching topic. Keep `Plan/` for settled designs; `TODO/TODO.md` is user-maintained.
+
+## Verification Scripts (`.project-script/`)
+
+Store reusable verification scripts in type-specific subdirectories and list each script's path, purpose, applicable scenarios, entry command, and prerequisites in `.project-script/MEMORY.md`. One-off checks do not need a saved script. Run `post-verify` after each project modification. This repository currently has no reusable verification scripts registered.
 
 ## Team Memory Collaboration
 
