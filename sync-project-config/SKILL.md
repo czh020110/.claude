@@ -7,6 +7,10 @@ description: Use when the user asks to sync base project config or config is fou
 
 This is the global config migration entry point, not a project-level skill that any project loads automatically. Install this directory into the current client's global skill directory, then use it to initialize or update a project.
 
+## Routine Sync Execution
+
+When the task is only to run a sync, do not invoke `read-index-memory`, inspect project-memory files, or pre-read the sync script. After resolving the platform and any required authorization, run the script directly. Do not invoke `post-verify` or `update-memory` after a successful run; the script's exit status and output are the completion check. If it fails or reports an unsafe overwrite conflict, inspect only the affected path. This exception does not apply when editing or debugging this Skill or its script.
+
 ## Single Source
 
 - Agent source: `.codex/agents/*.toml` in the template repo, where `developer_instructions` is the only prompt body.
