@@ -56,7 +56,7 @@ Agent 仍可整理主题结构和索引，但遵守以下边界：
 
 ## 快速开始
 
-1. 将本仓库的 `sync-morrowmark/` 安装到当前客户端的全局 Skill 目录：
+1. 使用 Vercel Skills CLI 安装并登记全局入口 Skill。以下是 CLI 使用或兼容链接使用的客户端 Skill 目录：
 
    | 客户端 | 全局 Skill 目录 |
    | --- | --- |
@@ -69,26 +69,20 @@ Agent 仍可整理主题结构和索引，但遵守以下边界：
    也可以使用 Vercel Skills CLI 安装这个 Skill：
 
    ```bash
-   npx skills add czh020110/Morrowmark --full-depth --skill sync-morrowmark --global
+   npx skills add czh020110/morrowmark@sync-morrowmark --global
    ```
 
-   `--full-depth` 用于扫描这个非标准子目录，`--skill` 只选择入口 Skill。如果 CLI 提示选择客户端，请选择当前使用的客户端。之后要更新 CLI 管理的安装时，运行 `npx skills update sync-morrowmark`。这一步只安装全局 Skill；项目初始化或更新仍需执行第 2 步。更多客户端和参数见 [Skills CLI 文档](https://github.com/vercel-labs/skills)。
+   `@sync-morrowmark` 后缀会直接选择这个入口 Skill。如果 CLI 提示选择客户端，请选择受支持的客户端。目前 CLI 的 Agent 列表不包含 WorkBuddy；项目初始化时会将 WorkBuddy 的客户端目录链接到登记后的 Skill 源。全局登记后，Skill 可使用 `npx skills update --global sync-morrowmark` 更新自身；项目配置仍需执行第 2 步。更多客户端和参数见 [Skills CLI 文档](https://github.com/vercel-labs/skills)。
 
 首次同步前，请用这个新名称替换之前安装的全局版本。
 
    也可以把下面这段提示词复制给 Agent：
 
    ```text
-   请从 https://github.com/czh020110/Morrowmark/tree/main/sync-morrowmark 安装 `sync-morrowmark` Skill 到当前客户端的全局 Skill 目录。该链接中的仓库仅作为 Skill 来源，当前会话打开的仓库才是目标项目。如果这是首次安装，请读取安装后的 Skill 中的 `references/PROJECT_USAGE.md` 并简要说明 Morrowmark 的使用方式；更新已有安装不算首次安装。然后询问我是否要初始化或更新当前仓库；得到确认前不要执行同步。
+   请使用 `npx skills add czh020110/morrowmark@sync-morrowmark --global` 安装全局 `sync-morrowmark` Skill。如果 CLI 提示选择客户端，请选择它支持的客户端；如果当前客户端是 WorkBuddy，请选择 Codex 作为登记来源，之后由 Skill 将 WorkBuddy 客户端目录链接到该来源。当前会话打开的仓库是目标项目。如果这是首次安装，请读取安装后的 Skill 中的 `references/PROJECT_USAGE.md` 并简要说明 Morrowmark 的使用方式；更新已有安装不算首次安装。然后询问我是否要初始化或更新当前仓库；得到确认前不要执行项目同步。
    ```
 
-2. 首次同步时运行刚安装的全局脚本；它会在目标仓库创建项目副本。后续更新时，在目标仓库根目录运行：
-
-   ```bash
-   bash sync-morrowmark/scripts/sync.sh codex
-   ```
-
-   根据客户端将 `codex` 替换为 `zcode`、`claude`、`codebuddy`、`workbuddy`、`workbuddy-cn` 或 `opencode`。
+2. 在目标仓库中调用全局安装的 `sync-morrowmark` Skill。它会先通过 `npx skills update --global sync-morrowmark` 更新登记的全局 Skill，再运行脚本同步当前仓库的平台配置。若当前平台不受 Skills CLI 识别，Skill 会先将平台全局目录链接到 CLI 管理的 Skill 源，再运行脚本。
 
 同步会生成对应平台的 Agent、Skill 配置并补齐项目记忆模板；会保留现有自定义提示词、累积的记忆正文，以及平台支持的同名 Agent 思考程度设置。
 

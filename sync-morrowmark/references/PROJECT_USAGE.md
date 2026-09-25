@@ -15,21 +15,23 @@ Morrowmark is a configuration template for coding agents. It brings reusable Ski
 Install it from GitHub with Vercel's Skills CLI:
 
 ```bash
-npx skills add czh020110/Morrowmark --full-depth --skill sync-morrowmark --global
+npx skills add czh020110/morrowmark@sync-morrowmark --global
 ```
 
-The repository shorthand supports skills.sh install tracking. `--full-depth` finds this Skill outside the CLI's standard skill directories, and `--skill` limits the installation to this entry Skill.
+The `@sync-morrowmark` suffix selects this entry Skill directly. `--global` installs it into the current client's global Skill directory.
 
-You can also install it manually in the client's global Skill directory listed in the repository README. If Vercel's Skills CLI manages the installed copy, update it with `npx skills update sync-morrowmark`.
+Use the Skills CLI for installation so the global source is registered for updates. Manually copied Skill directories are not covered by the CLI update lock. Before every project sync, the Skill updates its registered source with `npx skills update --global sync-morrowmark`.
 
 Installing the Skill for the first time is separate from initializing a project. After confirming a first-time installation, the Agent may briefly explain this guide and ask whether the user wants to initialize the current project. Do not sync a project without the user's request.
 
 ### Initialize or update a target repository
 
-Run this command from the target repository root:
+Invoke the globally installed Skill while the target repository is open. It updates its registered global source first, then runs the bundled script with the target repository as its working directory. If Skills CLI does not recognize the current client, the Skill links that client's global Skill path to the CLI-managed source.
+
+For a manual project sync, first update the global Skill, keep the target repository as the working directory, then run the script from the global Skill path. For Codex:
 
 ```bash
-bash sync-morrowmark/scripts/sync.sh codex
+bash "$HOME/.agents/skills/sync-morrowmark/scripts/sync.sh" codex
 ```
 
 Replace `codex` with the target client:
@@ -44,7 +46,7 @@ Replace `codex` with the target client:
 | `workbuddy-cn` | WorkBuddy domestic edition |
 | `opencode` | OpenCode |
 
-The script fetches the current version from the configured template remote, replaces the target repository's `sync-morrowmark/` copy, and generates the client-specific configuration. Re-running it is a project update or sync, not a first-time Skill installation. Update a CLI-managed global Skill copy separately with `npx skills update sync-morrowmark`.
+The script fetches project configuration from the configured template remote into a temporary directory and generates the client-specific configuration. It does not update or replace the global entry Skill. The Skill CLI update and project configuration sync are separate operations.
 
 ## 3. What the Sync Changes
 
@@ -112,7 +114,7 @@ These subagents are delegated work by the main Agent and normally do not need to
 
 ## 7. Common Workflows
 
-- **Initialize or update project configuration:** Run `sync-morrowmark/scripts/sync.sh <client-argument>` from the target repository root.
+- **Initialize or update project configuration:** Invoke the globally installed `sync-morrowmark` Skill while the target repository is open; it updates the global Skill first and then runs the project sync script.
 - **Finish a code change:** Follow the project's workflow, then run `post-verify` after modifications.
 - **Plan an unimplemented design:** Use `draft-long-term-plan` when the user explicitly asks. Use `design-alignment` to settle a new design or a conflict with an existing one. `Plan/` stores only agreed designs.
 - **Run a full memory sync:** Request `collect-update-memory` after pulling remote updates, when several commits or code changes have accumulated, when you add new documents/materials, when the memory-topic structure needs reorganization, or when you want a comprehensive review. It audits and restructures the layout first, then syncs eligible facts from commits since its saved base and the local working tree. It does not fetch remote data: pull code changes first, and use `sync-project-memory pull` for a separate team-memory repository.

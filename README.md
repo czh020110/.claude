@@ -56,7 +56,7 @@ The agent may still restructure topic layout and indexes, with these boundaries:
 
 ## Quick Start
 
-1. Install this repository's `sync-morrowmark/` directory into the current client's global skill directory:
+1. Install and register the global entry Skill with Vercel's Skills CLI. These are the client skill directories used by the CLI or by the compatibility link for unsupported clients:
 
    | Client | Global skill directory |
    | --- | --- |
@@ -69,26 +69,20 @@ The agent may still restructure topic layout and indexes, with these boundaries:
    Or install this Skill with Vercel's Skills CLI:
 
    ```bash
-   npx skills add czh020110/Morrowmark --full-depth --skill sync-morrowmark --global
+   npx skills add czh020110/morrowmark@sync-morrowmark --global
    ```
 
-   `--full-depth` finds this Skill in its non-standard subdirectory, and `--skill` selects only this entry Skill. Select the current client if prompted. To update a CLI-managed installation later, run `npx skills update sync-morrowmark`. This installs the global Skill; initialize or update a project separately in step 2. See the [Skills CLI documentation](https://github.com/vercel-labs/skills) for supported agents and options.
+   The `@sync-morrowmark` suffix selects this entry Skill directly. Select a supported client if the CLI prompts. WorkBuddy is not currently in the CLI's agent list; its client directory is linked to the registered source during project setup. The global registration lets the Skill update itself with `npx skills update --global sync-morrowmark`; project configuration is synced separately in step 2. See the [Skills CLI documentation](https://github.com/vercel-labs/skills) for supported agents and options.
 
    Replace any earlier global installation with this renamed skill before the next sync.
 
    Or copy this prompt to your agent:
 
    ```text
-   Install the `sync-morrowmark` skill from https://github.com/czh020110/Morrowmark/tree/main/sync-morrowmark into the global skills directory for the current client. The linked repository is only the skill source; the target is the repository open in this session. If this is the first installation, read `references/PROJECT_USAGE.md` from the installed skill and briefly explain how to use Morrowmark. An update of an existing installation is not a first install. Then ask whether I want to initialize or update the current repository; do not run a sync until I confirm.
+   Install the global `sync-morrowmark` Skill with `npx skills add czh020110/morrowmark@sync-morrowmark --global`. Select a Skills CLI-supported client if prompted; if the current client is WorkBuddy, use Codex as the registered source and let the Skill link WorkBuddy's client directory during setup. The repository open in this session is the target project. If this is the first installation, read `references/PROJECT_USAGE.md` from the installed Skill and briefly explain how to use Morrowmark. Updating an existing installation is not a first install. Then ask whether I want to initialize or update the current repository; do not run a project sync until I confirm.
    ```
 
-2. For the first sync, run the global copy you installed. It creates a project-local copy. For later updates, run this from the target repository root:
-
-   ```bash
-   bash sync-morrowmark/scripts/sync.sh codex
-   ```
-
-   Replace `codex` with `zcode`, `claude`, `codebuddy`, `workbuddy`, `workbuddy-cn`, or `opencode` as appropriate.
+2. In the target repository, invoke the globally installed `sync-morrowmark` Skill. It first updates its registered global source with `npx skills update --global sync-morrowmark`, then runs the script to sync this repository's platform configuration. For platforms the Skills CLI does not recognize, the Skill links the platform's global directory to the CLI-managed source before running the script.
 
 The sync generates the platform's agent and skill configuration and adds project memory templates. It preserves existing custom prompts, accumulated memory bodies, and same-named agents' reasoning settings where the platform supports them.
 

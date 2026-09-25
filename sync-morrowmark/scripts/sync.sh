@@ -47,49 +47,17 @@ fi
 
 PROJECT_DIR="$(pwd)"
 
-# Self-update of the global skill: clone the remote template and run its script
-# directly from the temporary clone. Never copy the entry skill into the project.
-if [ "${SYNC_MORROWMARK_BOOTSTRAPPED:-0}" != "1" ]; then
-  BOOTSTRAP_TMP="$(mktemp -d)"
-  trap 'rm -rf "$BOOTSTRAP_TMP"' EXIT
-  echo "[bootstrap] Fetching the latest remote sync-morrowmark..."
-  if ! git clone --depth 1 "$REPO_URL" "$BOOTSTRAP_TMP" 2>&1; then
-    echo "Error: unable to clone the config source, project sync aborted" >&2
-    exit 1
-  fi
-  if [ ! -d "$BOOTSTRAP_TMP/sync-morrowmark" ]; then
-    echo "Error: remote template is missing sync-morrowmark/ at the repo root" >&2
-    exit 1
-  fi
-  echo "[bootstrap] Re-running the latest script from the temporary clone"
-  exec env SYNC_MORROWMARK_BOOTSTRAPPED=1 SYNC_MORROWMARK_REMOTE_DIR="$BOOTSTRAP_TMP" \
-    bash "$BOOTSTRAP_TMP/sync-morrowmark/scripts/sync.sh" "$@"
-fi
-
-TMP_DIR="${SYNC_MORROWMARK_REMOTE_DIR:?}"
+TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
 
-SKILL_NAME="sync-morrowmark"
-# Canonical install location: one real copy shared by every platform.
-CANONICAL_SKILL_DIR="${CODEX_GLOBAL_SKILL_DIR:-$HOME/.agents/skills}"
-# Per-platform skill directories are link targets rather than second copies: clients that
-# do not read .agents/skills natively get a symlink back to the canonical copy.
-if [ "$PLATFORM" = "opencode" ]; then
-  # OpenCode reads ~/.agents/skills/ natively, so the canonical copy needs no symlink.
-  GLOBAL_SKILL_DIR="${OPENCODE_GLOBAL_SKILL_DIR:-$CANONICAL_SKILL_DIR}"
-elif [ "$PLATFORM" = "workbuddy" ]; then
-  if [ "$WORKBUDDY_VARIANT" = "domestic" ]; then
-    WORKBUDDY_DEFAULT_SKILL_DIR="$HOME/.workbuddy/skills"
-  else
-    WORKBUDDY_DEFAULT_SKILL_DIR="$HOME/.workbuddy-ai/skills"
-  fi
-  GLOBAL_SKILL_DIR="${WORKBUDDY_GLOBAL_SKILL_DIR:-$WORKBUDDY_DEFAULT_SKILL_DIR}"
-elif [ "$PLATFORM" = "codebuddy" ]; then
-  GLOBAL_SKILL_DIR="${CODEBUDDY_GLOBAL_SKILL_DIR:-$HOME/.codebuddy/skills}"
-elif [ "$PLATFORM" = "claude" ]; then
-  GLOBAL_SKILL_DIR="${CLAUDE_GLOBAL_SKILL_DIR:-$HOME/.claude/skills}"
-else
-  GLOBAL_SKILL_DIR="$CANONICAL_SKILL_DIR"
+echo "[bootstrap] Fetching the current project configuration source..."
+if ! git clone --depth 1 "$REPO_URL" "$TMP_DIR" 2>&1; then
+  echo "Error: unable to clone the config source, project sync aborted" >&2
+  exit 1
+fi
+if [ ! -f "$TMP_DIR/AGENTS.md" ] && [ ! -d "$TMP_DIR/.codex" ]; then
+  echo "Error: remote repository does not contain project configuration templates" >&2
+  exit 1
 fi
 
 # Protocol marker: splits AGENTS.md into the managed section (everything strictly
@@ -134,7 +102,7 @@ echo "Project directory: $PROJECT_DIR"
 echo "Remote repository: $REPO_URL"
 echo ""
 
-echo "[1/7] Using the updated remote config source: $TMP_DIR"
+echo "[1/7] Using the current project config source: $TMP_DIR"
 echo ""
 
 copy_tree() {
@@ -603,60 +571,9 @@ sync_platform() {
   esac
 }
 
-# Link a platform skill directory back to the canonical copy. Only replaces an existing
-# symlink; a real directory is left untouched so user data is never deleted.
-link_skill_into() {
-  local target="$1"
-  local link_dir="$2"
-  [ -d "$target" ] || return 0
-  [ -d "$(dirname "$link_dir")" ] || return 0
-  mkdir -p "$link_dir" || return 0
-  local dest="$link_dir/$SKILL_NAME"
-  if [ -L "$dest" ]; then
-    rm -f "$dest"
-  elif [ -e "$dest" ]; then
-    echo "  ! left untouched (not a symlink): $dest"
-    return 0
-  fi
-  ln -s "$target" "$dest"
-  echo "  ✓ linked: $dest -> $target"
-}
-
-sync_global_skill() {
-  local source="$TMP_DIR/$SKILL_NAME"
-  [ -d "$source" ] || return 0
-
-  mkdir -p "$CANONICAL_SKILL_DIR"
-  rm -rf "$CANONICAL_SKILL_DIR/$SKILL_NAME"
-  cp -R "$source" "$CANONICAL_SKILL_DIR/$SKILL_NAME"
-  echo "  ✓ Global skill: $CANONICAL_SKILL_DIR/$SKILL_NAME"
-
-  local canonical_target="$CANONICAL_SKILL_DIR/$SKILL_NAME"
-  case "$PLATFORM" in
-    claude|codebuddy)
-      [ "$GLOBAL_SKILL_DIR" = "$CANONICAL_SKILL_DIR" ] || link_skill_into "$canonical_target" "$GLOBAL_SKILL_DIR"
-      ;;
-    workbuddy)
-      local link_dirs="${WORKBUDDY_SKILL_LINK_DIRS:-$GLOBAL_SKILL_DIR}"
-      local dir
-      local IFS=:
-      for dir in $link_dirs; do
-        unset IFS
-        [ "$dir" = "$CANONICAL_SKILL_DIR" ] || link_skill_into "$canonical_target" "$dir"
-      done
-      ;;
-    zcode)
-      if [ -d "$HOME/.zcode/skills" ]; then
-        link_skill_into "$canonical_target" "$HOME/.zcode/skills"
-      fi
-      ;;
-  esac
-}
-
-echo "[2/7] Syncing AGENTS.md and the global skill..."
+echo "[2/7] Syncing project instruction files..."
 sync_agents_md
 sync_claude_md
-sync_global_skill
 echo ""
 
 echo "[3/7] Generating platform agents and skills..."

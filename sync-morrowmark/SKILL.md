@@ -9,7 +9,7 @@ Template source: [Morrowmark/sync-morrowmark](https://github.com/czh020110/Morro
 
 Morrowmark is a cross-platform configuration template that helps coding agents use shared project instructions, Skills, Agents, and durable project memory.
 
-`sync-morrowmark` is installed in the current client's global Skill directory. Invoke it while the target repository is open to fetch the latest template and copy or adapt that platform's project configuration, including memory-loading instructions. It adds the shared project-memory templates while preserving existing memory content.
+`sync-morrowmark` is installed in the current client's global Skill directory. Before a project sync, update this registered Skill with the Skills CLI; then use its script to fetch and apply the selected platform's project configuration, including memory-loading instructions. The script adds shared project-memory templates while preserving existing memory content.
 
 ## Conditional Project Onboarding
 
@@ -24,7 +24,16 @@ When a follow-up asks for details beyond the guide, inspect the latest configure
 
 ## Routine Sync Execution
 
-When the user directly requests a sync or explicitly invokes this Skill to sync, that authorizes the current run. Resolve the platform and run the script directly without asking for separate authorization or whether to sync. If the Skill is used only because missing configuration was discovered during another task, ask before initializing or updating the project. Do not invoke `read-index-memory`, inspect project-memory files, or pre-read the sync script for a routine sync. Do not invoke `post-verify` or `update-memory` after a successful run; the script's exit status and output are the completion check. If it fails or reports an unsafe overwrite conflict, inspect only the affected path. This exception does not apply when editing or debugging this Skill or its script.
+When the user directly requests a sync or explicitly invokes this Skill to sync, that authorizes the current project sync. If the Skill is used only because missing configuration was discovered during another task, ask before initializing or updating the project.
+
+Before every requested project sync:
+
+1. Run `npx skills update --global sync-morrowmark`. This Skill is already registered with the CLI; do not perform a separate registration check. If it reports that the Skill is current, continue. If the update fails, stop before changing project configuration.
+2. Resolve the current client and its Skills CLI agent ID. Use `codex`, `zcode`, `codebuddy`, or `opencode` for those clients; map Morrowmark's `claude` argument to `claude-code`. Check support and the installed path with `npx skills list --global --agent <agent-id> --json`. A successful response that includes `sync-morrowmark` for the current agent means the CLI manages that location. An `Invalid agents` result means the client is not supported by this CLI; a valid agent with no `sync-morrowmark` entry also needs a platform link.
+3. For an unsupported or unlinked client, run `npx skills list --global --json` and use the `path` for `sync-morrowmark` as the CLI-managed source. Link the current client's global Skill path to that source. WorkBuddy and WorkBuddy CN currently use the IDs `workbuddy` and `workbuddy-cn`, which the CLI does not recognize; their global paths are `~/.workbuddy-ai/skills/sync-morrowmark/` and `~/.workbuddy/skills/sync-morrowmark/`. Create a symlink when the destination is missing or already a symlink. Never replace a real directory; report that conflict and stop if one is present.
+4. Re-read `SKILL.md` from the CLI-managed source after updating. Keep the target repository as the working directory and run `scripts/sync.sh` from that updated source with the matching project platform argument.
+
+Do not invoke `read-index-memory`, inspect project-memory files, or pre-read the sync script for a routine project sync. Do not invoke `post-verify` or `update-memory` after a successful run; the script's exit status and output are the completion check. If it fails or reports an unsafe overwrite conflict, inspect only the affected path. This exception does not apply when editing or debugging this Skill or its script.
 
 ## Single Source
 
@@ -34,7 +43,7 @@ When the user directly requests a sync or explicitly invokes this Skill to sync,
 
 ## Usage
 
-1. Install it once, into the client's global skill directory:
+1. Install and register the global entry Skill with `npx skills add czh020110/morrowmark@sync-morrowmark --global`. Select a supported client if the CLI prompts. The client directories below are the CLI destinations or compatibility-link targets for platforms it does not recognize:
    - Codex/ZCode: `~/.agents/skills/sync-morrowmark/`
    - Claude Code: `~/.claude/skills/sync-morrowmark/`
    - CodeBuddy (domestic build): `~/.codebuddy/skills/sync-morrowmark/`
@@ -42,10 +51,10 @@ When the user directly requests a sync or explicitly invokes this Skill to sync,
    - WorkBuddy domestic: `~/.workbuddy/skills/sync-morrowmark/`
    - OpenCode: `~/.agents/skills/sync-morrowmark/` (OpenCode reads that directory natively, no symlink needed)
 
-   Prefer letting the script install it (see "Unified install strategy" below), which keeps one real copy plus symlinks. A hand copy is a second real copy that the script will never replace — if you copied by hand, delete that copy before switching to script-managed install, otherwise the two drift apart.
-2. Or ask the agent to install `sync-morrowmark` from the template source into the current client's global Skill directory. After installation, it must ask whether to initialize or update the open target repository and wait for confirmation before syncing.
+   The Skills CLI owns the global source and its update lock. Do not manually copy an independent source.
+2. After installation, ask whether to initialize or update the open target repository and wait for confirmation before syncing.
 3. Determine the client and pass the platform argument: `codex`, `zcode`, `claude`, `codebuddy`, `workbuddy`, `workbuddy-cn` or `opencode`. Capitalized and `--`-prefixed spellings are also accepted, as are `workbuddy-ai` (international) and `workbuddy-domestic` (domestic).
-4. **Run the requested sync, then report.** Keep the target repository as the working directory and invoke `scripts/sync.sh` from this Skill's global installation with the selected platform argument.
+4. **Run the requested project sync, then report.** First complete the update and platform-link steps in "Routine Sync Execution". Keep the target repository as the working directory and invoke `scripts/sync.sh` from the updated CLI-managed Skill source with the selected platform argument.
    1. Run the sync. The script handles the prompt file by itself — `AGENTS.md` on every platform, plus `CLAUDE.md` on `claude`:
       - no such file yet → the template is written whole;
       - a file that already carries `<!-- sync-morrowmark:custom-prompts -->` → everything strictly above the marker is replaced from the source, and the marker with everything below it is kept;
@@ -55,11 +64,11 @@ When the user directly requests a sync or explicitly invokes this Skill to sync,
    4. Report the sync scope, changed files and any adoption or failure result. Move project facts into `.project-memory/` only in a separate task when the user explicitly requests it.
    5. After the first successful project initialization, remind the user to run `collect-update-memory` for a full initial memory sync. Do not invoke it automatically.
 
-**Unified install strategy (single copy + symlink)**: the script installs the real directory at `~/.agents/skills/sync-morrowmark/` and, for clients that do not read `~/.agents/skills`, symlinks it into their own skill directory — so there is only one copy on disk. An existing symlink is replaced; a real directory is left untouched and reported.
+**Global source and platform links**: `npx skills update --global sync-morrowmark` updates the registered source. For a client the Skills CLI does not recognize, use the path reported by `npx skills list --global --json` as the source and link the client's global Skill path to it. Keep the source managed by the CLI so future updates continue to use the registered repository.
 
 `codebuddy`, `workbuddy` and `workbuddy-cn` are three separate targets with different **user-level** skill directories (see the table in step 1). At the **project** level, `workbuddy` and `workbuddy-cn` share CodeBuddy's `.codebuddy/` layout with `codebuddy`. Picking the wrong target fails silently rather than erroring.
 
-On every launch the script fetches the latest `sync-morrowmark` into a temporary directory and runs the fetched script directly from there. It refreshes the global Skill and does not copy the entry Skill into the target repository.
+The global Skill update and project configuration sync are separate operations. The Skills CLI updates the global entry Skill; `scripts/sync.sh` fetches the configured project template into a temporary directory and applies project configuration. The project script does not replace or re-execute the global Skill.
 
 ## Context7 MCP
 
