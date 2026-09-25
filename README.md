@@ -37,6 +37,19 @@ Morrowmark gives each repository durable, project-local context. It records conf
 2. Then explicitly ask the agent to run `collect-update-memory` for an initial memory sync based on the code already in the repository.
 3. After this initial pass, the agent records eligible, confirmed project facts during normal conversations. You do not need to request a full memory sync after every task.
 
+### When to Run a Full Memory Sync
+
+Request `collect-update-memory` after pulling remote updates, when several commits or code changes have accumulated, when you add new documents/materials, when memory topics need restructuring, or when you want a comprehensive review. It audits the memory structure first, then syncs eligible facts from commits since its saved base and the local working tree. It does not fetch remote data: pull code changes first, and use `sync-project-memory pull` for a separate team-memory repository.
+
+Fact updates follow strict evidence sources: `Design/`, `Commands/`, `Environment/`, and `Tools/` use current code, scripts, and configuration; `Target/` and `Boundary/` use only the bodies of non-code materials indexed in `Documents/`. If the allowed source does not support a real, relevant change, the agent leaves the fact unchanged. The full-sync agent does not update fact content in `Preferences/`, `Plan/`, `Pitfalls/`, or `TODO/`.
+
+The agent may still restructure topic layout and indexes, with these boundaries:
+
+- `Plan/` designs are preserved verbatim; only their structure and indexes may be repaired.
+- `Documents/` bodies remain read-only; its index may be updated when needed.
+- `Preferences/` and `Pitfalls/` may be reorganized, but their fact content is not synced.
+- `TODO/TODO.md` is never modified by this skill.
+
 ## Quick Start
 
 1. Install this repository's `sync-morrowmark/` directory into the current client's global skill directory:
@@ -78,6 +91,8 @@ The sync generates the platform's agent and skill configuration and adds project
 ## Project Memory
 
 Memory lives in `.project-memory/` and uses an index-and-body layout. Each topic's `MEMORY.md` routes agents to separate topic bodies; put durable facts in the relevant body.
+
+All supported clients use this same `.project-memory/` directory in the target repository. Existing memory does not need to be migrated when changing clients. Run `sync-morrowmark` for the target client to generate or update its memory-loading instructions; the memory files remain shared, while the client-specific configuration changes.
 
 | Directory | Purpose |
 | --- | --- |

@@ -58,6 +58,8 @@ The script fetches the current version from the configured template remote, repl
 
 `.project-memory/` uses an index-and-body layout. Read the topic indexes first, then only the bodies relevant to the task. Store confirmed, reusable project facts in the matching topic.
 
+All supported clients use this same `.project-memory/` directory in the target repository. Existing memory does not need to be migrated when switching clients. Run `sync-morrowmark` for the target client to generate or update its memory-loading instructions; the memory files remain shared, while the client-specific configuration changes.
+
 | Directory | Purpose |
 | --- | --- |
 | `Target/` | Project purpose, scope, and acceptance criteria. |
@@ -113,8 +115,11 @@ These subagents are delegated work by the main Agent and normally do not need to
 - **Initialize or update project configuration:** Run `sync-morrowmark/scripts/sync.sh <client-argument>` from the target repository root.
 - **Finish a code change:** Follow the project's workflow, then run `post-verify` after modifications.
 - **Plan an unimplemented design:** Use `draft-long-term-plan` when the user explicitly asks. Use `design-alignment` to settle a new design or a conflict with an existing one. `Plan/` stores only agreed designs.
+- **Run a full memory sync:** Request `collect-update-memory` after pulling remote updates, when several commits or code changes have accumulated, when you add new documents/materials, when the memory-topic structure needs reorganization, or when you want a comprehensive review. It audits and restructures the layout first, then syncs eligible facts from commits since its saved base and the local working tree. It does not fetch remote data: pull code changes first, and use `sync-project-memory pull` for a separate team-memory repository.
 - **Share project memory with a team:** First configure the separate memory repository with `sync-project-memory config <memory-repository-url>` and use the same URL across clones. Then use `info` to check status, `pull` to fetch, or `push` to publish. With no direction, the Skill checks status and recommends an action before asking to make changes. Conflicts stop for manual resolution.
 - **Commit changes:** Commit only when the user explicitly asks, using `git-commit`.
+
+The full-sync agent updates fact content only when the allowed evidence supports a real, relevant change. `Design/`, `Commands/`, `Environment/`, and `Tools/` use current code, scripts, and configuration as evidence. `Target/` and `Boundary/` use only the bodies of non-code materials indexed in `Documents/`. The agent does not update fact content in `Preferences/`, `Plan/`, `Pitfalls/`, or `TODO/`. It may restructure topic layout and indexes while preserving all fact bodies during that phase; `Plan/` designs remain verbatim, `Documents/` source bodies remain read-only, and `TODO/TODO.md` is never touched.
 
 ## 8. Questions That Need More Detail
 
