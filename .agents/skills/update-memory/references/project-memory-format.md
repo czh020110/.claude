@@ -8,7 +8,7 @@ Project memory consists of nine topics: `Commands`, `Environment`, `Documents`, 
 
 - `Commands`: install, run, build, test, evaluate, deploy and failure-recovery workflows.
 - `Environment`: tools/versions, hardware, paths, environment variables, external services and platform limits.
-- `Documents`: user-maintained project docs; bodies are read-only by default, indexes are maintained by the full memory agent.
+- `Documents`: index of user-owned, non-code project documents and materials stored anywhere in the repository; source bodies remain user-owned and read-only. `collect-update-memory` maintains this index; the ordinary `update-memory` skill does not maintain this topic.
 - `Target`: currently effective project purpose, scope and acceptance criteria — intent, not implementation (that is `Design`); the design the project is meant to have, including what is not built yet, is `Plan`.
 - `Design`: the architecture, module responsibilities, collaboration model and design rationale of the code as it exists now; the expected design, including design decisions that are not implemented yet, is `Plan`.
 - `Boundary`: behavior that must be preserved, explicitly excluded scope, limits and quality floor, plus everything the project must not do — what the user has said not to do, designs the user has explicitly rejected, and what the agent has confirmed during execution must not be done.
