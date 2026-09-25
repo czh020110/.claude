@@ -8,6 +8,13 @@ This repository's long-term project memory lives in `.project-memory/`. Memory u
 - Pure consultation, code review, or external research does not enter the modification loop; the memory-reading, documentation-lookup and output constraints still apply.
 - Adding, fixing, refactoring, configuration, tests, docs or prompt syncs are "modification tasks" and follow the loop below.
 
+## Staged Skill Loading
+
+- Do not load every skill mentioned in this file at task start. Determine the next concrete action and load only the skill needed for that action; do not preload skills for later workflow stages.
+- `read-index-memory` is used at task start under Task Routing. Load `post-verify` only after modification work is complete. Load `update-memory` when an eligible durable fact or preference needs recording, and after successful `post-verify` for the required final memory review; do not preload it at task start unless that capture is the next action.
+- Load `design-alignment` only when a new design needs user agreement, or a design conflict must be resolved, and the next action is to settle that decision. Do not preload it for ordinary implementation of an already-settled design.
+- Load `docs-research`, `collect-update-memory`, and other skills only when their trigger condition is met and the next action requires them. A skill being named in this file is not itself a trigger to load it.
+
 ## Memory Capture
 
 - Across all tasks, trigger `update-memory` when a durable project goal, scope, preference or boundary is explicitly stated; do not wait for task completion or technical verification.
