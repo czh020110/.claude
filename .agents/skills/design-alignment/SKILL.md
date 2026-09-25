@@ -1,6 +1,6 @@
 ---
 name: design-alignment
-description: Use when a design is added, changed, or found to conflict: settles it with multi-round request_user_input, then records the design in Plan.
+description: Use when a design is added, changed, or found to conflict; settles it with multi-round request_user_input, then records the design in Plan.
 ---
 
 # design-alignment
