@@ -18,6 +18,10 @@
 
 Morrowmark gives each repository durable, project-local context. It records confirmed current facts separately from settled future designs, and guides agents to load relevant topics as work changes. Shared skills and subagents make planning, documentation research, verification, and memory updates reusable across six coding clients. Memory stays in the project repository, not the client's global memory.
 
+<p align="center">
+  <img src="assets/morrowmark-cross-platform-banner-en.png" alt="Morrowmark cross-platform project memory and agent workflow banner" width="100%">
+</p>
+
 ## What It Remembers
 
 - **Project facts:** purpose and scope (`Target`), current implementation (`Design`), boundaries and project-specific preferences (`Boundary`, `Preferences`).

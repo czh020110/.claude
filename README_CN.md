@@ -18,6 +18,10 @@
 
 Morrowmark 为每个仓库维护长期的项目上下文：把已确认的当前事实与已确定的预期设计分开，并让 Agent 按任务读取相关主题。配套的 skills 和 subagents 将计划、文档查询、验证和记忆更新等工作流程带到六种编码客户端。记忆保存在项目仓库中，不写入客户端的全局记忆。
 
+<p align="center">
+  <img src="assets/morrowmark-cross-platform-banner.png" alt="Morrowmark 跨平台项目记忆与智能体工作流横幅海报" width="100%">
+</p>
+
 ## 记忆记录什么
 
 - **项目事实：** 项目目的与范围（`Target`）、当前实现（`Design`）、必须遵守的边界与项目偏好（`Boundary`、`Preferences`）。

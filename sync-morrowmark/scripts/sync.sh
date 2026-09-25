@@ -47,10 +47,8 @@ fi
 
 PROJECT_DIR="$(pwd)"
 
-# Self-update of the global skill: on first launch, clone the remote template,
-# overwrite sync-morrowmark in the project root, then exec the fresh script.
-# The temporary clone directory is handed to the second run via an environment
-# variable so the repository is not cloned twice.
+# Self-update of the global skill: clone the remote template and run its script
+# directly from the temporary clone. Never copy the entry skill into the project.
 if [ "${SYNC_MORROWMARK_BOOTSTRAPPED:-0}" != "1" ]; then
   BOOTSTRAP_TMP="$(mktemp -d)"
   trap 'rm -rf "$BOOTSTRAP_TMP"' EXIT
@@ -63,11 +61,9 @@ if [ "${SYNC_MORROWMARK_BOOTSTRAPPED:-0}" != "1" ]; then
     echo "Error: remote template is missing sync-morrowmark/ at the repo root" >&2
     exit 1
   fi
-  rm -rf "$PROJECT_DIR/sync-morrowmark"
-  cp -R "$BOOTSTRAP_TMP/sync-morrowmark" "$PROJECT_DIR/sync-morrowmark"
-  echo "[bootstrap] Updated sync-morrowmark in the project root, re-running the latest script"
+  echo "[bootstrap] Re-running the latest script from the temporary clone"
   exec env SYNC_MORROWMARK_BOOTSTRAPPED=1 SYNC_MORROWMARK_REMOTE_DIR="$BOOTSTRAP_TMP" \
-    bash "$PROJECT_DIR/sync-morrowmark/scripts/sync.sh" "$@"
+    bash "$BOOTSTRAP_TMP/sync-morrowmark/scripts/sync.sh" "$@"
 fi
 
 TMP_DIR="${SYNC_MORROWMARK_REMOTE_DIR:?}"
@@ -627,16 +623,8 @@ link_skill_into() {
 }
 
 sync_global_skill() {
-  # The freshly fetched remote is authoritative; the project-root copy is only a
-  # fallback for a run that was started without a bootstrap clone.
-  local source=""
-  for candidate in "$TMP_DIR/$SKILL_NAME" "$PROJECT_DIR/$SKILL_NAME"; do
-    if [ -d "$candidate" ]; then
-      source="$candidate"
-      break
-    fi
-  done
-  [ -n "$source" ] || return 0
+  local source="$TMP_DIR/$SKILL_NAME"
+  [ -d "$source" ] || return 0
 
   mkdir -p "$CANONICAL_SKILL_DIR"
   rm -rf "$CANONICAL_SKILL_DIR/$SKILL_NAME"
@@ -687,20 +675,20 @@ echo ""
 echo "[6/7] Checking .gitignore..."
 GITIGNORE="$PROJECT_DIR/.gitignore"
 if [ "$PLATFORM" = "opencode" ]; then
-  ENTRIES=( ".project-memory/" ".project-script/" ".opencode/" "sync-morrowmark/" )
+  ENTRIES=( ".project-memory/" ".project-script/" ".opencode/" )
   HEADER="# OpenCode / project-local config"
   elif [ "$PLATFORM" = "workbuddy" ]; then
-    ENTRIES=( ".project-memory/" ".project-script/" "sync-morrowmark/" ".codebuddy/" )
+    ENTRIES=( ".project-memory/" ".project-script/" ".codebuddy/" )
     if [ "$WORKBUDDY_VARIANT" = "domestic" ]; then
       HEADER="# WorkBuddy domestic / project-local config"
     else
       HEADER="# WorkBuddy international / project-local config"
     fi
   elif [ "$PLATFORM" = "codebuddy" ]; then
-    ENTRIES=( ".project-memory/" ".project-script/" "sync-morrowmark/" ".codebuddy/" )
+    ENTRIES=( ".project-memory/" ".project-script/" ".codebuddy/" )
     HEADER="# CodeBuddy / project-local config"
 else
-  ENTRIES=( ".codex/" ".zcode/" ".claude/" ".agents/" ".project-memory/" ".project-script/" "sync-morrowmark/" "AGENTS.md" "CLAUDE.md" )
+  ENTRIES=( ".codex/" ".zcode/" ".claude/" ".agents/" ".project-memory/" ".project-script/" "AGENTS.md" "CLAUDE.md" )
   HEADER="# Agent / project-local config"
 fi
 if [ ! -f "$GITIGNORE" ]; then
