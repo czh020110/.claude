@@ -59,3 +59,8 @@ redis-data/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Local poster exports
+/assets/morrowmark-poster-illustration.jpg
+/assets/morrowmark-project-poster.png
+/assets/morrowmark-project-poster.svg
