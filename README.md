@@ -31,6 +31,12 @@ Morrowmark gives each repository durable, project-local context. It records conf
 3. Do the requested project work and run `post-verify` for every modification before delivery.
 4. After `post-verify`, make one final memory pass for implementation facts, conflicts with existing memory, and execution lessons with confirmed recurrence risk and reuse value. Exclude unverified claims and temporary progress.
 
+## Starting with an Existing Codebase
+
+1. Run `sync-morrowmark` to copy the template configuration into the repository.
+2. Then explicitly ask the agent to run `collect-update-memory` for an initial memory sync based on the code already in the repository.
+3. After this initial pass, the agent records eligible, confirmed project facts during normal conversations. You do not need to request a full memory sync after every task.
+
 ## Quick Start
 
 1. Install this repository's `sync-morrowmark/` directory into the current client's global skill directory:
