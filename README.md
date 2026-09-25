@@ -43,12 +43,20 @@ Morrowmark gives each repository durable, project-local context. It records conf
    | WorkBuddy international | `~/.workbuddy-ai/skills/` |
    | WorkBuddy domestic | `~/.workbuddy/skills/` |
 
+   Or install this Skill with Vercel's Skills CLI:
+
+   ```bash
+   npx skills add https://github.com/czh020110/Morrowmark/tree/main/sync-morrowmark --global
+   ```
+
+   Select the current client if prompted. To update a CLI-managed installation later, run `npx skills update sync-morrowmark`. This installs the global Skill; initialize or update a project separately in step 2. See the [Skills CLI documentation](https://github.com/vercel-labs/skills) for supported agents and options.
+
    Replace any earlier global installation with this renamed skill before the next sync.
 
    Or copy this prompt to your agent:
 
    ```text
-   Install the `sync-morrowmark` skill from https://github.com/czh020110/Morrowmark/tree/main/sync-morrowmark into the global skills directory for the current client. The linked repository is only the skill source; the target is the repository open in this session. After installation, ask whether I want to initialize or update that repository now. Do not run a sync until I confirm.
+   Install the `sync-morrowmark` skill from https://github.com/czh020110/Morrowmark/tree/main/sync-morrowmark into the global skills directory for the current client. The linked repository is only the skill source; the target is the repository open in this session. If this is the first installation, read `references/PROJECT_USAGE.md` from the installed skill and briefly explain how to use Morrowmark. An update of an existing installation is not a first install. Then ask whether I want to initialize or update the current repository; do not run a sync until I confirm.
    ```
 
 2. For the first sync, run the global copy you installed. It creates a project-local copy. For later updates, run this from the target repository root:

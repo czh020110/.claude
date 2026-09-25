@@ -7,6 +7,17 @@ description: Use when the user asks to sync base project config or config is fou
 
 This is the global config migration entry point, not a project-level skill that any project loads automatically. Install this directory into the current client's global skill directory, then use it to initialize or update a project.
 
+## Conditional Project Onboarding
+
+The full Morrowmark user guide is `references/PROJECT_USAGE.md`. Read it only in either of these cases:
+
+- This is the first successful installation of `sync-morrowmark` for the current user/client. If you are performing the installation, check the destination first; after installing into a location where the skill was absent, read the guide and briefly explain what Morrowmark does and how to initialize a project. If the installation happened outside this conversation, treat it as first-time only when the user says it is; when prior installation state is unknown, do not infer a first install.
+- The user asks how to use Morrowmark, or asks which skills or agents it provides.
+
+An existing installation being updated, repaired, or synchronized is not a first installation. A project configuration sync is never a first installation. Do not read or summarize the guide during routine syncs.
+
+When a follow-up asks for details beyond the guide, inspect the latest configured Morrowmark template source and answer from the relevant prompt and code. Start with `AGENTS.md`, `.codex/agents/*.toml`, `.agents/skills/<skill>/SKILL.md` and its referenced files, then inspect only the relevant scripts under `sync-morrowmark/scripts/`. Do not treat this guide as a substitute for the current implementation.
+
 ## Routine Sync Execution
 
 When the user directly requests a sync or explicitly invokes this Skill to sync, that authorizes the current run. Resolve the platform and run the script directly without asking for separate authorization or whether to sync. If the Skill is used only because missing configuration was discovered during another task, ask before initializing or updating the project. Do not invoke `read-index-memory`, inspect project-memory files, or pre-read the sync script for a routine sync. Do not invoke `post-verify` or `update-memory` after a successful run; the script's exit status and output are the completion check. If it fails or reports an unsafe overwrite conflict, inspect only the affected path. This exception does not apply when editing or debugging this Skill or its script.

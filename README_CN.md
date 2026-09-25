@@ -43,12 +43,20 @@ Morrowmark 为每个仓库维护长期的项目上下文：把已确认的当前
    | WorkBuddy 国际版 | `~/.workbuddy-ai/skills/` |
    | WorkBuddy 国内版 | `~/.workbuddy/skills/` |
 
+   也可以使用 Vercel Skills CLI 安装这个 Skill：
+
+   ```bash
+   npx skills add https://github.com/czh020110/Morrowmark/tree/main/sync-morrowmark --global
+   ```
+
+   如果 CLI 提示选择客户端，请选择当前使用的客户端。之后要更新 CLI 管理的安装时，运行 `npx skills update sync-morrowmark`。这一步只安装全局 Skill；项目初始化或更新仍需执行第 2 步。更多客户端和参数见 [Skills CLI 文档](https://github.com/vercel-labs/skills)。
+
 首次同步前，请用这个新名称替换之前安装的全局版本。
 
    也可以把下面这段提示词复制给 Agent：
 
    ```text
-   请从 https://github.com/czh020110/Morrowmark/tree/main/sync-morrowmark 安装 `sync-morrowmark` Skill 到当前客户端的全局 Skill 目录。该链接中的仓库仅作为 Skill 来源，当前会话打开的仓库才是目标项目。安装完成后，先询问我是否要立即初始化或更新该仓库；得到确认前不要执行同步。
+   请从 https://github.com/czh020110/Morrowmark/tree/main/sync-morrowmark 安装 `sync-morrowmark` Skill 到当前客户端的全局 Skill 目录。该链接中的仓库仅作为 Skill 来源，当前会话打开的仓库才是目标项目。如果这是首次安装，请读取安装后的 Skill 中的 `references/PROJECT_USAGE.md` 并简要说明 Morrowmark 的使用方式；更新已有安装不算首次安装。然后询问我是否要初始化或更新当前仓库；得到确认前不要执行同步。
    ```
 
 2. 首次同步时运行刚安装的全局脚本；它会在目标仓库创建项目副本。后续更新时，在目标仓库根目录运行：
