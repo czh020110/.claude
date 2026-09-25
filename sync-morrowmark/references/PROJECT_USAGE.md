@@ -4,7 +4,7 @@ This guide explains Morrowmark, how to install and sync it, and which Skills and
 
 ## 1. What Is Morrowmark?
 
-Morrowmark is a configuration template for coding agents. It brings reusable Skills, Agents, project prompts, and project-memory workflows into target repositories. It supports Codex, ZCode, Claude Code, CodeBuddy, WorkBuddy, and OpenCode.
+Morrowmark is a configuration template for coding agents. It brings reusable Skills, Agents, project prompts, and project-memory workflows into target repositories. It supports Codex, Cursor, GitHub Copilot, Antigravity, ZCode, Claude Code, CodeBuddy, WorkBuddy, and OpenCode.
 
 `sync-morrowmark` is the user-level entry Skill. Installing it does not initialize the current project. Install or update project configuration by running the sync script from the target repository root.
 
@@ -45,13 +45,18 @@ Replace `codex` with the target client:
 | `workbuddy` | WorkBuddy international edition |
 | `workbuddy-cn` | WorkBuddy domestic edition |
 | `opencode` | OpenCode |
+| `cursor` | Cursor |
+| `github-copilot` | GitHub Copilot |
+| `antigravity` | Google Antigravity IDE |
+| `antigravity-cli` | Google Antigravity CLI (uses the same project layout as `antigravity`) |
 
 The script fetches project configuration from the configured template remote into a temporary directory and generates the client-specific configuration. It does not update or replace the global entry Skill. The Skill CLI update and project configuration sync are separate operations.
 
 ## 3. What the Sync Changes
 
 - The source files are in `.codex/agents/` and `.agents/skills/`. Do not edit generated client directories directly; edit the template sources and sync again.
-- Codex uses the source directories. Other clients receive their own generated Agent and Skill directories. WorkBuddy project-level configuration is written to `.codebuddy/`.
+- Codex uses the source directories. Other clients receive native project agent files where required. Cursor and GitHub Copilot share project Skills in `.agents/skills/`, with agents in `.cursor/agents/` and `.github/agents/`; Antigravity uses `.agents/skills/` and `.agents/agents/`. WorkBuddy project-level configuration is written to `.codebuddy/`.
+- Model IDs are not copied between different provider namespaces. Each generated agent uses a native platform default or inheritance where no safe model mapping exists; a later sync preserves existing target-side model and reasoning settings independently.
 - Sync adds missing project-memory and verification-script templates and refreshes memory-file titles. It preserves existing memory bodies.
 - `AGENTS.md` and Claude Code's `CLAUDE.md` preserve user-authored prompts. When a file has the `sync-morrowmark:custom-prompts` marker, content at and below the marker is kept. If an existing file has no marker, its content is adopted below the marker.
 - Project configuration directories are added to `.gitignore`. To share project memory across clones, use `sync-project-memory` instead of committing generated directories.

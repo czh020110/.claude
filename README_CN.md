@@ -4,19 +4,19 @@
   <img src="assets/morrowmark-logo.png" alt="Morrowmark 项目图标" width="520">
 </p>
 
-**面向 Codex、ZCode、Claude Code、CodeBuddy、WorkBuddy 和 OpenCode 的项目记忆与编码 Agent 工作流。**
+**面向 Codex、Cursor、GitHub Copilot、Antigravity、ZCode、Claude Code、CodeBuddy、WorkBuddy 和 OpenCode 的项目记忆与编码 Agent 工作流。**
 
 <p align="center">
   <a href="README.md">English</a> | <strong>简体中文</strong>
 </p>
 
 <p align="center">
-  <a href="https://github.com/czh020110/Morrowmark"><img alt="platforms" src="https://img.shields.io/badge/platforms-Codex%20%7C%20ZCode%20%7C%20Claude%20Code%20%7C%20CodeBuddy%20%7C%20WorkBuddy%20%7C%20OpenCode-blue"></a>
+  <a href="https://github.com/czh020110/Morrowmark"><img alt="platforms" src="https://img.shields.io/badge/platforms-Codex%20%7C%20Cursor%20%7C%20GitHub%20Copilot%20%7C%20Antigravity%20%7C%20ZCode%20%7C%20Claude%20Code%20%7C%20CodeBuddy%20%7C%20WorkBuddy%20%7C%20OpenCode-blue"></a>
 </p>
 
 **让项目记得住，也让 Agent 接得上。**
 
-Morrowmark 为每个仓库维护长期的项目上下文：把已确认的当前事实与已确定的预期设计分开，并让 Agent 按任务读取相关主题。配套的 skills 和 subagents 将计划、文档查询、验证和记忆更新等工作流程带到六种编码客户端。记忆保存在项目仓库中，不写入客户端的全局记忆。
+Morrowmark 为每个仓库维护长期的项目上下文：把已确认的当前事实与已确定的预期设计分开，并让 Agent 按任务读取相关主题。配套的 skills 和 subagents 将计划、文档查询、验证和记忆更新等工作流程带到九种编码客户端。记忆保存在项目仓库中，不写入客户端的全局记忆。
 
 <p align="center">
   <img src="assets/morrowmark-cross-platform-banner.png" alt="Morrowmark 跨平台项目记忆与智能体工作流横幅海报" width="100%">
@@ -61,6 +61,10 @@ Agent 仍可整理主题结构和索引，但遵守以下边界：
    | 客户端 | 全局 Skill 目录 |
    | --- | --- |
    | Codex、ZCode、OpenCode | `~/.agents/skills/` |
+   | Cursor | `~/.cursor/skills/` |
+   | GitHub Copilot | `~/.copilot/skills/` |
+   | Google Antigravity | `~/.gemini/antigravity/skills/` |
+   | Antigravity CLI | `~/.gemini/antigravity-cli/skills/` |
    | Claude Code | `~/.claude/skills/` |
    | CodeBuddy | `~/.codebuddy/skills/` |
    | WorkBuddy 国际版 | `~/.workbuddy-ai/skills/` |
@@ -84,7 +88,7 @@ Agent 仍可整理主题结构和索引，但遵守以下边界：
 
 2. 在目标仓库中调用全局安装的 `sync-morrowmark` Skill。它会先通过 `npx skills update --global sync-morrowmark` 更新登记的全局 Skill，再运行脚本同步当前仓库的平台配置。若当前平台不受 Skills CLI 识别，Skill 会先将平台全局目录链接到 CLI 管理的 Skill 源，再运行脚本。
 
-同步会生成对应平台的 Agent、Skill 配置并补齐项目记忆模板；会保留现有自定义提示词、累积的记忆正文，以及平台支持的同名 Agent 思考程度设置。
+同步会生成对应平台的 Agent、Skill 配置并补齐项目记忆模板。Cursor 和 GitHub Copilot 共用 `.agents/skills/`，Agent 分别写入 `.cursor/agents/` 和 `.github/agents/`；Antigravity 使用 `.agents/skills/` 与 `.agents/agents/`。同步会保留现有自定义提示词、累积的记忆正文，以及平台支持的同名 Agent 模型或思考程度设置。
 
 ## 项目记忆
 

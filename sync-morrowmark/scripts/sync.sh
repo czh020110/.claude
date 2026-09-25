@@ -29,8 +29,17 @@ case "$PLATFORM_ARG" in
   opencode|OpenCode|--opencode)
     PLATFORM="opencode"
     ;;
+  cursor|Cursor|--cursor)
+    PLATFORM="cursor"
+    ;;
+  copilot|Copilot|github-copilot|GitHubCopilot|--copilot|--github-copilot)
+    PLATFORM="github-copilot"
+    ;;
+  antigravity|Antigravity|--antigravity|antigravity-cli|AntigravityCLI|--antigravity-cli)
+    PLATFORM="antigravity"
+    ;;
   *)
-    echo "Usage: ${0##*/} codex|zcode|claude|codebuddy|workbuddy|workbuddy-cn|opencode" >&2
+    echo "Usage: ${0##*/} codex|zcode|claude|codebuddy|workbuddy|workbuddy-cn|opencode|cursor|github-copilot|antigravity" >&2
     exit 2
     ;;
 esac
@@ -95,6 +104,18 @@ case "$PLATFORM" in
     PLAN_TOOL="todowrite"
     QUESTION_TOOL="question"
     ;;
+  cursor)
+    PLAN_TOOL="/plan"
+    QUESTION_TOOL="ask the user in chat"
+    ;;
+  github-copilot)
+    PLAN_TOOL="update_todo"
+    QUESTION_TOOL="ask_user"
+    ;;
+  antigravity)
+    PLAN_TOOL="/plan"
+    QUESTION_TOOL="ask_question"
+    ;;
 esac
 
 echo "=== sync-morrowmark ($PLATFORM) ==="
@@ -141,19 +162,19 @@ def split_agent_header(text):
 
 source_header, source_body = split_agent_header(source_text)
 target_header, _ = split_agent_header(target_text)
-target_effort = re.search(r"(?m)^model_reasoning_effort\s*=\s*.*$", target_header)
-if target_effort is not None:
-    source_effort = re.search(r"(?m)^model_reasoning_effort\s*=\s*.*$", source_header)
-    if source_effort is not None:
-        source_header = source_header[:source_effort.start()] + target_effort.group(0) + source_header[source_effort.end():]
+preserved_settings = []
+for setting in ("model", "model_reasoning_effort"):
+    target_setting = re.search(rf"(?m)^{setting}\s*=\s*.*$", target_header)
+    if target_setting is None:
+        continue
+    source_setting = re.search(rf"(?m)^{setting}\s*=\s*.*$", source_header)
+    if source_setting is not None:
+        source_header = source_header[:source_setting.start()] + target_setting.group(0) + source_header[source_setting.end():]
     else:
-        model_line = re.search(r"(?m)^model\s*=\s*.*$", source_header)
-        if model_line is not None:
-            insert_at = model_line.end()
-            source_header = source_header[:insert_at] + "\n" + target_effort.group(0) + source_header[insert_at:]
-        else:
-            source_header = source_header.rstrip("\n") + "\n" + target_effort.group(0) + "\n\n"
-    print(f"  ✓ preserved reasoning effort: {target}")
+        source_header = source_header.rstrip("\n") + "\n" + target_setting.group(0) + "\n\n"
+    preserved_settings.append(setting)
+if preserved_settings:
+    print(f"  ✓ preserved target settings ({', '.join(preserved_settings)}): {target}")
 target.write_text(source_header + source_body, encoding="utf-8")
 PY
     else
@@ -281,7 +302,7 @@ if platform in {"claude", "codebuddy", "workbuddy"} and not any(line.startswith(
     front.append("user-invocable: true")
 target.write_text("---\n" + "\n".join(front) + "\n---\n" + body, encoding="utf-8")
 PY
-    elif [[ "$rel_path" == sync-project-memory/scripts/sync-memory.sh && "$target_platform" != "zcode" ]]; then
+    elif [[ "$rel_path" == sync-project-memory/scripts/sync-memory.sh && ( "$target_platform" == "claude" || "$target_platform" == "codebuddy" || "$target_platform" == "workbuddy" || "$target_platform" == "opencode" ) ]]; then
       python3 - "$src_file" "$dest_file" "$target_platform" <<'PY'
 import sys
 from pathlib import Path
@@ -324,6 +345,17 @@ codebuddy_tools = {
     "collect_update_memory": ("Read, Grep, Glob, Bash, Write, Edit", ""),
     "docs_research": ("Read, Grep, Glob, Bash, WebFetch", "Edit, Write"),
 }
+copilot_tools = {
+    "collect_update_memory": ["*"],
+    "docs_research": ["web"],
+}
+antigravity_tools = {
+    "collect_update_memory": [
+        "view_file", "list_dir", "find_by_name", "grep_search", "run_command",
+        "write_to_file", "replace_file_content", "multi_replace_file_content",
+    ],
+    "docs_research": ["search_web", "read_url_content"],
+}
 
 for source in sorted(source_dir.glob("*.toml")):
     text = source.read_text(encoding="utf-8")
@@ -357,22 +389,59 @@ for source in sorted(source_dir.glob("*.toml")):
             lines.append(f"disallowedTools: {disallowed}")
     elif platform == "opencode":
         lines.append("mode: subagent")
+    elif platform == "cursor":
+        lines.append("model: inherit")
+        if re.search(r'^sandbox_mode\s*=\s*"read-only"\s*$', source_header, re.MULTILINE):
+            lines.append("readonly: true")
+    elif platform == "github-copilot":
+        copilot_tool_list = copilot_tools.get(source_name, ["*"])
+        lines.append("tools: " + json.dumps(copilot_tool_list, ensure_ascii=False))
+        lines.append("infer: true")
+        lines.append(f"include-custom-instructions: {'false' if source_name == 'docs_research' else 'true'}")
+    elif platform == "antigravity":
+        lines.append("tools:")
+        for tool in antigravity_tools.get(source_name, []):
+            lines.append(f"  - {tool}")
+        lines += ["subagent: true", "mainAgent: true", "model: inherit"]
+        command_policy = "off" if source_name == "docs_research" else "sandbox"
+        lines.append(f"commandExecutionPolicy: {json.dumps(command_policy)}")
 
     effort_fields = {
-        "claude": ("effort", {"low", "medium", "high", "xhigh", "max"}, ("effort",)),
-        "zcode": ("thoughtLevel", {"low", "high", "max"}, ("thoughtLevel",)),
-        "codebuddy": ("effort", {"minimal", "low", "medium", "high", "xhigh", "max"}, ("effort",)),
-        # WorkBuddy has no documented per-subagent effort key. Preserve existing
-        # user-authored effort metadata, but do not synthesize an undocumented key.
-        "workbuddy": (None, set(), ("effort", "thoughtLevel", "reasoningEffort", "reasoning_effort", "model_reasoning_effort", "reasoningLevel", "reasoning_level", "thinking", "thinkingLevel", "thinking_level")),
-        # OpenCode passes provider-specific options through; reasoningEffort is
-        # supported by OpenAI reasoning models. A pre-existing variant is also a
-        # user setting and takes precedence over the source default.
-        "opencode": ("reasoningEffort", {"none", "minimal", "low", "medium", "high", "xhigh"}, ("reasoningEffort", "variant")),
+        "claude": ("effort", {"low", "medium", "high", "xhigh", "max"}, ("model", "effort")),
+        "zcode": ("thoughtLevel", {"low", "high", "max"}, ("model", "thoughtLevel")),
+        # CodeBuddy's project-agent schema documents model, but not per-agent effort.
+        "codebuddy": (None, set(), ("model", "effort")),
+        # WorkBuddy has no directly documented per-agent model or effort fields.
+        "workbuddy": (None, set(), ("model", "effort", "thoughtLevel", "reasoningEffort", "reasoning_effort", "model_reasoning_effort", "reasoningLevel", "reasoning_level", "thinking", "thinkingLevel", "thinking_level")),
+        # OpenCode v2 puts provider request overrides under request.body.
+        "opencode": (None, set(), ("model", "request", "reasoningEffort", "variant")),
+        # Cursor carries model-specific effort in model parameters; no separate effort field.
+        "cursor": (None, set(), ("model",)),
+        # Copilot CLI supports reasoningEffort; the shared agent schema inherits its model by default.
+        "github-copilot": ("reasoningEffort", {"low", "medium", "high"}, ("model", "models", "reasoningEffort")),
+        # Antigravity supports model tiers but has no documented per-agent effort field.
+        "antigravity": (None, set(), ("model",)),
     }
-    default_effort_field, accepted_efforts, preserved_effort_keys = effort_fields[platform]
-    target_file = target_dir / f"{target_name}.md"
-    existing_effort_lines = []
+    reasoning_fields = {
+        "claude": {"effort"},
+        "zcode": {"thoughtLevel"},
+        "codebuddy": set(),
+        "workbuddy": {"effort", "thoughtLevel", "reasoningEffort", "reasoning_effort", "model_reasoning_effort", "reasoningLevel", "reasoning_level", "thinking", "thinkingLevel", "thinking_level"},
+        "opencode": {"reasoningEffort", "variant"},
+        "cursor": set(),
+        "github-copilot": {"reasoningEffort"},
+        "antigravity": set(),
+    }
+    default_effort_field, accepted_efforts, preserved_setting_keys = effort_fields[platform]
+    if platform == "github-copilot":
+        target_file = target_dir / f"{target_name}.agent.md"
+    elif platform == "antigravity":
+        target_file = target_dir / target_name / "agent.md"
+    else:
+        target_file = target_dir / f"{target_name}.md"
+    existing_setting_lines = []
+    existing_setting_keys = set()
+    existing_reasoning_keys = set()
     if target_file.is_file():
         old_text = target_file.read_text(encoding="utf-8")
         if old_text.startswith("---\n"):
@@ -383,34 +452,69 @@ for source in sorted(source_dir.glob("*.toml")):
                 while old_index < len(old_frontmatter):
                     old_line = old_frontmatter[old_index]
                     key, separator, value = old_line.partition(":")
-                    preserve_line = separator and key in preserved_effort_keys
                     preserve_model_variant = platform == "opencode" and separator and key == "model" and "#" in value
-                    if preserve_line or preserve_model_variant:
-                        existing_effort_lines.append(old_line)
+                    preserve_cursor_effort = platform == "cursor" and separator and key == "model" and "[effort=" in value
+                    if separator and (key in preserved_setting_keys or preserve_model_variant or preserve_cursor_effort):
+                        existing_setting_keys.add(key)
+                        if key in reasoning_fields[platform] or preserve_model_variant or preserve_cursor_effort:
+                            existing_reasoning_keys.add(key)
+                        setting_block = [old_line]
                         old_index += 1
                         while old_index < len(old_frontmatter) and (old_frontmatter[old_index].startswith((" ", "\t")) or not old_frontmatter[old_index].strip()):
-                            existing_effort_lines.append(old_frontmatter[old_index])
+                            setting_block.append(old_frontmatter[old_index])
                             old_index += 1
+                        existing_setting_lines.extend(setting_block)
+                        if platform == "opencode" and key == "request" and any(re.search(r"reasoningEffort\s*:", line) for line in setting_block):
+                            existing_reasoning_keys.add("request")
                         continue
                     old_index += 1
 
-    if existing_effort_lines:
-        # Retain the target agent's own setting instead of replacing it with the
-        # generated source default. Preserve model#variant where it carries effort.
-        lines.extend(existing_effort_lines)
-        print(f"  ✓ preserved reasoning effort: {target_file}")
-    elif platform == "claude" and source_name in claude_models and source_effort:
-        # Effort availability depends on the pinned Claude model; don't guess.
-        print(f"  ! skipped reasoning effort for {target_name}: availability is unconfirmed for model {claude_models[source_name]}")
-    elif default_effort_field and source_effort:
+    if source_effort and platform == "opencode" and not existing_reasoning_keys:
+        if "request" not in existing_setting_keys:
+            lines += ["request:", "  body:", f"    reasoningEffort: {json.dumps(source_effort)}"]
+        else:
+            request_line = next((i for i, line in enumerate(existing_setting_lines) if re.match(r"^request\s*:\s*$", line)), None)
+            if request_line is None:
+                print(f"  ! skipped OpenCode reasoning effort for {target_name}: preserving a non-block request setting")
+            else:
+                request_indent = len(existing_setting_lines[request_line]) - len(existing_setting_lines[request_line].lstrip())
+                request_end = request_line + 1
+                while request_end < len(existing_setting_lines) and (existing_setting_lines[request_end].startswith((" ", "\t")) or not existing_setting_lines[request_end].strip()):
+                    request_end += 1
+                body_key_line = next((i for i in range(request_line + 1, request_end) if re.match(r"^\s+body\s*:", existing_setting_lines[i])), None)
+                if body_key_line is not None and not re.match(r"^\s+body\s*:\s*$", existing_setting_lines[body_key_line]):
+                    print(f"  ! skipped OpenCode reasoning effort for {target_name}: preserving an inline request.body value")
+                else:
+                    if body_key_line is None:
+                        body_indent = request_indent + 2
+                        existing_setting_lines[request_end:request_end] = [" " * body_indent + "body:", " " * (body_indent + 2) + f"reasoningEffort: {json.dumps(source_effort)}"]
+                    else:
+                        body_indent = len(existing_setting_lines[body_key_line]) - len(existing_setting_lines[body_key_line].lstrip())
+                        existing_setting_lines[body_key_line + 1:body_key_line + 1] = [" " * (body_indent + 2) + f"reasoningEffort: {json.dumps(source_effort)}"]
+                    print(f"  ✓ added OpenCode request.body.reasoningEffort: {target_file}")
+    elif source_effort and default_effort_field and not (existing_reasoning_keys & reasoning_fields[platform]):
         if source_effort in accepted_efforts:
             lines.append(f"{default_effort_field}: {json.dumps(source_effort)}")
+            if platform == "claude" and source_name in claude_models:
+                print(f"  ! Claude effort '{source_effort}' may depend on model support for {claude_models[source_name]}")
         else:
             print(f"  ! skipped unsupported {platform} reasoning effort '{source_effort}' for {target_name}")
-    elif platform == "workbuddy" and source_effort:
-        print(f"  ! skipped reasoning effort for {target_name}: no documented WorkBuddy subagent field")
+    elif source_effort and platform in ("codebuddy", "workbuddy"):
+        print(f"  ! skipped reasoning effort for {target_name}: no documented per-agent effort field")
+    elif source_effort and platform in ("cursor", "antigravity"):
+        print(f"  ! no separate per-agent effort field for {platform}; retaining the target model setting or platform default")
+
+    if existing_setting_lines:
+        # Keep target model/effort values while replacing the rest of the managed frontmatter.
+        lines = [
+            line for line in lines
+            if not (line and not line.startswith((" ", "\t")) and line.partition(":")[1] and line.partition(":")[0] in existing_setting_keys)
+        ]
+        lines.extend(existing_setting_lines)
+        print(f"  ✓ preserved target model/reasoning settings: {target_file}")
 
     lines += ["---", body, ""]
+    target_file.parent.mkdir(parents=True, exist_ok=True)
     target_file.write_text("\n".join(lines), encoding="utf-8")
 PY
 
@@ -568,6 +672,18 @@ sync_platform() {
       generate_agents "$TMP_DIR/.codex/agents" "$PROJECT_DIR/.opencode/agents" opencode
       copy_skill_tree "$TMP_DIR/.agents/skills" "$PROJECT_DIR/.opencode/skills" opencode
       ;;
+    cursor)
+      copy_skill_tree "$TMP_DIR/.agents/skills" "$PROJECT_DIR/.agents/skills" cursor
+      generate_agents "$TMP_DIR/.codex/agents" "$PROJECT_DIR/.cursor/agents" cursor
+      ;;
+    github-copilot)
+      copy_skill_tree "$TMP_DIR/.agents/skills" "$PROJECT_DIR/.agents/skills" github-copilot
+      generate_agents "$TMP_DIR/.codex/agents" "$PROJECT_DIR/.github/agents" github-copilot
+      ;;
+    antigravity)
+      copy_skill_tree "$TMP_DIR/.agents/skills" "$PROJECT_DIR/.agents/skills" antigravity
+      generate_agents "$TMP_DIR/.codex/agents" "$PROJECT_DIR/.agents/agents" antigravity
+      ;;
   esac
 }
 
@@ -605,7 +721,7 @@ if [ "$PLATFORM" = "opencode" ]; then
     ENTRIES=( ".project-memory/" ".project-script/" ".codebuddy/" )
     HEADER="# CodeBuddy / project-local config"
 else
-  ENTRIES=( ".codex/" ".zcode/" ".claude/" ".agents/" ".project-memory/" ".project-script/" "AGENTS.md" "CLAUDE.md" )
+  ENTRIES=( ".codex/" ".zcode/" ".claude/" ".agents/" ".cursor/agents/" ".github/agents/" ".project-memory/" ".project-script/" "AGENTS.md" "CLAUDE.md" )
   HEADER="# Agent / project-local config"
 fi
 if [ ! -f "$GITIGNORE" ]; then

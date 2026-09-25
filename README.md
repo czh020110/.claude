@@ -4,19 +4,19 @@
   <img src="assets/morrowmark-logo.png" alt="Morrowmark project icon" width="520">
 </p>
 
-**Project memory and coding-agent workflows for Codex, ZCode, Claude Code, CodeBuddy, WorkBuddy, and OpenCode.**
+**Project memory and coding-agent workflows for Codex, Cursor, GitHub Copilot, Antigravity, ZCode, Claude Code, CodeBuddy, WorkBuddy, and OpenCode.**
 
 <p align="center">
   <a href="README_CN.md">简体中文</a> | <strong>English</strong>
 </p>
 
 <p align="center">
-  <a href="https://github.com/czh020110/Morrowmark"><img alt="platforms" src="https://img.shields.io/badge/platforms-Codex%20%7C%20ZCode%20%7C%20Claude%20Code%20%7C%20CodeBuddy%20%7C%20WorkBuddy%20%7C%20OpenCode-blue"></a>
+  <a href="https://github.com/czh020110/Morrowmark"><img alt="platforms" src="https://img.shields.io/badge/platforms-Codex%20%7C%20Cursor%20%7C%20GitHub%20Copilot%20%7C%20Antigravity%20%7C%20ZCode%20%7C%20Claude%20Code%20%7C%20CodeBuddy%20%7C%20WorkBuddy%20%7C%20OpenCode-blue"></a>
 </p>
 
 **A codebase that remembers—and an agent that can pick up the thread.**
 
-Morrowmark gives each repository durable, project-local context. It records confirmed current facts separately from settled future designs, and guides agents to load relevant topics as work changes. Shared skills and subagents make planning, documentation research, verification, and memory updates reusable across six coding clients. Memory stays in the project repository, not the client's global memory.
+Morrowmark gives each repository durable, project-local context. It records confirmed current facts separately from settled future designs, and guides agents to load relevant topics as work changes. Shared skills and subagents make planning, documentation research, verification, and memory updates reusable across nine coding clients. Memory stays in the project repository, not the client's global memory.
 
 <p align="center">
   <img src="assets/morrowmark-cross-platform-banner-en.png" alt="Morrowmark cross-platform project memory and agent workflow banner" width="100%">
@@ -61,6 +61,10 @@ The agent may still restructure topic layout and indexes, with these boundaries:
    | Client | Global skill directory |
    | --- | --- |
    | Codex, ZCode, OpenCode | `~/.agents/skills/` |
+   | Cursor | `~/.cursor/skills/` |
+   | GitHub Copilot | `~/.copilot/skills/` |
+   | Google Antigravity | `~/.gemini/antigravity/skills/` |
+   | Antigravity CLI | `~/.gemini/antigravity-cli/skills/` |
    | Claude Code | `~/.claude/skills/` |
    | CodeBuddy | `~/.codebuddy/skills/` |
    | WorkBuddy international | `~/.workbuddy-ai/skills/` |
@@ -84,7 +88,7 @@ The agent may still restructure topic layout and indexes, with these boundaries:
 
 2. In the target repository, invoke the globally installed `sync-morrowmark` Skill. It first updates its registered global source with `npx skills update --global sync-morrowmark`, then runs the script to sync this repository's platform configuration. For platforms the Skills CLI does not recognize, the Skill links the platform's global directory to the CLI-managed source before running the script.
 
-The sync generates the platform's agent and skill configuration and adds project memory templates. It preserves existing custom prompts, accumulated memory bodies, and same-named agents' reasoning settings where the platform supports them.
+The sync generates the platform's agent and skill configuration and adds project memory templates. Cursor and GitHub Copilot use the shared `.agents/skills/` directory with agents in `.cursor/agents/` and `.github/agents/`; Antigravity uses `.agents/skills/` and `.agents/agents/`. It preserves existing custom prompts, accumulated memory bodies, and same-named agents' supported model or reasoning settings.
 
 ## Project Memory
 
