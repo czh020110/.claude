@@ -46,10 +46,10 @@ Morrowmark 为每个仓库维护长期的项目上下文：把已确认的当前
    也可以使用 Vercel Skills CLI 安装这个 Skill：
 
    ```bash
-   npx skills add https://github.com/czh020110/Morrowmark/tree/main/sync-morrowmark --global
+   npx skills add czh020110/Morrowmark --full-depth --skill sync-morrowmark --global
    ```
 
-   如果 CLI 提示选择客户端，请选择当前使用的客户端。之后要更新 CLI 管理的安装时，运行 `npx skills update sync-morrowmark`。这一步只安装全局 Skill；项目初始化或更新仍需执行第 2 步。更多客户端和参数见 [Skills CLI 文档](https://github.com/vercel-labs/skills)。
+   `--full-depth` 用于扫描这个非标准子目录，`--skill` 只选择入口 Skill。如果 CLI 提示选择客户端，请选择当前使用的客户端。之后要更新 CLI 管理的安装时，运行 `npx skills update sync-morrowmark`。这一步只安装全局 Skill；项目初始化或更新仍需执行第 2 步。更多客户端和参数见 [Skills CLI 文档](https://github.com/vercel-labs/skills)。
 
 首次同步前，请用这个新名称替换之前安装的全局版本。
 

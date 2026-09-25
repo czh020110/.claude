@@ -46,10 +46,10 @@ Morrowmark gives each repository durable, project-local context. It records conf
    Or install this Skill with Vercel's Skills CLI:
 
    ```bash
-   npx skills add https://github.com/czh020110/Morrowmark/tree/main/sync-morrowmark --global
+   npx skills add czh020110/Morrowmark --full-depth --skill sync-morrowmark --global
    ```
 
-   Select the current client if prompted. To update a CLI-managed installation later, run `npx skills update sync-morrowmark`. This installs the global Skill; initialize or update a project separately in step 2. See the [Skills CLI documentation](https://github.com/vercel-labs/skills) for supported agents and options.
+   `--full-depth` finds this Skill in its non-standard subdirectory, and `--skill` selects only this entry Skill. Select the current client if prompted. To update a CLI-managed installation later, run `npx skills update sync-morrowmark`. This installs the global Skill; initialize or update a project separately in step 2. See the [Skills CLI documentation](https://github.com/vercel-labs/skills) for supported agents and options.
 
    Replace any earlier global installation with this renamed skill before the next sync.
 

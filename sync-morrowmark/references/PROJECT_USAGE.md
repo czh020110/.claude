@@ -15,8 +15,10 @@ Morrowmark is a configuration template for coding agents. It brings reusable Ski
 Install it from GitHub with Vercel's Skills CLI:
 
 ```bash
-npx skills add https://github.com/czh020110/Morrowmark/tree/main/sync-morrowmark --global
+npx skills add czh020110/Morrowmark --full-depth --skill sync-morrowmark --global
 ```
+
+The repository shorthand supports skills.sh install tracking. `--full-depth` finds this Skill outside the CLI's standard skill directories, and `--skill` limits the installation to this entry Skill.
 
 You can also install it manually in the client's global Skill directory listed in the repository README. If Vercel's Skills CLI manages the installed copy, update it with `npx skills update sync-morrowmark`.
 
