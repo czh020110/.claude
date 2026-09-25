@@ -73,7 +73,7 @@ Do not invoke `read-index-memory`, inspect project-memory files, or pre-read the
 
 `codebuddy`, `workbuddy` and `workbuddy-cn` are three separate targets with different **user-level** skill directories (see the table in step 1). At the **project** level, `workbuddy` and `workbuddy-cn` share CodeBuddy's `.codebuddy/` layout with `codebuddy`. Cursor and GitHub Copilot use `.agents/skills/` for Skills and their own agent directories; Antigravity and Antigravity CLI share `.agents/skills/` and `.agents/agents/`. Picking the wrong WorkBuddy target fails silently rather than erroring.
 
-The global Skill update and project configuration sync are separate operations. The Skills CLI updates the global entry Skill; `scripts/sync.sh` fetches the configured project template into a temporary directory and applies project configuration. The project script does not replace or re-execute the global Skill.
+The global Skill update and project configuration sync are separate operations. The Skills CLI updates the global entry Skill; `scripts/sync.sh` fetches the configured project template into a temporary directory and applies project configuration. If a network issue prevents cloning the GitHub template, retry the download using a mirror or acceleration source. The project script does not replace or re-execute the global Skill.
 
 ## Context7 MCP
 
