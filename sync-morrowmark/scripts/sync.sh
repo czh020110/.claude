@@ -707,23 +707,49 @@ echo ""
 
 echo "[6/7] Checking .gitignore..."
 GITIGNORE="$PROJECT_DIR/.gitignore"
-if [ "$PLATFORM" = "opencode" ]; then
-  ENTRIES=( ".project-memory/" ".project-script/" ".opencode/" )
-  HEADER="# OpenCode / project-local config"
-  elif [ "$PLATFORM" = "workbuddy" ]; then
-    ENTRIES=( ".project-memory/" ".project-script/" ".codebuddy/" )
+ENTRIES=( ".project-memory/" ".project-script/" "AGENTS.md" )
+case "$PLATFORM" in
+  codex)
+    ENTRIES+=( ".codex/" ".agents/" )
+    HEADER="# Codex / project-local config"
+    ;;
+  zcode)
+    ENTRIES+=( ".zcode/" ".agents/" )
+    HEADER="# ZCode / project-local config"
+    ;;
+  claude)
+    ENTRIES+=( ".claude/" "CLAUDE.md" )
+    HEADER="# Claude / project-local config"
+    ;;
+  codebuddy)
+    ENTRIES+=( ".codebuddy/" )
+    HEADER="# CodeBuddy / project-local config"
+    ;;
+  workbuddy)
+    ENTRIES+=( ".codebuddy/" )
     if [ "$WORKBUDDY_VARIANT" = "domestic" ]; then
       HEADER="# WorkBuddy domestic / project-local config"
     else
       HEADER="# WorkBuddy international / project-local config"
     fi
-  elif [ "$PLATFORM" = "codebuddy" ]; then
-    ENTRIES=( ".project-memory/" ".project-script/" ".codebuddy/" )
-    HEADER="# CodeBuddy / project-local config"
-else
-  ENTRIES=( ".codex/" ".zcode/" ".claude/" ".agents/" ".cursor/agents/" ".github/agents/" ".project-memory/" ".project-script/" "AGENTS.md" "CLAUDE.md" )
-  HEADER="# Agent / project-local config"
-fi
+    ;;
+  opencode)
+    ENTRIES+=( ".opencode/" )
+    HEADER="# OpenCode / project-local config"
+    ;;
+  cursor)
+    ENTRIES+=( ".agents/" ".cursor/agents/" )
+    HEADER="# Cursor / project-local config"
+    ;;
+  github-copilot)
+    ENTRIES+=( ".agents/" ".github/agents/" )
+    HEADER="# GitHub Copilot / project-local config"
+    ;;
+  antigravity)
+    ENTRIES+=( ".agents/" )
+    HEADER="# Antigravity / project-local config"
+    ;;
+esac
 if [ ! -f "$GITIGNORE" ]; then
   for entry in "${ENTRIES[@]}"; do printf '%s\n' "$entry"; done > "$GITIGNORE"
 else
